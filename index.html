@@ -1,11 +1,13 @@
 <title>Trio Loop-inspector</title>
 <style>
 :root{
-  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
   --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
   --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
   --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
   --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
+  --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
     --band:rgba(111,207,151,.13); --sel:#0b0b0b;
 }
 @media (prefers-color-scheme: dark){
@@ -15,15 +17,19 @@
     --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
     --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
     --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
+    --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
+    --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
     --band:rgba(111,207,151,.10); --sel:#ffffff;
   }
 }
 :root[data-theme="light"]{
-  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
   --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
   --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
   --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
   --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
+  --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
   --band:rgba(111,207,151,.13); --sel:#0b0b0b;
 }
 :root[data-theme="dark"]{
@@ -32,6 +38,8 @@
   --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
   --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
     --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
+    --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
+    --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
   --band:rgba(111,207,151,.10); --sel:#ffffff;
 }
 *{box-sizing:border-box}
@@ -44,7 +52,7 @@ h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
 .tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
   padding:6px 13px;font:600 13px system-ui,sans-serif;cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
-.tab:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--iob);outline-offset:2px}
+.tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:9px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px 6px}
 .tile .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
@@ -66,6 +74,7 @@ svg{display:block;width:100%}
   box-shadow:0 3px 14px rgba(0,0,0,.14);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
 .tooltip b{font-weight:650}
 .hint{color:var(--muted);font-size:11.5px;margin:3px 0 0 44px}
+@media (pointer:coarse){.hint{display:none}.tooltip{display:none !important}}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;position:sticky;top:8px}
 @media (max-width:1080px){.panel{position:static}}
 .panel h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
@@ -111,19 +120,20 @@ details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .step{border-top:1px solid var(--grid)}
 .step:first-child{border-top:none}
 .srow{display:flex;gap:8px;align-items:baseline;padding:5px 0;cursor:pointer;background:none;border:none;width:100%;text-align:left;color:inherit;font:inherit}
+.srow:hover{background:rgba(127,127,127,.07)}
 .srow:hover .slab{color:var(--ink)}
 .sdot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--axis);align-self:center}
-.slab{flex:none;width:72px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.slab{flex:none;width:82px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
 .sval{flex:1;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.5;word-break:break-word}
-.sval .ok{color:var(--good);font-weight:700}
+.sval .ok{color:var(--txt-good);font-weight:700}
 .sval .warn{font-weight:700}
-.scar{flex:none;color:var(--muted);font-size:9px;align-self:center;transition:transform .12s}
+.scar{flex:none;color:var(--muted);font-size:9px;align-self:center}
 .step.open .scar{transform:rotate(90deg)}
 .step.skip{opacity:.4}
 .sbody{padding:0 0 10px 16px;font-size:12.5px;color:var(--ink2);line-height:1.5}
 .sbody p{margin:2px 0 6px}
 .frm{font:11.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:6px 0;overflow-x:auto;color:var(--ink);white-space:pre}
-.vr{border-bottom:1px dotted var(--muted);cursor:help}
+.vr{background:none;border:none;border-bottom:1px dotted var(--muted);padding:0;font:inherit;color:inherit;cursor:pointer}
 .vrow{display:flex;flex-wrap:wrap;gap:4px 10px;margin:5px 0 2px;font-size:11.5px}
 .vrow .vr{color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
 .vardef{font-size:12px;color:var(--ink2);background:var(--page);border-left:3px solid var(--iob);padding:5px 9px;margin:6px 0;border-radius:0 6px 6px 0}
@@ -136,12 +146,12 @@ details.src a{color:var(--iob);font-size:11px;text-decoration:none}
 .conc .flowrow .lbl{width:64px;font-size:12px}
 .concnote{font-size:11px;color:var(--muted);margin-top:3px}
 .spark{display:block;margin:4px 0 2px}
-.frm .cy{color:var(--iob)}
+.frm .cy{color:var(--txt-iob)}
 details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:7px 0 4px;font-weight:650}
 #loginCard label{display:block;font-size:12.5px;color:var(--ink2);margin:10px 0 4px;font-weight:600}
 #loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
 #loginCard .err{color:var(--lo);font-size:12.5px;margin-top:8px;min-height:1em}
-@media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .12s,color .12s}}
+@media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .12s,color .12s}.scar{transition:transform .12s}}
 </style>
 
 <div class="wrap">
@@ -163,7 +173,7 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
 
 <div id="appbody">
 
-<div class="tabs" id="tabs" role="tablist"></div>
+<div class="tabs" id="tabs" role="toolbar" aria-label="day navigation"></div>
 <div class="tiles" id="tiles"></div>
 
 <div class="main">
@@ -183,13 +193,14 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
     <div class="chartbox" id="boxI"></div>
     <div class="chart-title">Safety limits <span id="limlegend" style="display:contents"></span></div>
     <div class="chartbox limstrip" id="boxL"></div>
-    <p class="hint">&#8592; &#8594; steps through loop cycles</p>
+    <p class="hint">&#8592; &#8594; steps through loop cycles · clicking past the last point selects the latest</p>
   </div>
 
-  <aside class="panel" id="panel" aria-live="polite">
+  <aside class="panel" id="panel">
     <h2>Loop decision</h2>
     <div class="empty">Click a moment in the chart to dissect that loop cycle.</div>
   </aside>
+  <span id="srlive" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></span>
 </div>
 
 </div>
@@ -222,7 +233,7 @@ function computeDays(){
   for(let d=firstMid; d<=t1all; d+=86400){
     if(DATA.sgv.filter(e=>e[0]>=d&&e[0]<d+86400).length>=24) days.push(d);
   }
-  if(!days.includes(curDay)) curDay = days[days.length-1];
+  if(!days.includes(curDay)) curDay = days.length?days[days.length-1]:todayStart();
 }
 
 /* scheduled basal */
@@ -255,20 +266,23 @@ function parseReason(c){
   if(m=g(/CR: ([\d.]+)/)) p.cr=+m[1];
   if(m=g(/Dev: (-?[\d.]+)/)) p.dev=+m[1];
   if(m=g(/BGI: (-?[\d.]+)/)) p.bgi=+m[1];
-  if(m=g(/minPredBG:? ([\d.]+)/)) p.minPred=+m[1];
-  if(m=g(/minGuardBG:? ([\d.]+)/)) p.minGuard=+m[1];
+  if(m=g(/minPredBG:? (-?[\d.]+)/)) p.minPred=+m[1];
+  if(m=g(/minGuardBG:? (-?[\d.]+)/)) p.minGuard=+m[1];
   if(m=g(/IOBpredBG:? ([\d.]+)/)) p.iobPred=+m[1];
   if(m=g(/COBpredBG:? ([\d.]+)/)) p.cobPred=+m[1];
   if(m=g(/UAMpredBG:? ([\d.]+)/)) p.uamPred=+m[1];
   p.decision = r.includes('; ') ? r.slice(r.indexOf('; ')+2) : r;
   p.limits=[];
-  if(m=g(/minGuardBG ([0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/))
-    p.limits.push({key:'guard',t:'Hypo guard (minGuardBG)',c:'--lo',
-      why:`The worst-case forecast touches ${m[1]} mmol/L, below the ${m[2]} safety threshold. All SMBs blocked and basal set to zero — even though the current reading is ${f1(M(c.bg))}.`});
   const wacht=g(/Waiting (\d+)m ?(\d*)s? to microbolus/);
+  if(m=g(/minGuardBG (-?[0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/))
+    { p.thr=+m[2];
+    p.limits.push({key:'guard',t:'Hypo guard (minGuardBG)',c:'--lo',
+      why:`The worst-case forecast touches ${m[1]} mmol/L, below the ${m[2]} safety threshold. All SMBs blocked and basal set to zero (current reading ${f1(M(c.bg))} — the guard fires on current BG below threshold too).`}); }
   if(m=g(/maxBolus ([0-9]+(?:\.[0-9]+)?)[^0-9]/)){ const req=c.req||0, mb=+m[1];
     if(mb>0) p.limits.push({key:'maxbolus',t:'SMB limited (maxBolus)',c:'--hi',
-      why:`Calculated need ${f2(req)} U, but each SMB is capped at ${f2(mb)} U. The remainder follows in later cycles.`});}
+      why:`Calculated need ${f2(req)} U, but each SMB is capped at ${f2(mb)} U. The remainder follows in later cycles.`});
+    else if(!wacht) p.limits.push({key:'maxbolus',t:'SMB blocked (maxBolus 0)',c:'--hi',
+      why:`oref set a hard SMB cap of 0 U this cycle${req>0.01?` despite a ${f2(req)} U need`:''} — the whole correction goes via temp basal instead.`});}
   if(wacht){ const req=c.req||0;
     p.limits.push({key:'smbwait',t:'SMB interval',c:'--smbwait',
       why:`An SMB was just delivered; Trio waits another ${wacht[1]}m${wacht[2]?wacht[2]+'s':''} before microbolusing again${req>0.01?` — the ${f2(req)} U need is on hold`:''}.`});}
@@ -295,7 +309,7 @@ function dayData(d){
   if(dayCache[d]) return dayCache[d].data;
   if(SHARE){ const p=loadPersisted(d); if(p) return p.data; }
   const a=d,b=d+86400;
-  return {
+  const ds={
     a,b,
     sgv:DATA.sgv.filter(e=>e[0]>=a&&e[0]<b),
     cycles:DATA.cycles.filter(c=>c.t>=a&&c.t<b),
@@ -304,8 +318,10 @@ function dayData(d){
     carbs:DATA.carbs.filter(e=>e[0]>=a&&e[0]<b),
     notes:DATA.notes.filter(e=>e[0]>=a&&e[0]<b),
     siteChange:DATA.siteChange.filter(t=>t>=a&&t<b),
-    segs:basalSegs(a,b,DATA.tempBasal),
   };
+  const lastT=Math.max(ds.sgv.length?ds.sgv[ds.sgv.length-1][0]:a, ds.cycles.length?ds.cycles[ds.cycles.length-1].t:a);
+  ds.segs=basalSegs(a,Math.min(b,lastT+300),DATA.tempBasal);
+  return ds;
 }
 function dayISO(d){ return new Date((d+TZ)*1000).toISOString().slice(0,10); }
 function isoToDay(v){ const t=Date.parse(v+'T00:00:00Z'); return isNaN(t)?null:t/1000-TZ; }
@@ -318,7 +334,7 @@ function buildTabs(){
   tabsEl.innerHTML='';
   const mk=(html,fn,title)=>{ const b=document.createElement('button'); b.className='tab';
     b.innerHTML=html; b.onclick=fn; if(title) b.title=title; tabsEl.appendChild(b); return b; };
-  mk('&#8249;',()=>selectDay(curDay-86400),'previous day');
+  mk('&#8249;',()=>selectDay(curDay-86400),'previous day').setAttribute('aria-label','previous day');
   const inp=document.createElement('input');
   inp.type='date'; inp.className='tab'; inp.style.cssText='padding:4px 8px;color:inherit;background:var(--surface)';
   inp.value=dayISO(curDay);
@@ -326,11 +342,11 @@ function buildTabs(){
   else if(days.length){ inp.min=dayISO(days[0]); inp.max=dayISO(days[days.length-1]); }
   inp.onchange=()=>{ const d=isoToDay(inp.value); if(d!=null) selectDay(d); };
   tabsEl.appendChild(inp);
-  mk('&#8250;',()=>selectDay(curDay+86400),'next day');
+  mk('&#8250;',()=>selectDay(curDay+86400),'next day').setAttribute('aria-label','next day');
   const cached=Object.keys(dayCache).map(Number);
   const avail=[...new Set([...days,...cached,...(LIVE?[todayStart()]:[])])].sort((x,y)=>x-y).slice(-4);
   for(const d of avail){
-    const b=mk(d===todayStart()?'Today':dayLabel(d),()=>selectDay(d)); b.dataset.day=d; b.setAttribute('role','tab');
+    const b=mk(d===todayStart()?'Today':dayLabel(d),()=>selectDay(d)); b.dataset.day=d;
   }
   if(LIVE){
     mk('&#10227;',()=>selectDay(curDay,true),'refresh this day');
@@ -350,7 +366,8 @@ async function selectDay(d,force){
     curDay=d;
     if(!dayCache[d]) loadPersisted(d);
     const c=dayCache[d];
-    const stale = d===today && c && (Date.now()-c.fetchedAt>120000);
+    const stale = c && (d===today ? (Date.now()-c.fetchedAt>120000)
+      : (c.fetchedAt < (d+86400)*1000+600000)); /* gecachet vóór de dag voorbij was */
     if(force || !c || stale){
       dayStatusTxt='loading\u2026'; buildTabs();
       try{
@@ -386,7 +403,7 @@ function renderTiles(dd){
   <div class="tile"><div class="k">Insulin (SMB + bolus)</div><div class="v">${f1(s.smbU)} + ${f1(s.bolU)}<small> U</small></div></div>
   <div class="tile"><div class="k">Basal delivered</div><div class="v">${f1(s.basalU)}<small> U</small></div></div>
   <div class="tile"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small> g</small></div></div>
-  <div class="tile"><div class="k">Loop cycles / limited</div><div class="v">${s.nC}<small> / ${s.limN}</small></div></div>`;
+  <div class="tile"><div class="k">Loop cycles</div><div class="v">${s.nC}<small> · ${s.limN} hit a safety limit</small></div></div>`;
 }
 
 /* ---------- charts ---------- *//* ---------- charts ---------- */
@@ -410,7 +427,7 @@ function drawTimeAxis(svg,w,h,dd){
 function renderGlucose(dd,w){
   const h=286, ha=h-18, STRIP=38, LANE=STRIP+22, TOP=LANE+6;
   boxG.querySelectorAll('svg').forEach(e=>e.remove());
-  const svg=svgEl(w,h); boxG.appendChild(svg);
+  const svg=svgEl(w,h); svg.setAttribute('role','img'); svg.setAttribute('aria-label','glucose and insulin delivery chart; click to inspect a loop cycle'); boxG.appendChild(svg);
   const maxbg=Math.max(12.5, ...dd.sgv.map(e=>M(e[1])))+0.8;
   const y=v=>ha-( (v-2)/(maxbg-2) )*(ha-TOP);
   drawTimeAxis(svg,w,h,dd);
@@ -482,8 +499,12 @@ function renderGlucose(dd,w){
   /* selected cycle marker */
   if(selCycle){
     const x=X(selCycle.t);
-    add(svg,'line',{x1:x,x2:x,y1:0,y2:ha,stroke:css('--sel'),'stroke-width':1,opacity:.5,'stroke-dasharray':'2 3'});
+    add(svg,'line',{x1:x,x2:x,y1:0,y2:ha,stroke:css('--sel'),'stroke-width':2,opacity:.75});
     add(svg,'circle',{cx:x,cy:y(M(selCycle.bg)),r:6,fill:'none',stroke:css('--sel'),'stroke-width':2});
+    const lw=34, lx=Math.min(w-MR-lw, Math.max(ML, x-lw/2));
+    add(svg,'rect',{x:lx,y:STRIP+21,width:lw,height:13,rx:3,fill:css('--sel')});
+    add(svg,'text',{x:lx+lw/2,y:STRIP+31,'text-anchor':'middle',fill:css('--page'),
+      style:'font:700 9.5px ui-monospace,Menlo,monospace'},hhmm(selCycle.t));
   }
   addHoverLine(svg,ha);
   attachHover(svg,dd,'G');
@@ -569,9 +590,11 @@ function addHoverLine(svg,h){
   const l=add(svg,'line',{x1:-10,x2:-10,y1:0,y2:h,stroke:css('--muted'),'stroke-width':1,opacity:.6,'pointer-events':'none'});
   hoverLines.push(l); return l;
 }
+const COARSE=matchMedia('(pointer:coarse)').matches;
 function attachHover(svg,dd,which){
   svg.style.cursor='pointer';
   svg.addEventListener('mousemove',ev=>{
+    if(COARSE) return;
     const r=svg.getBoundingClientRect();
     const px=ev.clientX-r.left, w=r.width;
     if(px<ML||px>w-MR){tip.style.display='none';hoverLines.forEach(l=>{l.setAttribute('x1',-10);l.setAttribute('x2',-10);});return;}
@@ -601,15 +624,18 @@ function attachHover(svg,dd,which){
     const px=ev.clientX-r.left, w=r.width;
     const t=dd.a+(px-ML)/(w-ML-MR)*86400;
     const c=nearestCycle(dd,t);
-    if(c){ selCycle=c; renderAll(false); }
+    if(c){ selCycle=c; renderAll(false); tip.style.display='none';
+      if(matchMedia('(max-width:1080px)').matches) panel.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: no-preference)').matches?'smooth':'auto'});
+    }
   });
 }
 
 /* keyboard nav */
 document.addEventListener('keydown',ev=>{
-  if(!selCycle) return;
+  if(ev.target.matches('input,textarea,select')) return;
   if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
   const dd=dayData(curDay);
+  if(!selCycle){ if(dd.cycles.length){ selCycle=dd.cycles[dd.cycles.length-1]; renderAll(false); ev.preventDefault(); } return; }
   const i=dd.cycles.indexOf(selCycle);
   if(i<0) return;
   const j=ev.key==='ArrowLeft'?i-1:i+1;
@@ -641,7 +667,7 @@ const VD={
  short_avgdelta:'short_avgdelta — average BG change per 5 min over the last 2.5–17.5 min.',
  IOB:'IOB (Insulin on Board) — insulin still active, computed from every bolus, SMB and temp-basal deviation in pump history, decayed along the insulin activity curve (DIA).',
  COB:'COB (Carbs on Board) — announced carbs not yet absorbed; decays with the observed carb absorption rate.',
- autosens:'autosens — ratio of how insulin actually worked over recent hours vs. expected. >1 = resistant (dose more): effective ISF = ISF ÷ ratio; also scales basal and target.',
+ autosens:'autosens — ratio of how insulin actually worked over recent hours vs. expected. >1 = resistant: effective ISF = ISF ÷ ratio; basal is scaled too (unless Dynamic ISF handles it) and target only if the sensitivity-raises-target / resistance-lowers-target preferences are on.',
  TDD:'TDD — Total Daily Dose of insulin; used by Dynamic ISF variants.',
  CR:'CR (carb ratio) — grams of carbs covered by 1 U of insulin.',
  ISF:'ISF (insulin sensitivity factor) — how far 1 U drops BG (mmol/L per U here).',
@@ -650,29 +676,29 @@ const VD={
  naive_eventualBG:'naive_eventualBG — where BG lands if all IOB works with no deviations: bg − IOB × ISF.',
  eventualBG:'eventualBG — naive_eventualBG + projected deviation impact: the forecast endpoint oref doses against.',
  minPredBG:'minPredBG — lowest point of the relevant forecast curves; used (vs eventualBG) so dosing respects the dip before the rise.',
- minGuardBG:'minGuardBG — lowest point of the most cautious curve (usually ZT). The hypo guard compares it to the threshold.',
- threshold:'threshold — safety floor derived from your target (4.4 mmol/L here). Forecast below it = all dosing stops.',
+ minGuardBG:'minGuardBG — the no-wait minimum of the active forecast curves (COB/UAM blended by remaining carbs, else UAM, else IOB). The hypo guard compares it to the threshold.',
+ threshold:'threshold — safety floor: target − ½×(target − 2.2), raised to your “glucose safety limit” setting if higher, clamped to 3.3–6.7 mmol/L. Current BG or forecast below it = all dosing stops.',
  UAM:'UAM (Unannounced Meal) — forecast that extends the current unexplained rise and decays it at the slope observed over the last hour (at least linearly to zero in 3 h).',
- ZT:'ZT (zero-temp) — worst-case forecast if the pump delivers nothing from now on. Its minimum is the safety net.',
+ ZT:'ZT (zero-temp) — worst-case forecast if the pump delivers nothing from now on. Its minimum floors the averaged forecast and tempers the UAM-based dosing minimum.',
  insulinReq:'insulinReq — additional insulin needed now: (min(minPredBG, eventualBG) − target) ÷ effective ISF, capped by maxIOB headroom.',
  maxIOB:'maxIOB — hard ceiling on total insulin on board; insulinReq can never push IOB above it.',
- maxBolus:'maxBolus — per-SMB cap: current basal × maxSMBBasalMinutes ÷ 60 (maxUAMSMBBasalMinutes when the rise is unannounced).',
+ maxBolus:'maxBolus — per-SMB cap: current basal × maxSMBBasalMinutes ÷ 60; the (usually stricter) maxUAMSMBBasalMinutes applies whenever IOB already exceeds the insulin needed for the remaining COB.',
  smb_delivery_ratio:'smb_delivery_ratio — fraction of insulinReq an SMB may deliver at once (default 0.5).',
  SMBInterval:'SMBInterval — minimum minutes between SMBs (default 3).',
  maxSafeBasal:'maxSafeBasal — temp-basal ceiling: min(max basal setting, 3 × highest scheduled basal, 4 × current scheduled basal).',
  enacted:'enacted — the pump confirmed this command. "Suggested only" means it was computed but not (yet) delivered.',
 };
-function vchips(list){ return '<div class="vrow">'+list.map(v=>`<span class="vr" data-v="${v}">${v}</span>`).join('')+'</div>'; }
+function vchips(list){ return '<div class="vrow">'+list.map(v=>`<button type="button" class="vr" data-v="${v}" aria-expanded="false">${v}</button>`).join('')+'</div>'; }
 function srcBlock(k){ const x=SRC[k];
   return `<details class="src"><summary>source · ${x.loc}</summary><pre>${x.code.replace(/</g,'&lt;')}</pre><a href="${GHB}${x.gh}" target="_blank" rel="noopener">view in nightscout/trio-oref ↗</a></details>`; }
 const dash='—';
-function sparkline(c){
+function sparkline(c,thr){
   const pr=c.pred||{}; const keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
   if(!keys.length) return '';
   const W=286,H=78,P=5;
   let mn=Infinity,mx=-Infinity;
   for(const k of keys) for(const v of pr[k]){ const m=M(v); if(m<mn)mn=m; if(m>mx)mx=m; }
-  mn=Math.min(mn,3.7); mx=Math.max(mx,10.3);
+  mn=Math.min(mn,thr-0.5); mx=Math.max(mx,10.3);
   const y=v=>H-P-((v-mn)/(mx-mn))*(H-2*P);
   const n=Math.max(...keys.map(k=>pr[k].length));
   const x=i=>P+i/(n-1)*(W-2*P);
@@ -680,12 +706,12 @@ function sparkline(c){
   const tgt=c.tgt||6.1;
   let out=`<svg class="spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%" role="img" aria-label="forecast curves, next 4 hours">`;
   out+=`<line x1="${P}" x2="${W-P}" y1="${y(tgt).toFixed(1)}" y2="${y(tgt).toFixed(1)}" stroke="var(--good)" stroke-dasharray="4 3" stroke-width="1" opacity=".8"/>`;
-  out+=`<line x1="${P}" x2="${W-P}" y1="${y(4.4).toFixed(1)}" y2="${y(4.4).toFixed(1)}" stroke="var(--lo)" stroke-dasharray="3 3" stroke-width="1" opacity=".7"/>`;
+  out+=`<line x1="${P}" x2="${W-P}" y1="${y(thr).toFixed(1)}" y2="${y(thr).toFixed(1)}" stroke="var(--lo)" stroke-dasharray="3 3" stroke-width="1" opacity=".7"/>`;
   for(const k of keys){
     let d=''; pr[k].forEach((v,i)=>{d+=(d?'L':'M')+x(i).toFixed(1)+' '+y(Math.max(mn,Math.min(mx,M(v)))).toFixed(1)+' ';});
     out+=`<path d="${d}" fill="none" stroke="var(${cols[k]})" stroke-width="1.6"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
   }
-  out+=`</svg><div style="font-size:10.5px;color:var(--muted)">next 4 h · <span style="color:var(--good)">– – target</span> · <span style="color:var(--lo)">– – threshold 4.4</span></div>`;
+  out+=`</svg><div style="font-size:10.5px;color:var(--muted)">next 4 h · <span style="color:var(--txt-good)">– – target</span> · <span style="color:var(--txt-lo)">– – threshold ${f1(thr)}</span></div>`;
   return out;
 }
 function buildSteps(c,p){
@@ -707,6 +733,7 @@ function buildSteps(c,p){
   const tgtV=c?(c.tgt||6.1):null;
   const isfV=c?p.isf:null;
   const sched=c?schedBasal(c.t):null;
+  const thr=(c&&p.thr)??4.4;
   const rows=[];
   const skipAfter = n => exited && n>exited;
   const cy=t=>`\n<span class="cy">» ${t}</span>`;
@@ -714,14 +741,14 @@ function buildSteps(c,p){
   /* conclusie-blok */
   let conc='';
   if(c){
-    if(guard) conc=`<div class="conc" style="color:var(--lo);font-size:12.5px;font-weight:600">hypo guard active — all dosing stopped (zero temp)</div>`;
-    else if(zero) conc=`<div class="conc" style="font-size:12.5px"><b style="color:var(--zt)">forecast below target</b> — basal wound down, nothing added</div>`;
+    if(guard) conc=`<div class="conc" style="color:var(--txt-lo);font-size:12.5px;font-weight:600">hypo guard active — all dosing stopped (zero temp)</div>`;
+    else if(zero) conc=`<div class="conc" style="font-size:12.5px"><b style="color:var(--txt-zt)">forecast below target</b> — basal wound down, nothing added</div>`;
     else if(req!=null&&req>0.01){
       const maxb=Math.max(req,smbGiven,0.01), pct=Math.round(smbGiven/req*100);
       conc=`<div class="conc">
         <div class="flowrow"><span class="lbl">needed</span><span class="bar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="bar-note">${F2(req)} U</span></div>
         <div class="flowrow"><span class="lbl">given now</span><span class="bar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="bar-note">${F2(smbGiven)} U · ${pct}%</span></div>
-        ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the fences below</div>`:''}</div>`;
+        ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits below</div>`:''}</div>`;
     }
     else conc=`<div class="conc" style="font-size:12.5px;color:var(--ink2)">no extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
   }
@@ -741,32 +768,32 @@ function buildSteps(c,p){
     const ztM=p.minGuard??minOf('ZT');
     const cobE=p.cobPred??(pr.COB?M(pr.COB[pr.COB.length-1]):null);
     const uamE=p.uamPred??(pr.UAM?M(pr.UAM[pr.UAM.length-1]):null);
-    if(iobE!=null)chips.push(`<span style="color:var(--iob)">IOB→${F(iobE)}</span>`);
-    if(ztM!=null)chips.push(`<span style="color:var(--zt)">ZT↘${F(ztM)}</span>`);
-    if(cobE!=null)chips.push(`<span style="color:var(--cob)">COB→${F(cobE)}</span>`);
-    if(uamE!=null)chips.push(`<span style="color:var(--uam)">UAM→${F(uamE)}</span>`); }
+    if(iobE!=null)chips.push(`<span style="color:var(--txt-iob)">IOB→${F(iobE)}</span>`);
+    if(ztM!=null)chips.push(`<span style="color:var(--txt-zt)">ZT↘${F(ztM)}</span>`);
+    if(cobE!=null)chips.push(`<span style="color:var(--txt-cob)">COB→${F(cobE)}</span>`);
+    if(uamE!=null)chips.push(`<span style="color:var(--txt-uam)">UAM→${F(uamE)}</span>`); }
   const naive=c&&isfV!=null?M(c.bg)-c.iob*isfV:null;
   rows.push({id:'forecast',lab:'forecast',
     val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
        :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
-    body:(c?sparkline(c):'')+
+    body:(c?sparkline(c,p.thr??4.4):'')+
       `<p>Four futures are drawn: <b>IOB</b> — active insulin plays out; <b>ZT</b> — worst case if delivery stopped now; <b>COB</b> — announced carbs still absorbing; <b>UAM</b> — the current <i>unexplained</i> rise carried forward and decayed at the slope of the last hour’s deviations. Dosing follows the most cautious relevant curve — high side: the highest; low side: the lowest. With SMB forecasts enabled, eventualBG is refined from the curve endpoints, which is why it can sit well above naive + deviation.</p>
-      <div class="frm">deviation  = 6 × (minDelta − BGI)\neventualBG = naive_eventualBG + deviation${naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>`
+      <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with 15-min, then 45-min avg delta\neventualBG = naive_eventualBG + deviation${naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>`
       +vchips(['BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
 
   /* 3 — hypo guard */
   rows.push({id:'guard',lab:'hypo guard',st:guard?'fired':'pass',dot:guard?'--lo':(c?'--good':null),
-    val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; 4.4 → <span class="warn" style="color:var(--lo)">zero temp, SMBs blocked</span>`
-              :(p.minGuard!=null?`minGuardBG ${F(p.minGuard)} ≥ 4.4 <span class="ok">✓</span>`:`no dip below threshold <span class="ok">✓</span>`))
-       :'minGuardBG &lt; threshold? → zero temp + block SMBs',
+    val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; ${F(thr)} → <span class="warn" style="color:var(--txt-lo)">zero temp, SMBs blocked</span>`
+              :(p.minGuard!=null?`minGuardBG ${F(p.minGuard)} ≥ ${F(thr)} <span class="ok">✓</span>`:`no dip below threshold <span class="ok">✓</span>`))
+       :'BG or minGuardBG &lt; threshold? → zero temp + block SMBs',
     body:(guard?`<p><b>${guard.t}.</b> ${guard.why}</p>`:'')+
-      `<p>The strongest brake, checked first. If the most cautious forecast dips under the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot — regardless of the current BG. Nothing after this step runs.</p>
-      <div class="frm">if (minGuardBG &lt; threshold) → setTempBasal(0, 30–120 min); no SMB${c&&p.minGuard!=null?cy(`${F(p.minGuard)} ${guard?'&lt; 4.4 → STOP':'≥ 4.4 → continue'}`):''}</div>`
+      `<p>The strongest brake, checked first. If the <i>current BG</i> or the worst-case forecast (minGuardBG) is below the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot. One escape hatch: it is skipped when IOB is already strongly negative and BG is rising faster than expected. Nothing after this step runs.</p>
+      <div class="frm">if (bg &lt; threshold || minGuardBG &lt; threshold) → setTempBasal(0, 30–120 min); no SMB${c&&p.minGuard!=null?cy(`${F(p.minGuard)} ${guard?`&lt; ${F(thr)} → STOP`:`≥ ${F(thr)} → continue`}`):''}</div>`
       +vchips(['minGuardBG','threshold','ZT'])+srcBlock('guard')});
 
   /* 4 — target check */
   rows.push({id:'target',lab:'vs target',st:zero?'fired':(skipAfter(4)?'skip':(c?'pass':null)),dot:zero?'--zt':(c&&!skipAfter(4)?'--good':null),skip:skipAfter(4),
-    val:skipAfter(4)?'not reached':(c?(zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} → <span class="warn" style="color:var(--zt)">wind basal down</span>`
+    val:skipAfter(4)?'not reached':(c?(zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} → <span class="warn" style="color:var(--txt-zt)">wind basal down</span>`
               :`eventualBG ${c.ebg!=null?mm(c.ebg):dash} ≥ target ${F(tgtV)} <span class="ok">✓</span>`)
        :'eventualBG &lt; target? → reduce / zero the basal'),
     body:(zero?`<p><b>${zero.t}.</b> ${zero.why}</p>`:'')+
@@ -789,14 +816,14 @@ function buildSteps(c,p){
   let smbVal, smbSt=null, smbDot=null;
   if(skipAfter(6)||idle){ smbVal = idle?'skipped — no need':'not reached'; smbSt='skip'; }
   else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
-  else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--smbwait)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--smbwait'; }
-  else if(capS){ smbVal=`min(${F2(req)} × 0.5, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
+  else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-smbwait)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--smbwait'; }
+  else if(capS){ smbVal=`min(${F2(req)} × 0.5, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
   else { smbVal='no SMB this cycle'; }
   rows.push({id:'smb',lab:'SMB',st:smbSt,dot:smbDot,skip:skipAfter(6)||idle,
     val:smbVal,
     body:((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
-      `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three fences apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs. The remainder waits for the next cycles.</p>
+      `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three safety limits apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs — and SMBs are only considered at all while BG is above the safety threshold (and not right after a &gt;20%-of-BG jump, which suggests a sensor calibration). The remainder waits for the next cycles.</p>
       <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(`min(${F2(req)} × 0.5, ${capVal!=null?F2(capVal):'cap'}) = ${F2(smbGiven)} U${capVal!=null&&req*0.5>capVal?' — cap wins':''}`):''}</div>`
       +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
 
@@ -805,19 +832,19 @@ function buildSteps(c,p){
   const mmB=capB?capB.why.match(/basal ([0-9.]+) U\/h, capped at the ([0-9.]+)/):null;
   if(skipAfter(7)){ basVal='not reached'; basSt='skip'; }
   else if(!c){ basVal='temp = basal + 2×insulinReq, capped at maxSafeBasal'; }
-  else if(capB){ basVal=`req ${mmB?.[1]??''} U/h → <b>${mmB?.[2]??''} U/h</b> <span class="warn" style="color:var(--serious)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--serious'; }
-  else if(c.rate!=null){ basVal=`temp <b>${F2(c.rate)} U/h</b>${c.dur?` for ${Math.round(c.dur)} m`:''}${smbGiven&&c.rate===0?' (post-SMB buffer)':''}`; }
+  else if(capB){ basVal=`req ${mmB?.[1]??''} U/h → <b>${mmB?.[2]??''} U/h</b> <span class="warn" style="color:var(--txt-serious)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--serious'; }
+  else if(c.rate!=null&&c.dur>0){ basVal=`temp <b>${F2(c.rate)} U/h</b> for ${Math.round(c.dur)} m${smbGiven&&c.rate===0?' (post-SMB buffer)':''}`; }
   else { basVal='current temp continues'; }
   rows.push({id:'basal',lab:'temp basal',st:basSt,dot:basDot,skip:skipAfter(7),
     val:basVal,
     body:((capB&&`<p><b>${capB.t}.</b> ${capB.why}</p>`)||'')+
-      `<p>The revocable channel. Without an SMB the whole need is scheduled as a 30-min high temp (rate = basal + 2×insulinReq). Right after an SMB oref instead parks a compensating low/zero temp: if the forecast was too optimistic, the missing basal is the safety buffer. Either way the rate can never exceed maxSafeBasal — a multiple of your <i>scheduled</i> basal.</p>
+      `<p>The revocable channel. Without an SMB the whole need is scheduled as a 30-min high temp (rate = basal + 2×insulinReq). Right after an SMB oref instead parks a compensating zero temp of up to 60 min (a need under 30 min becomes a 30-min low-but-nonzero temp): if the forecast was too optimistic, the withheld basal is the buffer. Either way the rate can never exceed maxSafeBasal — a multiple of your <i>scheduled</i> basal.</p>
       <div class="frm">rate = basal + 2 × insulinReq\nmaxSafeBasal = min(max basal, 3 × max daily basal, 4 × current basal)${c&&sched!=null&&req!=null&&req>0.01?cy(`${F2(sched)} + 2 × ${F2(req)} = ${F2(sched+2*req)} U/h${mmB?` → capped ${mmB[2]}`:(c.rate!=null?` → set ${F2(c.rate)}`:'')}`):''}</div>`
       +vchips(['maxSafeBasal','insulinReq'])+srcBlock('basal')});
 
   /* 8 — result */
   rows.push({id:'result',lab:'→ deliver',
-    val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${c.rate!=null?`<b>${F2(c.rate)} U/h</b>${c.dur?` · ${Math.round(c.dur)} m`:''}`:'(unchanged)'} · ${c.rec?'<span class="ok">enacted</span>':'suggested only'}`
+    val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${(c.rate!=null&&c.dur>0)?`<b>${F2(c.rate)} U/h</b> · ${Math.round(c.dur)} m`:'(unchanged)'} · ${c.rec?'<span class="ok">enacted</span>':'suggested only'}`
        :'deliver, then start over in ~5 minutes',
     body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
       +vchips(['enacted'])});
@@ -839,17 +866,18 @@ function renderPanel(dd){
     return `<div class="step ${open?'open':''} ${r.skip?'skip':''}">
       <button class="srow" data-step="${r.id}">
         <span class="sdot"${r.dot?` style="background:var(${r.dot})"`:''}></span>
-        <span class="slab">${r.lab}</span>
-        <span class="sval">${r.val}</span>
-        <span class="scar">▶</span></button>
+        <span class="slab">${r.lab} <span class="scar">▶</span></span>
+        <span class="sval">${r.val}</span></button>
       ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
     </div>`;}).join('');
   const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
   panel.innerHTML=`<h2>Loop decision</h2>${head}${conc}<div class="steps">${list}</div>${raw}`;
+  const lv=document.getElementById('srlive');
+  if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${rows[rows.length-1].val.replace(/<[^>]+>/g,'')}`;
   if(c){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
-    if(pb) pb.onclick=()=>{ if(i>0){selCycle=dd.cycles[i-1]; renderAll(false);} };
-    if(nb) nb.onclick=()=>{ if(i<dd.cycles.length-1){selCycle=dd.cycles[i+1]; renderAll(false);} };
+    if(pb) pb.onclick=()=>{ if(i>0){selCycle=dd.cycles[i-1]; renderAll(false); document.getElementById('prevC')?.focus();} };
+    if(nb) nb.onclick=()=>{ if(i<dd.cycles.length-1){selCycle=dd.cycles[i+1]; renderAll(false); document.getElementById('nextC')?.focus();} };
   }
 }
 panel.addEventListener('click',ev=>{
@@ -857,8 +885,10 @@ panel.addEventListener('click',ev=>{
   if(vr){
     const body=vr.closest('.sbody'); const def=body&&body.querySelector('.vardef');
     if(def){ const d=VD[vr.dataset.v]||'';
-      if(def.style.display!=='none'&&def.dataset.v===vr.dataset.v){ def.style.display='none'; }
-      else { def.innerHTML='<b>'+vr.dataset.v+'</b> — '+d.slice(d.indexOf('—')+2); def.dataset.v=vr.dataset.v; def.style.display='block'; } }
+      const wasOpen = def.style.display!=='none'&&def.dataset.v===vr.dataset.v;
+      body.querySelectorAll('.vr').forEach(x=>x.setAttribute('aria-expanded','false'));
+      if(wasOpen){ def.style.display='none'; }
+      else { def.innerHTML='<b>'+vr.dataset.v+'</b> — '+d.slice(d.indexOf('—')+2); def.dataset.v=vr.dataset.v; def.style.display='block'; vr.setAttribute('aria-expanded','true'); } }
     return;
   }
   const row=ev.target.closest('.srow');
@@ -866,13 +896,14 @@ panel.addEventListener('click',ev=>{
     const id=row.dataset.step;
     if(openSteps.has(id)) openSteps.delete(id); else openSteps.add(id);
     renderPanel(dayData(curDay));
+    panel.querySelector(`.srow[data-step="${id}"]`)?.focus();
   }
 });
 
 /* ---------- master render ---------- *//* ---------- master render ---------- */
 function renderAll(full=true){
   hoverLines=[];
-  tabsEl.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.day===curDay)));
+  tabsEl.querySelectorAll('.tab').forEach(b=>{ if(b.dataset.day) b.setAttribute('aria-pressed', String(+b.dataset.day===curDay)); });
   const dd=dayData(curDay);
   const w=boxG.clientWidth||900;
   X=makeX(dd,w);
@@ -953,7 +984,7 @@ function persistDay(d){
 async function fetchDay(d){
   const from=new Date((d-3*3600)*1000).toISOString();
   const to=new Date((d+86400+3600)*1000).toISOString();
-  const q=(p,extra)=>fetch(`${LIVE.url}/api/v1/${p}?${extra}&token=${LIVE.token}`)
+  const q=(p,extra)=>fetch(`${LIVE.url}/api/v1/${p}?${extra}&token=${encodeURIComponent(LIVE.token)}`)
     .then(r=>{ if(!r.ok) throw new Error(p+' HTTP '+r.status); return r.json(); });
   const [entries,treatments,dev,profileArr]=await Promise.all([
     q('entries.json',`find[dateString][$gte]=${from}&find[dateString][$lte]=${to}&count=600`),
@@ -974,8 +1005,9 @@ async function fetchDay(d){
     bolus:raw.bolus.filter(e=>e[0]>=a&&e[0]<b),
     carbs:raw.carbs.filter(e=>e[0]>=a&&e[0]<b),
     notes:raw.notes.filter(e=>e[0]>=a&&e[0]<b),
-    siteChange:raw.site.filter(t=>t>=a&&t<b),
-    segs:basalSegs(a,b,raw.tb)};
+    siteChange:raw.site.filter(t=>t>=a&&t<b)};
+  const lastT=Math.max(data.sgv.length?data.sgv[data.sgv.length-1][0]:a, data.cycles.length?data.cycles[data.cycles.length-1].t:a);
+  data.segs=basalSegs(a,Math.min(b,lastT+300),raw.tb);
   dayCache[d]={data,fetchedAt:Date.now()};
   persistDay(d);
 }
@@ -994,7 +1026,7 @@ async function connectNS(){
   if(!token){ errEl.textContent='Enter an access token.'; return; }
   errEl.textContent='connecting\u2026';
   try{
-    const r=await fetch(`${url}/api/v1/status.json?token=${token}`);
+    const r=await fetch(`${url}/api/v1/status.json?token=${encodeURIComponent(token)}`);
     if(!r.ok) throw new Error('HTTP '+r.status+(r.status===401?' \u2014 check the token':''));
     await r.json();
   }catch(e){ errEl.textContent='Could not connect: '+e.message; return; }
