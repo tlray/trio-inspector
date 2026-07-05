@@ -107,6 +107,32 @@ summary{cursor:pointer;font-weight:600;font-size:13.5px;padding:9px 0;list-style
 details p{margin:0 0 12px;color:var(--ink2);font-size:13px;max-width:72ch}
 details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--page);border:1px solid var(--grid);border-radius:4px;padding:0 4px}
 .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:baseline;margin-right:3px}
+.steps{display:flex;flex-direction:column;margin-top:2px}
+.step{border-top:1px solid var(--grid)}
+.step:first-child{border-top:none}
+.srow{display:flex;gap:8px;align-items:baseline;padding:5px 0;cursor:pointer;background:none;border:none;width:100%;text-align:left;color:inherit;font:inherit}
+.srow:hover .slab{color:var(--ink)}
+.sdot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--axis);align-self:center}
+.slab{flex:none;width:72px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.sval{flex:1;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.5;word-break:break-word}
+.sval .ok{color:var(--good);font-weight:700}
+.sval .warn{font-weight:700}
+.scar{flex:none;color:var(--muted);font-size:9px;align-self:center;transition:transform .12s}
+.step.open .scar{transform:rotate(90deg)}
+.step.skip{opacity:.4}
+.sbody{padding:0 0 10px 16px;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.sbody p{margin:2px 0 6px}
+.frm{font:11.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:6px 0;overflow-x:auto;color:var(--ink);white-space:pre}
+.vr{border-bottom:1px dotted var(--muted);cursor:help}
+.vrow{display:flex;flex-wrap:wrap;gap:4px 10px;margin:5px 0 2px;font-size:11.5px}
+.vrow .vr{color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
+.vardef{font-size:12px;color:var(--ink2);background:var(--page);border-left:3px solid var(--iob);padding:5px 9px;margin:6px 0;border-radius:0 6px 6px 0}
+.vardef b{font-family:ui-monospace,Menlo,monospace}
+details.src{margin-top:4px}
+details.src summary{font-size:11px;color:var(--muted);cursor:pointer;padding:2px 0}
+details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
+details.src a{color:var(--iob);font-size:11px;text-decoration:none}
+details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:7px 0 4px;font-weight:650}
 #loginCard label{display:block;font-size:12.5px;color:var(--ink2);margin:10px 0 4px;font-weight:600}
 #loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
 #loginCard .err{color:var(--lo);font-size:12.5px;margin-top:8px;min-height:1em}
@@ -161,58 +187,9 @@ details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
   </aside>
 </div>
 
-<div class="charts" style="margin-top:14px">
-  <div class="chart-title" style="margin-left:12px">Decision tree — the route of the selected cycle
-    <span class="lg" id="treewhen"></span></div>
-  <div style="overflow-x:auto"><div id="boxT" style="min-width:920px"></div></div>
+</div>
 </div>
 
-<div class="explain">
-  <h2>How the algorithm (oref) works &mdash; concepts</h2>
-  <details><summary>The loop cycle: a fresh decision every 5 minutes</summary>
-  <p>On every new sensor reading Trio computes how much insulin is still active (IOB), how many carbs are still
-  absorbing (COB), and where glucose will end up if it does nothing extra. Based on that it picks a temp basal
-  (higher, lower or zero) and possibly a small automatic correction bolus (SMB). Five minutes later everything is
-  recomputed from scratch &mdash; every decision is small and revocable.</p></details>
-  <details><summary>The four forecast curves (IOB, ZT, COB, UAM)</summary>
-  <p>The algorithm draws several futures: <span class="swatch" style="background:var(--iob)"></span><b>IOB</b> &mdash;
-  what happens as the active insulin plays out; <span class="swatch" style="background:var(--zt)"></span><b>ZT</b>
-  (zero-temp) &mdash; the worst-case path if the pump delivers nothing from now on; <span class="swatch" style="background:var(--cob)"></span><b>COB</b> &mdash;
-  the path including announced carbs still absorbing; <span class="swatch" style="background:var(--uam)"></span><b>UAM</b> &mdash;
-  an estimate for an unannounced rise (a meal without carb entry, hormones, stress). Trio doses on the most
-  <i>cautious</i> relevant scenario, not on the current number. Select a moment in the chart to see these curves
-  drawn from that point.</p></details>
-  <details><summary><code>eventualBG</code> &mdash; where things land if nothing special happens</summary>
-  <p>The expected glucose once all IOB and COB have played out. If it sits above target, Trio wants more insulin;
-  below target, Trio winds the basal down or to zero &mdash; <i>even if you are high right now</i>. That is why you
-  sometimes see a zero temp at 10 mmol/L: according to the model the insulin already on board is enough.</p></details>
-  <details><summary><code>minGuardBG</code> &mdash; the hypo guard <span class="swatch" style="background:var(--lo)"></span></summary>
-  <p>The lowest point of the most cautious forecast curve. If it dips under the safety threshold (4.4 mmol/L),
-  Trio blocks all SMBs and sets a zero temp, no matter how high you are. In the log this shows as
-  <code>minGuardBG 3.5&lt;4.4</code>. It is the strongest brake in the system.</p></details>
-  <details><summary>SMB and <code>maxBolus</code> <span class="swatch" style="background:var(--hi)"></span></summary>
-  <p>An SMB (super micro bolus) is a small automatic bolus used instead of basal alone &mdash; faster, but bounded:
-  per cycle at most a fraction of the computed need (typically 0.4&ndash;0.5 U here). If the algorithm wants 1.6 U
-  you still get only one capped SMB per cycle. There is also a <b>minimum interval</b> between SMBs: right after
-  one you will see <code>maxBolus 0. Waiting 2m 30s to microbolus again</code>. Safety over speed: if the forecast
-  turns out too aggressive, as little as possible is already irreversible.</p></details>
-  <details><summary><code>maxSafeBasal</code> &mdash; the basal ceiling <span class="swatch" style="background:var(--serious)"></span></summary>
-  <p>A temp basal may never exceed a multiple of your scheduled basal (and your own max-basal setting). If the
-  algorithm wants 3.5 U/h against a 1.4 U/h ceiling the log shows
-  <code>adj. req. rate: 3.55 to maxSafeBasal: 1.4</code>. A structurally low basal schedule therefore also lowers
-  this ceiling &mdash; the algorithm can push less hard at night.</p></details>
-  <details><summary>Zero temp <span class="swatch" style="background:var(--zt)"></span></summary>
-  <p>Trio&rsquo;s main defence against lows: basal fully off. It happens pre-emptively as soon as a forecast dips
-  below target or threshold. You will often see it alternate with SMBs: dose &rarr; forecast dips &rarr; zero temp
-  &rarr; forecast recovers &rarr; dose again. That pumping rhythm is normal with a strong ISF.</p></details>
-  <details><summary>Autosens &amp; ISF &mdash; how hard one unit works</summary>
-  <p>ISF is how far one unit of insulin drops you (2.5 mmol/L here). Autosens compares recent hours against what
-  the model expected: if insulin worked weaker than expected the ratio rises above 1 and the effective ISF shrinks
-  (dose more aggressively). In the detail panel this shows as e.g. <code>ISF 2.5&rarr;2.1</code> at ratio 1.2.
-  A hormonal overnight rise (dawn phenomenon) feeds into this only slowly &mdash; which is why the algorithm often
-  runs behind it.</p></details>
-</div>
-</div>
 </div>
 
 <script>
@@ -635,157 +612,206 @@ document.addEventListener('keydown',ev=>{
 });
 
 /* ---------- panel ---------- */
-function renderPanel(dd){
-  if(!selCycle){ panel.innerHTML=`<h2>Loop decision</h2><div class="empty">Click a moment in the chart to dissect that loop cycle.</div>`; return; }
-  const c=selCycle, p=parseReason(c);
-  const i=dd.cycles.indexOf(c);
-  const smbGiven=p.smb||c.units||0;
-  const req=c.req==null?null:c.req;
-  const maxbar=Math.max(req||0, smbGiven, 0.01);
-  const pv = (v)=> v==null?'—':f1(v);
-  const predChips=[];
-  if(p.iobPred!=null) predChips.push(`<span><span class="dotc" style="background:var(--iob)"></span>IOB → <b>${f1(p.iobPred)}</b></span>`);
-  if(p.minGuard!=null) predChips.push(`<span><span class="dotc" style="background:var(--zt)"></span>ZT min → <b>${f1(p.minGuard)}</b></span>`);
-  if(p.cobPred!=null) predChips.push(`<span><span class="dotc" style="background:var(--cob)"></span>COB → <b>${f1(p.cobPred)}</b></span>`);
-  if(p.uamPred!=null) predChips.push(`<span><span class="dotc" style="background:var(--uam)"></span>UAM → <b>${f1(p.uamPred)}</b></span>`);
-  const limHtml = p.limits.length
-    ? `<div class="badges">${p.limits.map(l=>`<div class="lim"><span class="chip" style="background:var(${l.c})"></span><div><b>${l.t}</b><div class="why">${l.why}</div></div></div>`).join('')}</div>`
-    : (req!=null && req>0.01
-      ? `<div class="none-lim"><span class="chip" style="background:var(--good);width:10px;height:10px;border-radius:3px;display:inline-block"></span> No limit active — Trio could deliver what it calculated.</div>`
-      : `<div class="none-lim"><span class="chip" style="background:var(--muted);width:10px;height:10px;border-radius:3px;display:inline-block;opacity:.55"></span> Not applicable — Trio wanted no additional insulin (need ≤ 0), so there was nothing to limit.</div>`);
-  let deliverRows='';
-  if(req!=null && req>0){
-    deliverRows+=`<div class="flowrow"><span class="lbl">needed</span><span class="bar"><span class="req" style="width:${Math.min(100,req/maxbar*100)}%"></span></span><span class="bar-note">${f2(req)} U</span></div>`;
-    deliverRows+=`<div class="flowrow"><span class="lbl">SMB now</span><span class="bar"><span class="giv" style="width:${Math.min(100,smbGiven/maxbar*100)}%"></span></span><span class="bar-note">${smbGiven?f2(smbGiven)+' U':'0 U'}</span></div>`;
-  } else if(req!=null && req<0){
-    deliverRows+=`<div class="flowrow"><span class="lbl">needed</span><span class="bar-note" style="flex:1">${f2(req)} U — less insulin is needed, not more</span></div>`;
-  }
-  const rateTxt = c.rate!=null ? `${f2(c.rate)} U/h${c.dur?` for ${Math.round(c.dur)} min`:''}` : 'current temp continues';
-  panel.innerHTML=`
-  <h2>Loop decision</h2>
-  <div class="when">
-    <button class="navbtn" id="prevC" aria-label="previous">←</button>
-    <span class="t">${hhmm(c.t)}</span>
-    <button class="navbtn" id="nextC" aria-label="next">→</button>
-    <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span>
-  </div>
-  <div class="sect"><h3>What Trio knew</h3>
-    <div class="grid2">
-      <div class="kv"><span class="k">glucose</span><span class="v">${f1(M(c.bg))} mmol/L</span></div>
-      <div class="kv"><span class="k">IOB</span><span class="v">${f2(c.iob)} U</span></div>
-      <div class="kv"><span class="k">COB</span><span class="v">${c.cob||0} g</span></div>
-      <div class="kv"><span class="k">target</span><span class="v">${pv(c.tgt)} mmol/L</span></div>
-      <div class="kv"><span class="k">autosens</span><span class="v">${p.autosens!=null?('×'+p.autosens):'—'}</span></div>
-      <div class="kv"><span class="k">effective ISF</span><span class="v">${p.isf!=null?f1(p.isf):'—'}</span></div>
-      <div class="kv"><span class="k">carb ratio</span><span class="v">${p.cr!=null?p.cr:'—'} g/U</span></div>
-      <div class="kv"><span class="k">TDD</span><span class="v">${c.tdd!=null?f1(c.tdd)+' U':'—'}</span></div>
-    </div>
-  </div>
-  <div class="sect"><h3>What it forecast</h3>
-    <div class="kv" style="margin-bottom:4px"><span class="k">outcome if nothing changes (eventualBG)</span>
-      <span class="v">${c.ebg!=null?f1(M(c.ebg)):'—'} mmol/L</span></div>
-    ${predChips.length?`<div class="predleg">${predChips.join('')}</div>`:''}
-  </div>
-  <div class="sect"><h3>What it decided</h3>
-    <div class="flow">${deliverRows}
-      <div class="flowrow"><span class="lbl">basal</span><span class="bar-note" style="flex:1">${rateTxt}</span></div>
-    </div>
-  </div>
-  <div class="sect"><h3>Limits this cycle</h3>${limHtml}</div>
-  <div class="sect"><h3>Raw reasoning (log)</h3><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></div>`;
-  document.getElementById('prevC').onclick=()=>{ if(i>0){selCycle=dd.cycles[i-1]; renderAll(false);} };
-  document.getElementById('nextC').onclick=()=>{ if(i<dd.cycles.length-1){selCycle=dd.cycles[i+1]; renderAll(false);} };
-}
+/* ---------- the algorithm trace: panel = pipeline + explanations + source ---------- */
+const openSteps=new Set();
+const GHB='https://github.com/nightscout/trio-oref/blob/main/lib/';
+const SRC={
+ inputs:{loc:'determine-basal.js:411',gh:'determine-basal/determine-basal.js#L411',code:
+'// use the lower of the last delta and the 15 min average delta:\nvar minDelta = Math.min(glucose_status.delta, glucose_status.short_avgdelta);'},
+ forecast:{loc:'determine-basal.js:698–716 · 933–939',gh:'determine-basal/determine-basal.js#L698',code:
+'// project deviations for 30 minutes\nvar deviation = round( 30 / 5 * ( minDelta - bgi ) );\n/* … */\nvar eventualBG = naive_eventualBG + deviation;\n\n// UAM: predicted carb impact drops at slopeFromDeviations\nvar predUCIslope = Math.max(0, uci + ( UAMpredBGs.length*slopeFromDeviations ) );\n// …or linearly to zero over 3h, whichever is sooner\nvar predUCImax = Math.max(0, uci * ( 1 - UAMpredBGs.length/Math.max(3*60/5,1) ) );\nvar predUCI = Math.min(predUCIslope, predUCImax);'},
+ guard:{loc:'determine-basal.js:1266–1281',gh:'determine-basal/determine-basal.js#L1266',code:
+'rT.reason += "minGuardBG " + convert_bg(minGuardBG, profile) + "<" + convert_bg(threshold, profile);\nbgUndershoot = target_bg - minGuardBG;\nworstCaseInsulinReq = bgUndershoot / sens;\ndurationReq = round(60*worstCaseInsulinReq / profile.current_basal*overrideFactor);\n// always set a 30-120m zero temp\ndurationReq = Math.min(120,Math.max(30,durationReq));\nreturn tempBasalFunctions.setTempBasal(0, durationReq, profile, rT, currenttemp);'},
+ target:{loc:'determine-basal.js:1320–1332',gh:'determine-basal/determine-basal.js#L1320',code:
+'// calculate 30m low-temp required to get projected BG up to target\n// multiply by 2 to low-temp faster for increased hypo safety\ninsulinReq = 2 * Math.min(0, (eventualBG - target_bg) / sens);\nif (minDelta < 0 && minDelta > expectedDelta) {\n    // if we are barely falling, newinsulinReq should be barely negative\n    insulinReq = round(( insulinReq * (minDelta / expectedDelta) ), 2);\n}'},
+ need:{loc:'determine-basal.js:1463–1470',gh:'determine-basal/determine-basal.js#L1463',code:
+'// insulinReq is the additional insulin required to get minPredBG down to target_bg\ninsulinReq = round( (Math.min(minPredBG,eventualBG) - target_bg) / sens, 2);\n// if that would put us over max_iob, then reduce accordingly\nif (insulinReq > max_iob-iob_data.iob) {\n    rT.reason += "max_iob " + max_iob + ", ";\n    insulinReq = max_iob-iob_data.iob;\n}'},
+ smb:{loc:'determine-basal.js:1534–1600',gh:'determine-basal/determine-basal.js#L1544',code:
+'// never bolus more than maxSMBBasalMinutes worth of basal\nmaxBolus = round(profile.current_basal * smbMinutesSetting / 60 ,1);\n/* … */\nvar smb_ratio = Math.min(profile.smb_delivery_ratio, 1);   // default 0.5\nvar microBolus = Math.min(insulinReq*smb_ratio, maxBolus);\nmicroBolus = Math.floor(microBolus*roundSMBTo)/roundSMBTo;\n/* … */\nif (lastBolusAge > SMBInterval) {\n    if (microBolus > 0) { rT.units = microBolus; }\n} else {\n    rT.reason += "Waiting " + nextBolusMins + "m to microbolus again. ";\n}'},
+ basal:{loc:'determine-basal.js:1478 · 1553–1559 · basal-set-temp.js:10–15',gh:'determine-basal/determine-basal.js#L1478',code:
+'// rate required to deliver insulinReq more insulin over 30m:\nrate = basal + (2 * insulinReq);\n/* after an SMB: calculate a long enough zero temp to eventually correct back up */\nworstCaseInsulinReq = (smbTarget - (naive_eventualBG + minIOBPredBG)/2 ) / sens;\ndurationReq = round(60*worstCaseInsulinReq / profile.current_basal);\n\n/* basal-set-temp.js — the ceiling: */\nreturn Math.min(profile.max_basal,\n    max_daily_safety_multiplier * profile.max_daily_basal,     // default 3×\n    current_basal_safety_multiplier * profile.current_basal);  // default 4×'},
+};
+const VD={
+ delta:'delta — BG change over the last ~5 min (mg/dL). oref uses min(delta, short_avgdelta) so one noisy reading cannot drive dosing.',
+ short_avgdelta:'short_avgdelta — average BG change per 5 min over the last 2.5–17.5 min.',
+ IOB:'IOB (Insulin on Board) — insulin still active, computed from every bolus, SMB and temp-basal deviation in pump history, decayed along the insulin activity curve (DIA).',
+ COB:'COB (Carbs on Board) — announced carbs not yet absorbed; decays with the observed carb absorption rate.',
+ autosens:'autosens — ratio of how insulin actually worked over recent hours vs. expected. >1 = resistant (dose more): effective ISF = ISF ÷ ratio; also scales basal and target.',
+ TDD:'TDD — Total Daily Dose of insulin; used by Dynamic ISF variants.',
+ CR:'CR (carb ratio) — grams of carbs covered by 1 U of insulin.',
+ ISF:'ISF (insulin sensitivity factor) — how far 1 U drops BG (mmol/L per U here).',
+ BGI:'BGI (blood glucose impact) — expected BG change per 5 min from insulin activity alone: −activity × ISF × 5.',
+ deviation:'deviation — how much the observed BG change differs from BGI: the part insulin cannot explain (carbs, hormones, stress, sensor drift).',
+ naive_eventualBG:'naive_eventualBG — where BG lands if all IOB works with no deviations: bg − IOB × ISF.',
+ eventualBG:'eventualBG — naive_eventualBG + projected deviation impact: the forecast endpoint oref doses against.',
+ minPredBG:'minPredBG — lowest point of the relevant forecast curves; used (vs eventualBG) so dosing respects the dip before the rise.',
+ minGuardBG:'minGuardBG — lowest point of the most cautious curve (usually ZT). The hypo guard compares it to the threshold.',
+ threshold:'threshold — safety floor derived from your target (4.4 mmol/L here). Forecast below it = all dosing stops.',
+ UAM:'UAM (Unannounced Meal) — forecast that extends the current unexplained rise and decays it at the slope observed over the last hour (at least linearly to zero in 3 h).',
+ ZT:'ZT (zero-temp) — worst-case forecast if the pump delivers nothing from now on. Its minimum is the safety net.',
+ insulinReq:'insulinReq — additional insulin needed now: (min(minPredBG, eventualBG) − target) ÷ effective ISF, capped by maxIOB headroom.',
+ maxIOB:'maxIOB — hard ceiling on total insulin on board; insulinReq can never push IOB above it.',
+ maxBolus:'maxBolus — per-SMB cap: current basal × maxSMBBasalMinutes ÷ 60 (maxUAMSMBBasalMinutes when the rise is unannounced).',
+ smb_delivery_ratio:'smb_delivery_ratio — fraction of insulinReq an SMB may deliver at once (default 0.5).',
+ SMBInterval:'SMBInterval — minimum minutes between SMBs (default 3).',
+ maxSafeBasal:'maxSafeBasal — temp-basal ceiling: min(max basal setting, 3 × highest scheduled basal, 4 × current scheduled basal).',
+ enacted:'enacted — the pump confirmed this command. "Suggested only" means it was computed but not (yet) delivered.',
+};
+function vchips(list){ return '<div class="vrow">'+list.map(v=>`<span class="vr" data-v="${v}">${v}</span>`).join('')+'</div>'; }
+function srcBlock(k){ const x=SRC[k];
+  return `<details class="src"><summary>source · ${x.loc}</summary><pre>${x.code.replace(/</g,'&lt;')}</pre><a href="${GHB}${x.gh}" target="_blank" rel="noopener">view in nightscout/trio-oref ↗</a></details>`; }
+const dash='—';
+function buildSteps(c,p){
+  const lim = k => c&&p.limits.find(l=>l.key===k);
+  const guard=lim('guard'), zero=lim('zero'), capS=lim('maxbolus'), wait=lim('smbwait'), capB=lim('maxbasal');
+  const req=c?(c.req??null):null;
+  const idle=c&&!guard&&!zero&&(req==null||req<=0.01);
+  const exited = guard?3 : zero?4 : 0;   /* stap waarna de rest niet meer draait */
+  const smbGiven=c?(p.smb||c.units||0):0;
+  const F=f1, F2=f2, mm=v=>F(M(v));
+  const rows=[];
+  const skipAfter = n => exited && n>exited;
 
-/* ---------- decision tree ---------- *//* ---------- beslissingsboom ---------- */
-const boxT=document.getElementById('boxT');
-function renderTree(dd){
-  boxT.querySelectorAll('svg').forEach(e=>e.remove());
-  const W=920,H=708, svg=svgEl(W,H); boxT.appendChild(svg);
-  const c=selCycle, p=c?parseReason(c):null;
-  const lk=c?p.limits.map(l=>l.key):[];
-  const req=c?(c.req||0):0;
-  const guard=lk.includes('guard'), zero=lk.includes('zero'), wait=lk.includes('smbwait'),
-        capS=lk.includes('maxbolus'), capB=lk.includes('maxbasal');
-  const idle=c&&!guard&&!zero&&!wait&&req<=0.01;
-  const give=c&&!guard&&!zero&&!idle;
-  document.getElementById('treewhen').textContent = c?`— ${hhmm(c.t)}`:'— click a moment in the chart first';
-  const on=new Set(['start','n1','d1']);
+  /* 1 — inputs */
+  rows.push({id:'inputs',lab:'inputs',
+    val:c?`BG <b>${mm(c.bg)}</b> · IOB ${F2(c.iob)} U · COB ${c.cob||0} g${p.dev!=null?` · Dev ${p.dev>0?'+':''}${p.dev}`:''} · AS ×${p.autosens??'1'}→ISF ${p.isf!=null?F(p.isf):dash}`
+       :'BG, ΔBG, IOB, COB, autosens → effective ISF',
+    body:`<p>Every ~5 minutes a new sensor value starts a cycle. oref gathers the BG trend (using the <i>smallest</i> of the recent deltas, so one noisy reading can’t dominate), computes IOB from the full pump history, decays COB, and lets autosens scale ISF, basal and target based on how insulin has actually been working.</p>
+      <div class="frm">effective ISF = profile ISF ÷ autosens ratio${c&&p.isf0!=null?`   →  ${F(p.isf0)} ÷ ${p.autosens??1} = ${F(p.isf)}`:''}</div>`
+      +vchips(['delta','short_avgdelta','IOB','COB','autosens','ISF','CR','TDD'])+srcBlock('inputs')});
+
+  /* 2 — forecast */
+  const chips=[];
   if(c){
-    if(guard) on.add('Lguard');
-    else{ on.add('d2');
-      if(zero) on.add('Lzero');
-      else{ on.add('n4').add('d3');
-        if(idle) on.add('Lidle');
-        else{ on.add('d4');
-          if(wait&&!(c.units>0)) on.add('Lwait');
-          else on.add('n5').add('n6').add('Lgive');
-        }}}}
-  const CX=210, LX=520, LW=380;
-  const N={
-    start:{y:16,h:40,t:['New CGM reading — a loop cycle starts'],box:1},
-    n1:{y:72,h:48,t:['Compute IOB, COB and autosens \u2192 effective ISF;','draw forecasts (IOB \u00b7 ZT \u00b7 COB \u00b7 UAM)'],box:1},
-    d1:{y:150,h:56,t:[c&&p.minGuard!=null?`minGuardBG ${f1(p.minGuard)} below the 4.4 threshold?`:'Does the most cautious forecast dip below 4.4?'],dia:1},
-    Lguard:{y:150,h:52,t:['Hypo guard: zero temp, SMBs blocked','\u2014 no matter how high you are now'],leaf:'--lo'},
-    d2:{y:240,h:56,t:[c&&c.ebg!=null?`eventualBG ${f1(M(c.ebg))} below target ${f1(c.tgt||DATA.profile.target||6.1)}?`:'Does eventualBG land below target?'],dia:1},
-    Lzero:{y:240,h:52,t:['Enough insulin already on its way:','reduce basal or zero-temp, no SMB'],leaf:'--zt'},
-    n4:{y:330,h:44,t:[c?`Compute need: insulinReq = ${f2(req)} U`:'Compute need: insulinReq = (eventualBG \u2212 target) \u00f7 ISF'],box:1},
-    d3:{y:398,h:56,t:['Is additional insulin needed (need > 0)?'],dia:1},
-    Lidle:{y:398,h:52,t:['No insulin needed \u2014 nothing to limit;','basal stays (close to) schedule'],leaf:'--muted'},
-    d4:{y:486,h:56,t:['Is an SMB allowed now (interval passed)?'],dia:1},
-    Lwait:{y:486,h:52,t:['SMB interval \u2014 microbolus postponed,','only a (capped) temp basal'],leaf:'--smbwait'},
-    n5:{y:486,h:0,skip:1},n6:{y:486,h:0,skip:1},
-    Lgive:{y:486,h:0,skip:1},
-  };
-  const bottomY=576;
-  N.n5={y:bottomY,h:46,t:[`SMB: part of the need, capped by maxBolus${capS?' \u2014 LIMITED':''}`],box:1,warn:capS?'--hi':null};
-  N.n6={y:bottomY+56,h:46,t:[`Remainder via temp basal, capped by maxSafeBasal${capB?' \u2014 LIMITED':''}`],box:1,warn:capB?'--serious':null};
-  N.Lgive={y:bottomY+26,h:52,t:['Delivery: SMB + temp basal','(next cycle: start over)'],leaf:'--good'};
-  function line(x1,y1,x2,y2,act,lbl,lx,ly){
-    add(svg,'path',{d:`M${x1} ${y1} L${x2} ${y2}`,fill:'none',stroke:act?css('--sel'):css('--axis'),
-      'stroke-width':act?2:1.2,'marker-end':act?'url(#arrA)':'url(#arr)'});
-    if(lbl) add(svg,'text',{x:lx,y:ly,fill:act?css('--ink'):css('--muted'),
-      style:`font:${act?'700':'500'} 10.5px system-ui`},lbl);
-  }
-  const defs=add(svg,'defs',{});
-  for(const [id,col] of [['arr','--axis'],['arrA','--sel']]){
-    const mk=add(defs,'marker',{id,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});
-    add(mk,'path',{d:'M0 0 L10 5 L0 10 z',fill:css(col)});
-  }
-  function node(id){
-    const n=N[id]; if(!n||n.skip&&!n.t) return;
-    const act=on.has(id);
-    const cx=id.startsWith('L')?LX+LW/2:CX, cy=n.y+n.h/2;
-    if(n.dia){
-      const w=418,h=n.h;
-      add(svg,'polygon',{points:`${cx},${n.y} ${cx+w/2},${cy} ${cx},${n.y+h} ${cx-w/2},${cy}`,
-        fill:css('--page'),stroke:act?css('--sel'):css('--border'),'stroke-width':act?2:1.2});
-    } else {
-      const w=id.startsWith('L')?LW:340, x=cx-w/2;
-      add(svg,'rect',{x,y:n.y,width:w,height:n.h,rx:8,fill:css('--page'),
-        stroke:n.leaf?css(n.leaf):(n.warn?css(n.warn):(act?css('--sel'):css('--border'))),
-        'stroke-width':(act&&(n.leaf||n.warn))?2.4:(act?2:1.2),opacity:act?1:.55});
-      if(n.leaf) add(svg,'rect',{x,y:n.y,width:5,height:n.h,rx:2.5,fill:css(n.leaf),opacity:act?1:.5});
-    }
-    n.t.forEach((tt,i)=>add(svg,'text',{x:cx,y:cy+(i-(n.t.length-1)/2)*15+4,'text-anchor':'middle',
-      fill:act?css('--ink'):css('--muted'),style:`font:${act?'600':'500'} 12px system-ui`,opacity:act?1:.8},tt));
-  }
-  const seq=[['start','n1'],['n1','d1'],['d1','d2','no'],['d2','n4','no'],['n4','d3'],['d3','d4','yes'],['d4','n5','yes']];
-  for(const [a,b,lbl] of seq){
-    const na=N[a],nb=N[b];
-    const act=on.has(a)&&on.has(b);
-    line(CX,na.y+na.h,CX,nb.y-3,act,lbl,CX+8,(na.y+na.h+nb.y)/2+3);
-  }
-  const branches=[['d1','Lguard','yes'],['d2','Lzero','yes'],['d3','Lidle','no'],['d4','Lwait','no']];
-  for(const [a,b,lbl] of branches){
-    const na=N[a],nb=N[b];
-    const act=on.has(a)&&on.has(b);
-    line(CX+209,na.y+na.h/2,LX-4,nb.y+nb.h/2,act,lbl,CX+222,na.y+na.h/2-6);
-  }
-  line(CX,N.n5.y+N.n5.h,CX,N.n6.y-3,on.has('n5')&&on.has('n6'),null);
-  line(CX+172,N.n6.y+N.n6.h/2,LX-4,N.Lgive.y+N.Lgive.h/2,on.has('Lgive'),null);
-  ['start','n1','d1','Lguard','d2','Lzero','n4','d3','Lidle','d4','Lwait','n5','n6','Lgive'].forEach(node);
+    const pr=c.pred||{};
+    const iobE=p.iobPred??(pr.IOB?M(pr.IOB[pr.IOB.length-1]):null);
+    const ztM=p.minGuard??(pr.ZT?M(Math.min(...pr.ZT)):null);
+    const cobE=p.cobPred??(pr.COB?M(pr.COB[pr.COB.length-1]):null);
+    const uamE=p.uamPred??(pr.UAM?M(pr.UAM[pr.UAM.length-1]):null);
+    if(iobE!=null)chips.push(`<span style="color:var(--iob)">IOB→${F(iobE)}</span>`);
+    if(ztM!=null)chips.push(`<span style="color:var(--zt)">ZT↘${F(ztM)}</span>`);
+    if(cobE!=null)chips.push(`<span style="color:var(--cob)">COB→${F(cobE)}</span>`);
+    if(uamE!=null)chips.push(`<span style="color:var(--uam)">UAM→${F(uamE)}</span>`); }
+  rows.push({id:'forecast',lab:'forecast',
+    val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
+       :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
+    body:`<p>Four futures are drawn (visible in the chart when a cycle is selected): <b>IOB</b> — active insulin plays out; <b>ZT</b> — worst case if delivery stopped now; <b>COB</b> — announced carbs still absorbing; <b>UAM</b> — the current <i>unexplained</i> rise carried forward and decayed at the slope of the last hour’s deviations. Dosing follows the most cautious relevant curve — high side: the highest; low side: the lowest.</p>
+      <div class="frm">deviation  = 6 × (minDelta − BGI)\neventualBG = naive_eventualBG + deviation</div>`
+      +vchips(['BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
+
+  /* 3 — hypo guard */
+  rows.push({id:'guard',lab:'hypo guard',st:guard?'fired':'pass',dot:guard?'--lo':(c?'--good':null),
+    val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; 4.4 → <span class="warn" style="color:var(--lo)">zero temp, SMBs blocked</span>`
+              :(p.minGuard!=null?`minGuardBG ${F(p.minGuard)} ≥ 4.4 <span class="ok">✓</span>`:`no dip below threshold <span class="ok">✓</span>`))
+       :'minGuardBG &lt; threshold? → zero temp + block SMBs',
+    body:(guard?`<p><b>${guard.t}.</b> ${guard.why}</p>`:'')+
+      `<p>The strongest brake, checked first. If the most cautious forecast dips under the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot — regardless of the current BG. Nothing after this step runs.</p>
+      <div class="frm">if (minGuardBG &lt; threshold) → setTempBasal(0, 30–120 min); no SMB</div>`
+      +vchips(['minGuardBG','threshold','ZT'])+srcBlock('guard')});
+
+  /* 4 — target check */
+  rows.push({id:'target',lab:'vs target',st:zero?'fired':(skipAfter(4)?'skip':(c?'pass':null)),dot:zero?'--zt':(c&&!skipAfter(4)?'--good':null),skip:skipAfter(4),
+    val:skipAfter(4)?'not reached':(c?(zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(c.tgt||6.1)} → <span class="warn" style="color:var(--zt)">wind basal down</span>`
+              :`eventualBG ${c.ebg!=null?mm(c.ebg):dash} ≥ target ${F(c.tgt||6.1)} <span class="ok">✓</span>`)
+       :'eventualBG &lt; target? → reduce / zero the basal'),
+    body:(zero?`<p><b>${zero.t}.</b> ${zero.why}</p>`:'')+
+      `<p>Landing below target means the insulin already on board is more than enough — so the move is to <i>remove</i> future insulin, not add more. The required negative amount is doubled for extra hypo safety and translated into a low or zero temp. This is why a high BG with lots of IOB still produces a zero temp.</p>
+      <div class="frm">insulinReq = 2 × min(0, (eventualBG − target) ÷ ISF)  →  low/zero temp</div>`
+      +vchips(['eventualBG','insulinReq','ISF'])+srcBlock('target')});
+
+  /* 5 — need */
+  rows.push({id:'need',lab:'need',st:skipAfter(5)?'skip':null,skip:skipAfter(5),
+    val:skipAfter(5)?'not reached':(c?(req!=null?(req>0.01
+          ?`(min(${p.minPred!=null?F(p.minPred):dash}, ${c.ebg!=null?mm(c.ebg):dash}) − ${F(c.tgt||6.1)}) ÷ ${p.isf!=null?F(p.isf):dash} = <b>${F2(req)} U</b>`
+          :`insulinReq <b>${F2(req)} U</b> → nothing extra needed`):dash)
+       :'insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF'),
+    body:`<p>The gap between forecast and target, translated into units. Using the <i>lower</i> of minPredBG and eventualBG means an expected dip tempers the correction. The result is clipped so IOB can never exceed maxIOB.</p>
+      <div class="frm">insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF\ninsulinReq = min(insulinReq, maxIOB − IOB)</div>`
+      +vchips(['insulinReq','minPredBG','maxIOB'])+srcBlock('need')});
+
+  /* 6 — SMB */
+  let smbVal, smbSt=null, smbDot=null;
+  if(skipAfter(6)||idle){ smbVal = idle?'skipped — no need':'not reached'; smbSt='skip'; }
+  else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
+  else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--smbwait)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--smbwait'; }
+  else if(capS){ smbVal=`min(${F2(req)} × 0.5, cap <b>${capS.why.match(/capped at ([0-9.]+)/)?.[1]??''} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
+  else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
+  else { smbVal='no SMB this cycle'; }
+  rows.push({id:'smb',lab:'SMB',st:smbSt,dot:smbDot,skip:skipAfter(6)||idle,
+    val:smbVal,
+    body:((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
+      `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three fences apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs. The remainder waits for the next cycles.</p>
+      <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)</div>`
+      +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
+
+  /* 7 — basal */
+  let basVal, basSt=null, basDot=null;
+  if(skipAfter(7)){ basVal='not reached'; basSt='skip'; }
+  else if(!c){ basVal='temp = basal + 2×insulinReq, capped at maxSafeBasal'; }
+  else if(capB){ const mm2=capB.why.match(/basal ([0-9.]+) U\/h, capped at the ([0-9.]+)/);
+    basVal=`req ${mm2?.[1]??''} U/h → <b>${mm2?.[2]??''} U/h</b> <span class="warn" style="color:var(--serious)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--serious'; }
+  else if(c.rate!=null){ basVal=`temp <b>${F2(c.rate)} U/h</b>${c.dur?` for ${Math.round(c.dur)} m`:''}${smbGiven&&c.rate===0?' (post-SMB buffer)':''}`; }
+  else { basVal='current temp continues'; }
+  rows.push({id:'basal',lab:'temp basal',st:basSt,dot:basDot,skip:skipAfter(7),
+    val:basVal,
+    body:((capB&&`<p><b>${capB.t}.</b> ${capB.why}</p>`)||'')+
+      `<p>The revocable channel. Without an SMB the whole need is scheduled as a 30-min high temp (rate = basal + 2×insulinReq). Right after an SMB oref instead parks a compensating low/zero temp: if the forecast was too optimistic, the missing basal is the safety buffer. Either way the rate can never exceed maxSafeBasal — note that this ceiling is a multiple of your <i>scheduled</i> basal.</p>
+      <div class="frm">rate = basal + 2 × insulinReq\nmaxSafeBasal = min(max basal, 3 × max daily basal, 4 × current basal)</div>`
+      +vchips(['maxSafeBasal','insulinReq'])+srcBlock('basal')});
+
+  /* 8 — result */
+  rows.push({id:'result',lab:'→ deliver',
+    val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${c.rate!=null?`<b>${F2(c.rate)} U/h</b>${c.dur?` · ${Math.round(c.dur)} m`:''}`:'(unchanged)'} · ${c.rec?'<span class="ok">enacted</span>':'suggested only'}`
+       :'deliver, then start over in ~5 minutes',
+    body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
+      +vchips(['enacted'])});
+  return rows;
 }
+function renderPanel(dd){
+  const c=selCycle, p=c?parseReason(c):null;
+  const i=c?dd.cycles.indexOf(c):-1;
+  const head = c
+    ? `<div class="when">
+        <button class="navbtn" id="prevC" aria-label="previous">←</button>
+        <span class="t">${hhmm(c.t)}</span>
+        <button class="navbtn" id="nextC" aria-label="next">→</button>
+        <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span></div>`
+    : `<div class="empty" style="padding:2px 0 6px">The oref1 pipeline — click a cycle in the chart to fill in its real values.</div>`;
+  const rows=buildSteps(c,p);
+  const list=rows.map(r=>{
+    const open=openSteps.has(r.id);
+    return `<div class="step ${open?'open':''} ${r.skip?'skip':''}">
+      <button class="srow" data-step="${r.id}">
+        <span class="sdot"${r.dot?` style="background:var(${r.dot})"`:''}></span>
+        <span class="slab">${r.lab}</span>
+        <span class="sval">${r.val}</span>
+        <span class="scar">▶</span></button>
+      ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
+    </div>`;}).join('');
+  const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
+  panel.innerHTML=`<h2>Loop decision</h2>${head}<div class="steps">${list}</div>${raw}`;
+  if(c){
+    const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
+    if(pb) pb.onclick=()=>{ if(i>0){selCycle=dd.cycles[i-1]; renderAll(false);} };
+    if(nb) nb.onclick=()=>{ if(i<dd.cycles.length-1){selCycle=dd.cycles[i+1]; renderAll(false);} };
+  }
+}
+panel.addEventListener('click',ev=>{
+  const vr=ev.target.closest('.vr');
+  if(vr){
+    const body=vr.closest('.sbody'); const def=body&&body.querySelector('.vardef');
+    if(def){ const d=VD[vr.dataset.v]||'';
+      if(def.style.display!=='none'&&def.dataset.v===vr.dataset.v){ def.style.display='none'; }
+      else { def.innerHTML='<b>'+vr.dataset.v+'</b> — '+d.slice(d.indexOf('—')+2); def.dataset.v=vr.dataset.v; def.style.display='block'; } }
+    return;
+  }
+  const row=ev.target.closest('.srow');
+  if(row && !ev.target.closest('details')){
+    const id=row.dataset.step;
+    if(openSteps.has(id)) openSteps.delete(id); else openSteps.add(id);
+    renderPanel(dayData(curDay));
+  }
+});
 
 /* ---------- master render ---------- *//* ---------- master render ---------- */
 function renderAll(full=true){
@@ -799,7 +825,6 @@ function renderAll(full=true){
   renderIOB(dd,w);
   renderLimits(dd,w);
   renderPanel(dd);
-  renderTree(dd);
 }
 let rto=null;
 window.addEventListener('resize',()=>{clearTimeout(rto); rto=setTimeout(()=>renderAll(false),120);});
