@@ -1,0 +1,4 @@
+# Personal builds contain medical data and/or access tokens — never commit these
+trio_data.json
+*-snapshot.html
+*-live.html

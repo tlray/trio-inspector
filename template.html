@@ -1,0 +1,950 @@
+<title>Trio Loop-inspector</title>
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
+  --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+    --band:rgba(111,207,151,.13); --sel:#0b0b0b;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
+    --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
+    --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
+    --band:rgba(111,207,151,.10); --sel:#ffffff;
+  }
+}
+:root[data-theme="light"]{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
+  --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --band:rgba(111,207,151,.13); --sel:#0b0b0b;
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
+  --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
+    --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
+  --band:rgba(111,207,151,.10); --sel:#ffffff;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:0}
+.wrap{max-width:1280px;margin:0 auto;padding:12px 16px 50px}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin-bottom:6px}
+h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
+.sub{color:var(--ink2);font-size:12.5px;margin:0 0 8px;max-width:110ch}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
+.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
+  padding:6px 13px;font:600 13px system-ui,sans-serif;cursor:pointer}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.tab:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--iob);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:9px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px 6px}
+.tile .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+.tile .v{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:12px;font-weight:500;color:var(--ink2)}
+.tirbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;background:var(--grid)}
+.tirbar div{height:100%}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}
+@media (max-width:1080px){.main{grid-template-columns:1fr}}
+.charts{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px 4px;min-width:0}
+.chart-title{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 0 0 44px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.chart-title .lg{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink2)}
+.dotc{width:9px;height:9px;border-radius:50%;display:inline-block}
+.linec{width:14px;height:0;border-top:2.5px solid;display:inline-block;border-radius:2px}
+.chartbox{position:relative}
+svg{display:block;width:100%}
+.tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);
+  border-radius:7px;padding:7px 10px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  box-shadow:0 3px 14px rgba(0,0,0,.14);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
+.tooltip b{font-weight:650}
+.hint{color:var(--muted);font-size:11.5px;margin:3px 0 0 44px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;position:sticky;top:8px}
+@media (max-width:1080px){.panel{position:static}}
+.panel h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
+.panel .when{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.panel .when .t{font:650 20px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.01em}
+.navbtn{border:1px solid var(--border);background:transparent;color:var(--ink2);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:13px;line-height:1}
+.navbtn:hover{color:var(--ink)}
+.badge-enact{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--ink2);margin-left:auto}
+.sect{border-top:1px solid var(--grid);padding-top:7px;margin-top:7px}
+.sect h3{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 7px;font-weight:650}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px}
+.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
+.kv .k{color:var(--ink2)}
+.kv .v{font-weight:600;font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
+.flow{display:flex;flex-direction:column;gap:7px}
+.flowrow{display:flex;align-items:center;gap:8px;font-size:13px}
+.flowrow .lbl{color:var(--ink2);width:78px;flex:none}
+.bar{height:14px;border-radius:3px;position:relative;flex:1;background:transparent}
+.bar .req{position:absolute;left:0;top:0;bottom:0;border:1.5px dashed var(--muted);border-radius:3px}
+.bar .giv{position:absolute;left:0;top:0;bottom:0;background:var(--insulin);border-radius:3px}
+.bar-note{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.badges{display:flex;flex-direction:column;gap:7px}
+.lim{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.45}
+.lim .chip{flex:none;margin-top:2px;width:10px;height:10px;border-radius:3px}
+.lim b{font-weight:650}
+.lim .why{color:var(--ink2)}
+.none-lim{color:var(--ink2);font-size:12.5px;display:flex;gap:8px;align-items:center}
+.reason{font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink2);background:var(--page);
+  border:1px solid var(--grid);border-radius:7px;padding:7px 10px;overflow-y:auto;max-height:118px;white-space:pre-wrap;word-break:break-word}
+.predleg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
+.predleg span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
+.empty{color:var(--muted);font-size:13px;padding:8px 0 4px}
+.limstrip{margin-top:4px}
+.explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 16px}
+.explain h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:650}
+details{border-top:1px solid var(--grid);padding:2px 0}
+details:first-of-type{border-top:none}
+summary{cursor:pointer;font-weight:600;font-size:13.5px;padding:9px 0;list-style-position:inside}
+details p{margin:0 0 12px;color:var(--ink2);font-size:13px;max-width:72ch}
+details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--page);border:1px solid var(--grid);border-radius:4px;padding:0 4px}
+.swatch{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:baseline;margin-right:3px}
+#loginCard label{display:block;font-size:12.5px;color:var(--ink2);margin:10px 0 4px;font-weight:600}
+#loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+#loginCard .err{color:var(--lo);font-size:12.5px;margin-top:8px;min-height:1em}
+@media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .12s,color .12s}}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <h1>Trio Loop Inspector</h1>
+  <button class="tab" id="signOut" style="display:none">Sign out</button>
+  <span id="refreshInfo" style="color:var(--muted);font-size:12px"></span>
+</header>
+<p class="sub">Click any point to see what Trio knew, what it forecast, what it decided — and which safety limits cut in.</p>
+
+<div class="panel" id="loginCard" style="display:none;max-width:440px;margin:26px auto;position:static">
+  <h2>Connect to Nightscout</h2>
+  <p style="font-size:13px;color:var(--ink2);margin:4px 0 2px">Your URL and token are stored only in this browser and are used to read glucose, treatments and loop data directly from your own Nightscout site.</p>
+  <label for="nsUrl">Nightscout URL</label><input id="nsUrl" type="url" placeholder="https://my-site.example.com">
+  <label for="nsToken">Access token</label><input id="nsToken" type="text" placeholder="token with readable permission">
+  <div style="margin-top:12px"><button class="tab" id="nsConnect" style="background:var(--ink);color:var(--page)">Connect</button></div>
+  <div class="err" id="nsError"></div>
+</div>
+
+<div id="appbody">
+
+<div class="tabs" id="tabs" role="tablist"></div>
+<div class="tiles" id="tiles"></div>
+
+<div class="main">
+  <div class="charts">
+    <div class="chart-title">Glucose &amp; delivery
+      <span class="lg"><span class="dotc" style="background:var(--basalfill);border-radius:2px"></span>temp basal (downward)</span>
+      <span class="lg"><span class="linec" style="border-color:var(--muted);border-top-style:dashed"></span>schedule</span>
+      <span class="lg" style="color:var(--insulin)">&#9660;<span style="color:var(--ink2)">bolus</span> &#9662;<span style="color:var(--ink2)">SMB</span></span>
+      <span class="lg"><span class="dotc" style="background:var(--carb)"></span>carbs</span>
+      <span class="lg" id="predlegend" style="display:none">forecast:
+        <span class="linec" style="border-color:var(--iob)"></span>IOB
+        <span class="linec" style="border-color:var(--zt)"></span>ZT
+        <span class="linec" style="border-color:var(--cob)"></span>COB
+        <span class="linec" style="border-color:var(--uam)"></span>UAM</span></div>
+    <div class="chartbox" id="boxG"><div class="tooltip" id="tip"></div></div>
+    <div class="chart-title">Insulin on Board (IOB)</div>
+    <div class="chartbox" id="boxI"></div>
+    <div class="chart-title">Safety limits <span id="limlegend" style="display:contents"></span></div>
+    <div class="chartbox limstrip" id="boxL"></div>
+    <p class="hint">&#8592; &#8594; steps through loop cycles</p>
+  </div>
+
+  <aside class="panel" id="panel" aria-live="polite">
+    <h2>Loop decision</h2>
+    <div class="empty">Click a moment in the chart to dissect that loop cycle.</div>
+  </aside>
+</div>
+
+<div class="charts" style="margin-top:14px">
+  <div class="chart-title" style="margin-left:12px">Decision tree — the route of the selected cycle
+    <span class="lg" id="treewhen"></span></div>
+  <div style="overflow-x:auto"><div id="boxT" style="min-width:920px"></div></div>
+</div>
+
+<div class="explain">
+  <h2>How the algorithm (oref) works &mdash; concepts</h2>
+  <details><summary>The loop cycle: a fresh decision every 5 minutes</summary>
+  <p>On every new sensor reading Trio computes how much insulin is still active (IOB), how many carbs are still
+  absorbing (COB), and where glucose will end up if it does nothing extra. Based on that it picks a temp basal
+  (higher, lower or zero) and possibly a small automatic correction bolus (SMB). Five minutes later everything is
+  recomputed from scratch &mdash; every decision is small and revocable.</p></details>
+  <details><summary>The four forecast curves (IOB, ZT, COB, UAM)</summary>
+  <p>The algorithm draws several futures: <span class="swatch" style="background:var(--iob)"></span><b>IOB</b> &mdash;
+  what happens as the active insulin plays out; <span class="swatch" style="background:var(--zt)"></span><b>ZT</b>
+  (zero-temp) &mdash; the worst-case path if the pump delivers nothing from now on; <span class="swatch" style="background:var(--cob)"></span><b>COB</b> &mdash;
+  the path including announced carbs still absorbing; <span class="swatch" style="background:var(--uam)"></span><b>UAM</b> &mdash;
+  an estimate for an unannounced rise (a meal without carb entry, hormones, stress). Trio doses on the most
+  <i>cautious</i> relevant scenario, not on the current number. Select a moment in the chart to see these curves
+  drawn from that point.</p></details>
+  <details><summary><code>eventualBG</code> &mdash; where things land if nothing special happens</summary>
+  <p>The expected glucose once all IOB and COB have played out. If it sits above target, Trio wants more insulin;
+  below target, Trio winds the basal down or to zero &mdash; <i>even if you are high right now</i>. That is why you
+  sometimes see a zero temp at 10 mmol/L: according to the model the insulin already on board is enough.</p></details>
+  <details><summary><code>minGuardBG</code> &mdash; the hypo guard <span class="swatch" style="background:var(--lo)"></span></summary>
+  <p>The lowest point of the most cautious forecast curve. If it dips under the safety threshold (4.4 mmol/L),
+  Trio blocks all SMBs and sets a zero temp, no matter how high you are. In the log this shows as
+  <code>minGuardBG 3.5&lt;4.4</code>. It is the strongest brake in the system.</p></details>
+  <details><summary>SMB and <code>maxBolus</code> <span class="swatch" style="background:var(--hi)"></span></summary>
+  <p>An SMB (super micro bolus) is a small automatic bolus used instead of basal alone &mdash; faster, but bounded:
+  per cycle at most a fraction of the computed need (typically 0.4&ndash;0.5 U here). If the algorithm wants 1.6 U
+  you still get only one capped SMB per cycle. There is also a <b>minimum interval</b> between SMBs: right after
+  one you will see <code>maxBolus 0. Waiting 2m 30s to microbolus again</code>. Safety over speed: if the forecast
+  turns out too aggressive, as little as possible is already irreversible.</p></details>
+  <details><summary><code>maxSafeBasal</code> &mdash; the basal ceiling <span class="swatch" style="background:var(--serious)"></span></summary>
+  <p>A temp basal may never exceed a multiple of your scheduled basal (and your own max-basal setting). If the
+  algorithm wants 3.5 U/h against a 1.4 U/h ceiling the log shows
+  <code>adj. req. rate: 3.55 to maxSafeBasal: 1.4</code>. A structurally low basal schedule therefore also lowers
+  this ceiling &mdash; the algorithm can push less hard at night.</p></details>
+  <details><summary>Zero temp <span class="swatch" style="background:var(--zt)"></span></summary>
+  <p>Trio&rsquo;s main defence against lows: basal fully off. It happens pre-emptively as soon as a forecast dips
+  below target or threshold. You will often see it alternate with SMBs: dose &rarr; forecast dips &rarr; zero temp
+  &rarr; forecast recovers &rarr; dose again. That pumping rhythm is normal with a strong ISF.</p></details>
+  <details><summary>Autosens &amp; ISF &mdash; how hard one unit works</summary>
+  <p>ISF is how far one unit of insulin drops you (2.5 mmol/L here). Autosens compares recent hours against what
+  the model expected: if insulin worked weaker than expected the ratio rises above 1 and the effective ISF shrinks
+  (dose more aggressively). In the detail panel this shows as e.g. <code>ISF 2.5&rarr;2.1</code> at ratio 1.2.
+  A hormonal overnight rise (dawn phenomenon) feeds into this only slowly &mdash; which is why the algorithm often
+  runs behind it.</p></details>
+</div>
+</div>
+</div>
+
+<script>
+let DATA = /*__DATA__*/null;
+let LIVE = /*__LIVE__*/null;
+const SHARE = /*__SHARE__*/false;
+
+/* ---------- helpers ---------- */
+const TZ = DATA.tzOffsetHours*3600;
+const M = v => v/18.016;
+const f1 = v => (Math.round(v*10)/10).toFixed(1);
+const f2 = v => (Math.round(v*100)/100).toFixed(2);
+const hhmm = t => { const s=(t+TZ)%86400; return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s%3600/60)).padStart(2,'0'); };
+const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dayLabel(d){ const dt=new Date((d+43200)*1000); return DAYNAMES[Math.floor((d+TZ)/86400+4)%7]+' '+dt.getUTCDate()+' '+MON[dt.getUTCMonth()]; }
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+/* day list (CEST midnights) */
+let days=[], curDay=null, selCycle=null, hoverT=null;
+function computeDays(){
+  days=[];
+  if(!DATA.sgv.length){ if(curDay==null) curDay=todayStart(); return; }
+  const t0all = DATA.sgv[0][0], t1all = DATA.sgv[DATA.sgv.length-1][0];
+  const firstMid = Math.floor((t0all+TZ)/86400)*86400 - TZ;
+  for(let d=firstMid; d<=t1all; d+=86400){
+    if(DATA.sgv.filter(e=>e[0]>=d&&e[0]<d+86400).length>=24) days.push(d);
+  }
+  if(!days.includes(curDay)) curDay = days[days.length-1];
+}
+
+/* scheduled basal */
+function schedBasal(t){ const bp=DATA.profile.basal; if(!bp.length) return 0; const s=(t+TZ)%86400; let r=bp[0][1];
+  for(const b of bp) if(b[0]<=s) r=b[1]; return r; }
+
+/* actual basal segments for [a,b] */
+function basalSegs(a,b,tb){
+  const evs = tb.filter(e=>e[0]<b && e[0]+e[2]*60>a-1);
+  const segs=[]; let cur=a;
+  for(let i=0;i<evs.length;i++){
+    const [t,rate,dur]=evs[i];
+    const start=Math.max(t,a), stop=Math.min(t+dur*60, i+1<evs.length?evs[i+1][0]:b, b);
+    if(start>cur) segs.push({a:cur,b:start,rate:null});
+    if(stop>start) segs.push({a:start,b:stop,rate,temp:true});
+    cur=Math.max(cur,stop);
+  }
+  if(cur<b) segs.push({a:cur,b,rate:null});
+  for(const s of segs) if(s.rate===null){ s.rate=schedBasal(s.a); s.temp=false; }
+  return segs;
+}
+
+/* ---------- reason parsing / limit classification ---------- */
+function parseReason(c){
+  const r=c.reason, g=(re)=>{const m=r.match(re);return m?m:null;};
+  const p={};
+  let m;
+  if(m=g(/Autosens ratio: ([\d.]+)/)) p.autosens=+m[1];
+  if(m=g(/ISF: ([\d.]+)\u2192([\d.]+)/)) {p.isf0=+m[1]; p.isf=+m[2];}
+  if(m=g(/CR: ([\d.]+)/)) p.cr=+m[1];
+  if(m=g(/Dev: (-?[\d.]+)/)) p.dev=+m[1];
+  if(m=g(/BGI: (-?[\d.]+)/)) p.bgi=+m[1];
+  if(m=g(/minPredBG ([\d.]+)/)) p.minPred=+m[1];
+  if(m=g(/minGuardBG ([\d.]+)/)) p.minGuard=+m[1];
+  if(m=g(/IOBpredBG ([\d.]+)/)) p.iobPred=+m[1];
+  if(m=g(/COBpredBG ([\d.]+)/)) p.cobPred=+m[1];
+  if(m=g(/UAMpredBG ([\d.]+)/)) p.uamPred=+m[1];
+  p.decision = r.includes('; ') ? r.slice(r.indexOf('; ')+2) : r;
+  p.limits=[];
+  if(m=g(/minGuardBG ([0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/))
+    p.limits.push({key:'guard',t:'Hypo guard (minGuardBG)',c:'--lo',
+      why:`The worst-case forecast touches ${m[1]} mmol/L, below the ${m[2]} safety threshold. All SMBs blocked and basal set to zero — even though the current reading is ${f1(M(c.bg))}.`});
+  const wacht=g(/Waiting (\d+)m ?(\d*)s? to microbolus/);
+  if(m=g(/maxBolus ([0-9]+(?:\.[0-9]+)?)[^0-9]/)){ const req=c.req||0, mb=+m[1];
+    if(mb>0) p.limits.push({key:'maxbolus',t:'SMB limited (maxBolus)',c:'--hi',
+      why:`Calculated need ${f2(req)} U, but each SMB is capped at ${f2(mb)} U. The remainder follows in later cycles.`});}
+  if(wacht){ const req=c.req||0;
+    p.limits.push({key:'smbwait',t:'SMB interval',c:'--smbwait',
+      why:`An SMB was just delivered; Trio waits another ${wacht[1]}m${wacht[2]?wacht[2]+'s':''} before microbolusing again${req>0.01?` — the ${f2(req)} U need is on hold`:''}.`});}
+  if(m=g(/adj\. req\. rate: ([0-9]+(?:\.[0-9]+)?) to maxSafeBasal: ([0-9]+(?:\.[0-9]+)?)/))
+    p.limits.push({key:'maxbasal',t:'Basal limited (maxSafeBasal)',c:'--serious',
+      why:`Requested temp basal ${m[1]} U/h, capped at the ${m[2]} U/h ceiling (a multiple of your scheduled basal).`});
+  if((m=g(/Eventual BG ([0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/)) && !p.limits.some(l=>l.key==='guard'))
+    p.limits.push({key:'zero',t:'Forecast below target',c:'--zt',
+      why:`Expected outcome ${m[1]} mmol/L sits below the ${m[2]} target — insulin already on board is (more than) enough, so basal is reduced or stopped instead of adding more.`});
+  if(g(/setting \d+m zero temp/)||g(/zero temp/i)) p.zeroTemp=true;
+  if(m=g(/Microbolusing ([0-9]+(?:\.[0-9]+)?)U/)) p.smb=+m[1];
+  return p;
+}
+function limitKeys(c){ return parseReason(c).limits.map(l=>l.key); }
+
+/* ---------- layout ---------- */
+const ML=44, MR=14;
+const boxG=document.getElementById('boxG'),
+      boxI=document.getElementById('boxI'), boxL=document.getElementById('boxL'),
+      tip=document.getElementById('tip'), panel=document.getElementById('panel');
+
+const dayCache={};   /* dagstart -> {data, fetchedAt} */
+function dayData(d){
+  if(dayCache[d]) return dayCache[d].data;
+  if(SHARE){ const p=loadPersisted(d); if(p) return p.data; }
+  const a=d,b=d+86400;
+  return {
+    a,b,
+    sgv:DATA.sgv.filter(e=>e[0]>=a&&e[0]<b),
+    cycles:DATA.cycles.filter(c=>c.t>=a&&c.t<b),
+    smb:DATA.smb.filter(e=>e[0]>=a&&e[0]<b),
+    bolus:DATA.bolus.filter(e=>e[0]>=a&&e[0]<b),
+    carbs:DATA.carbs.filter(e=>e[0]>=a&&e[0]<b),
+    notes:DATA.notes.filter(e=>e[0]>=a&&e[0]<b),
+    siteChange:DATA.siteChange.filter(t=>t>=a&&t<b),
+    segs:basalSegs(a,b,DATA.tempBasal),
+  };
+}
+function dayISO(d){ return new Date((d+TZ)*1000).toISOString().slice(0,10); }
+function isoToDay(v){ const t=Date.parse(v+'T00:00:00Z'); return isNaN(t)?null:t/1000-TZ; }
+function todayStart(){ return Math.floor((Date.now()/1000+TZ)/86400)*86400-TZ; }
+
+/* tabs */
+const tabsEl=document.getElementById('tabs');
+let dayStatusTxt='';
+function buildTabs(){
+  tabsEl.innerHTML='';
+  const mk=(html,fn,title)=>{ const b=document.createElement('button'); b.className='tab';
+    b.innerHTML=html; b.onclick=fn; if(title) b.title=title; tabsEl.appendChild(b); return b; };
+  mk('&#8249;',()=>selectDay(curDay-86400),'previous day');
+  const inp=document.createElement('input');
+  inp.type='date'; inp.className='tab'; inp.style.cssText='padding:4px 8px;color:inherit;background:var(--surface)';
+  inp.value=dayISO(curDay);
+  if(LIVE){ inp.max=dayISO(todayStart()); }
+  else if(days.length){ inp.min=dayISO(days[0]); inp.max=dayISO(days[days.length-1]); }
+  inp.onchange=()=>{ const d=isoToDay(inp.value); if(d!=null) selectDay(d); };
+  tabsEl.appendChild(inp);
+  mk('&#8250;',()=>selectDay(curDay+86400),'next day');
+  const cached=Object.keys(dayCache).map(Number);
+  const avail=[...new Set([...days,...cached,...(LIVE?[todayStart()]:[])])].sort((x,y)=>x-y).slice(-4);
+  for(const d of avail){
+    const b=mk(d===todayStart()?'Today':dayLabel(d),()=>selectDay(d)); b.dataset.day=d; b.setAttribute('role','tab');
+  }
+  if(LIVE){
+    mk('&#10227;',()=>selectDay(curDay,true),'refresh this day');
+    const st=document.createElement('span');
+    st.style.cssText='color:var(--muted);font-size:11.5px;align-self:center';
+    st.textContent=dayStatusTxt; tabsEl.appendChild(st);
+  }
+}
+async function selectDay(d,force){
+  const today=todayStart();
+  if(LIVE && d>today) d=today;
+  if(!LIVE){
+    const probe=dayData(d);
+    if(!probe.sgv.length){ buildTabs(); return; }
+    curDay=d;
+  } else {
+    curDay=d;
+    if(!dayCache[d]) loadPersisted(d);
+    const c=dayCache[d];
+    const stale = d===today && c && (Date.now()-c.fetchedAt>120000);
+    if(force || !c || stale){
+      dayStatusTxt='loading\u2026'; buildTabs();
+      try{
+        await fetchDay(d);
+        dayStatusTxt='updated '+new Date().toTimeString().slice(0,5);
+      }catch(e){
+        dayStatusTxt='fetch failed \u2014 showing cached data ('+e.message+')';
+        if(!dayData(curDay).sgv.length && days.length) curDay=days[days.length-1];
+      }
+    }
+  }
+  const dd=dayData(curDay);
+  selCycle = selCycle ? (dd.cycles.find(x=>x.t===selCycle.t)||null) : null;
+  buildTabs(); renderAll(); setInfo();
+}
+function stats(dd){
+  const v=dd.sgv.map(e=>e[1]); if(!v.length) return null;
+  const lo=v.filter(x=>x<70).length, hi=v.filter(x=>x>180).length, n=v.length;
+  const mean=v.reduce((s,x)=>s+x,0)/n;
+  const smbU=dd.smb.reduce((s,e)=>s+e[1],0), bolU=dd.bolus.reduce((s,e)=>s+e[1],0);
+  const carbsG=dd.carbs.reduce((s,e)=>s+e[1],0);
+  let basalU=0; for(const s of dd.segs) basalU += s.rate*(s.b-s.a)/3600;
+  const limN = dd.cycles.filter(c=>limitKeys(c).length).length;
+  return {tir:(n-lo-hi)/n, lo:lo/n, hi:hi/n, mean:M(mean), smbU, bolU, carbsG, basalU, nC:dd.cycles.length, limN};
+}
+function renderTiles(dd){
+  const s=stats(dd), el=document.getElementById('tiles');
+  if(!s){el.innerHTML='';return;}
+  el.innerHTML=`
+  <div class="tile"><div class="k">Time in Range (3.9\u201310)</div><div class="v">${Math.round(s.tir*100)}<small> %</small></div>
+    <div class="tirbar"><div style="width:${s.lo*100}%;background:var(--lo)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--hi)"></div></div></div>
+  <div class="tile"><div class="k">Average</div><div class="v">${f1(s.mean)}<small> mmol/L</small></div></div>
+  <div class="tile"><div class="k">Insulin (SMB + bolus)</div><div class="v">${f1(s.smbU)} + ${f1(s.bolU)}<small> U</small></div></div>
+  <div class="tile"><div class="k">Basal delivered</div><div class="v">${f1(s.basalU)}<small> U</small></div></div>
+  <div class="tile"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small> g</small></div></div>
+  <div class="tile"><div class="k">Loop cycles / limited</div><div class="v">${s.nC}<small> / ${s.limN}</small></div></div>`;
+}
+
+/* ---------- charts ---------- *//* ---------- charts ---------- */
+function svgEl(w,h){ const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  s.setAttribute('width',w); s.setAttribute('height',h); s.setAttribute('viewBox',`0 0 ${w} ${h}`); return s; }
+function add(parent,tag,attrs,txt){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; parent.appendChild(e); return e; }
+
+let X=null; // shared x-scale for current render
+function makeX(dd,w){ const a=dd.a,b=dd.b; return t=>ML+(t-a)/(b-a)*(w-ML-MR); }
+
+function drawTimeAxis(svg,w,h,dd){
+  for(let hr=0;hr<=24;hr+=2){
+    const x=X(dd.a+hr*3600);
+    add(svg,'line',{x1:x,y1:0,x2:x,y2:h-18,stroke:css('--grid'),'stroke-width':1});
+    add(svg,'text',{x,y:h-4,'text-anchor':'middle',fill:css('--muted'),
+      style:'font:10.5px ui-monospace,Menlo,monospace'},String(hr).padStart(2,'0'));
+  }
+}
+
+function renderGlucose(dd,w){
+  const h=286, ha=h-18, STRIP=38, LANE=STRIP+22, TOP=LANE+6;
+  boxG.querySelectorAll('svg').forEach(e=>e.remove());
+  const svg=svgEl(w,h); boxG.appendChild(svg);
+  const maxbg=Math.max(12.5, ...dd.sgv.map(e=>M(e[1])))+0.8;
+  const y=v=>ha-( (v-2)/(maxbg-2) )*(ha-TOP);
+  drawTimeAxis(svg,w,h,dd);
+  /* basaal-bovenbalk: vlak hangt vanaf de bovenrand omlaag (zoals in de app) */
+  const maxr=Math.max(1.6,...dd.segs.map(s=>s.rate))*1.08;
+  const hb=r=>(r/maxr)*(STRIP-4);
+  for(const s of dd.segs){
+    if(s.rate<=0) continue;
+    add(svg,'rect',{x:X(s.a),y:0,width:Math.max(0.5,X(s.b)-X(s.a)),height:hb(s.rate),
+      fill:'var(--basalfill)',opacity:s.temp?1:.55});
+  }
+  let bstr=''; for(let t=dd.a;t<=dd.b;t+=300){ bstr+=(bstr?'L':'M')+X(t).toFixed(1)+' '+hb(schedBasal(t)).toFixed(1)+' '; }
+  add(svg,'path',{d:bstr,fill:'none',stroke:css('--muted'),'stroke-width':1.2,'stroke-dasharray':'3 3',opacity:.9});
+  add(svg,'line',{x1:ML,x2:w-MR,y1:STRIP,y2:STRIP,stroke:css('--grid'),'stroke-width':1});
+  /* suspend/resume/site in de balk */
+  for(const [t,txt] of dd.notes){
+    if(/PumpSuspend/.test(txt)) add(svg,'text',{x:X(t),y:STRIP-5,'text-anchor':'middle',fill:css('--lo'),style:'font:600 9.5px system-ui'},'⏸');
+    if(/PumpResume/.test(txt)) add(svg,'text',{x:X(t),y:STRIP-5,'text-anchor':'middle',fill:css('--good'),style:'font:600 9.5px system-ui'},'▶');
+  }
+  for(const t of (dd.siteChange||[]))
+    add(svg,'text',{x:X(t),y:STRIP-5,'text-anchor':'middle',style:'font:10px system-ui'},'◆');
+  /* SMB- en bolusdriehoekjes in de strook onder de balk (zoals in de app) */
+  const maxS=Math.max(0.5,...dd.smb.map(e=>e[1]));
+  for(const [t,u] of dd.smb){
+    const x=X(t), s=2.6+(u/maxS)*3.2, yt=STRIP+6;
+    const tri=add(svg,'path',{d:`M${x-s} ${yt} L${x+s} ${yt} L${x} ${yt+s*1.7} Z`,fill:css('--insulin'),opacity:.95});
+    tri.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title')).textContent=`${hhmm(t)} SMB ${f2(u)} U`;
+  }
+  /* target band 3.9-10 */
+  add(svg,'rect',{x:ML,y:y(10),width:w-ML-MR,height:y(3.9)-y(10),fill:css('--band')});
+  if(DATA.profile.target!=null)
+    add(svg,'line',{x1:ML,x2:w-MR,y1:y(DATA.profile.target),y2:y(DATA.profile.target),
+      stroke:css('--good'),'stroke-width':1,'stroke-dasharray':'5 4',opacity:.7});
+  for(const g of [4,6,8,10,12,14,16]) if(g<maxbg){
+    add(svg,'text',{x:ML-6,y:y(g)+3.5,'text-anchor':'end',fill:css('--muted'),
+      style:'font:10.5px ui-monospace,Menlo,monospace'},g);
+    add(svg,'line',{x1:ML,x2:w-MR,y1:y(g),y2:y(g),stroke:css('--grid'),'stroke-width':g===4||g===10?0:1,opacity:.7});
+  }
+  /* prediction fan */
+  if(selCycle && selCycle.pred){
+    const colors={IOB:'--iob',ZT:'--zt',COB:'--cob',UAM:'--uam'};
+    for(const k of ['ZT','COB','UAM','IOB']){
+      const arr=selCycle.pred[k]; if(!arr) continue;
+      let dstr='';
+      arr.forEach((v,i)=>{ const t=selCycle.t+i*300; if(t>dd.b) return;
+        const vy=y(Math.min(maxbg,Math.max(2,M(v))));
+        dstr+=(dstr?'L':'M')+X(t).toFixed(1)+' '+vy.toFixed(1)+' '; });
+      add(svg,'path',{d:dstr,fill:'none',stroke:css(colors[k]),'stroke-width':2,
+        opacity:.9,'stroke-dasharray':k==='ZT'?'3 3':'none'});
+    }
+  }
+  /* sgv dots */
+  for(const [t,v] of dd.sgv){
+    const mm=M(v);
+    const col = v<70?css('--lo') : v>180?css('--hi') : css('--ink2');
+    add(svg,'circle',{cx:X(t),cy:y(mm),r:2.1,fill:col,opacity:v>=70&&v<=180?.75:1});
+  }
+  for(const [t,u] of dd.bolus){
+    const x=X(t), s=6, yt=STRIP+5;
+    const tri=add(svg,'path',{d:`M${x-s} ${yt} L${x+s} ${yt} L${x} ${yt+s*1.7} Z`,
+      fill:css('--insulin'),stroke:css('--surface'),'stroke-width':1});
+    tri.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title')).textContent=`${hhmm(t)} bolus ${f2(u)} U`;
+  }
+  for(const [t,g] of dd.carbs){
+    add(svg,'circle',{cx:X(t),cy:ha-10,r:7,fill:css('--carb')});
+    add(svg,'text',{x:X(t),y:ha-6.5,'text-anchor':'middle',fill:css('--page'),
+      style:'font:650 8.5px system-ui'},Math.round(g));
+  }
+  /* selected cycle marker */
+  if(selCycle){
+    const x=X(selCycle.t);
+    add(svg,'line',{x1:x,x2:x,y1:0,y2:ha,stroke:css('--sel'),'stroke-width':1,opacity:.5,'stroke-dasharray':'2 3'});
+    add(svg,'circle',{cx:x,cy:y(M(selCycle.bg)),r:6,fill:'none',stroke:css('--sel'),'stroke-width':2});
+  }
+  addHoverLine(svg,ha);
+  attachHover(svg,dd,'G');
+  document.getElementById('predlegend').style.display = selCycle?'inline-flex':'none';
+}
+
+function renderIOB(dd,w){
+  const h=74, ha=h-18; boxI.querySelectorAll('svg').forEach(e=>e.remove());
+  const svg=svgEl(w,h); boxI.appendChild(svg);
+  const vals=dd.cycles.map(c=>c.iob);
+  const mx=Math.max(1,...vals)+.4, mn=Math.min(0,...vals)-.2;
+  const y=v=>ha-((v-mn)/(mx-mn))*(ha-10);
+  drawTimeAxis(svg,w,h,dd);
+  for(const g of [0,2,4,6]) if(g<mx&&g>=mn)
+    add(svg,'text',{x:ML-6,y:y(g)+3.5,'text-anchor':'end',fill:css('--muted'),style:'font:10.5px ui-monospace,Menlo,monospace'},g);
+  add(svg,'line',{x1:ML,x2:w-MR,y1:y(0),y2:y(0),stroke:css('--axis'),'stroke-width':1});
+  let dstr='', area='M'+X(dd.a)+' '+y(0)+' ';
+  dd.cycles.forEach((c,i)=>{ const px=X(c.t).toFixed(1), py=y(c.iob).toFixed(1);
+    dstr+=(dstr?'L':'M')+px+' '+py+' '; area+='L'+px+' '+py+' '; });
+  if(dd.cycles.length){ area+='L'+X(dd.cycles[dd.cycles.length-1].t)+' '+y(0)+' Z';
+    add(svg,'path',{d:area,fill:css('--iob'),opacity:.13});
+    add(svg,'path',{d:dstr,fill:'none',stroke:css('--iob'),'stroke-width':2}); }
+  if(selCycle){ add(svg,'line',{x1:X(selCycle.t),x2:X(selCycle.t),y1:0,y2:ha,stroke:css('--sel'),'stroke-width':1,opacity:.5,'stroke-dasharray':'2 3'});
+    add(svg,'circle',{cx:X(selCycle.t),cy:y(selCycle.iob),r:4,fill:css('--iob')}); }
+  addHoverLine(svg,ha);
+  attachHover(svg,dd,'I');
+}
+
+const LIMROWS=[
+ {key:'guard', label:'hypo guard', c:'--lo'},
+ {key:'zero', label:'forecast < target', c:'--zt'},
+ {key:'maxbolus', label:'SMB limited', c:'--hi'},
+ {key:'smbwait', label:'SMB interval', c:'--smbwait'},
+ {key:'maxbasal', label:'basal limited', c:'--serious'},
+];
+function renderLimits(dd,w){
+  const wantsNothing = c => !((c.req||0)>0.01);
+  const ALLROWS=[
+    {key:'idle',label:'no insulin needed',c:'--muted',op:.35,
+     test:(c,keys)=>keys.length===0 && wantsNothing(c)},
+    {key:'none',label:'unrestricted',c:'--good',op:.6,
+     test:(c,keys)=>keys.length===0 && !wantsNothing(c)},
+    ...LIMROWS];
+  const rowH=11, h=ALLROWS.length*rowH+16;
+  boxL.querySelectorAll('svg').forEach(e=>e.remove());
+  const svg=svgEl(w,h); boxL.appendChild(svg);
+  const counts={};
+  ALLROWS.forEach((row,i)=>{
+    counts[row.key]=0;
+    const yy=i*rowH+1;
+    const runs=[]; let run=null;
+    dd.cycles.forEach((c,j)=>{
+      const keys=limitKeys(c);
+      const active = row.test ? row.test(c,keys) : keys.includes(row.key);
+      if(active) counts[row.key]++;
+      const next = j+1<dd.cycles.length ? dd.cycles[j+1].t : Math.min(c.t+300,dd.b);
+      const end = Math.min(next, c.t+600, dd.b);
+      if(active){
+        if(run && c.t-run.end<=1) run.end=end;
+        else { run={start:c.t,end}; runs.push(run); }
+      } else run=null;
+    });
+    for(const r of runs)
+      add(svg,'rect',{x:X(r.start),y:yy,width:Math.max(1.5,X(r.end)-X(r.start)),height:rowH-2,
+        fill:css(row.c),opacity:row.op||.9});
+  });
+  document.getElementById('limlegend').innerHTML = ALLROWS.map(r=>
+    `<span class="lg"><span class="dotc" style="background:var(${r.c});border-radius:0;width:8px;height:8px;opacity:${r.op?r.op+.2:1}"></span>${r.label} (${counts[r.key]}&times;)</span>`).join('');
+  for(let hr=0;hr<=24;hr+=2){ const x=X(dd.a+hr*3600);
+    add(svg,'text',{x,y:h-3,'text-anchor':'middle',fill:css('--muted'),style:'font:10px ui-monospace,Menlo,monospace'},String(hr).padStart(2,'0')); }
+  if(selCycle) add(svg,'line',{x1:X(selCycle.t),x2:X(selCycle.t),y1:0,y2:h-12,stroke:css('--sel'),'stroke-width':1,opacity:.5,'stroke-dasharray':'2 3'});
+  addHoverLine(svg,h-12);
+  attachHover(svg,dd,'L');
+}
+
+/* ---------- hover & click ---------- *//* ---------- hover & click ---------- */
+function nearestSgv(dd,t){ let best=null,bd=1e12; for(const e of dd.sgv){const d=Math.abs(e[0]-t); if(d<bd){bd=d;best=e;}} return bd<900?best:null; }
+function nearestCycle(dd,t){ let best=null,bd=1e12; for(const c of dd.cycles){const d=Math.abs(c.t-t); if(d<bd){bd=d;best=c;}} return best; }
+function rateAt(dd,t){ for(const s of dd.segs) if(t>=s.a&&t<s.b) return s; return null; }
+
+let hoverLines=[];
+function addHoverLine(svg,h){
+  const l=add(svg,'line',{x1:-10,x2:-10,y1:0,y2:h,stroke:css('--muted'),'stroke-width':1,opacity:.6,'pointer-events':'none'});
+  hoverLines.push(l); return l;
+}
+function attachHover(svg,dd,which){
+  svg.style.cursor='pointer';
+  svg.addEventListener('mousemove',ev=>{
+    const r=svg.getBoundingClientRect();
+    const px=ev.clientX-r.left, w=r.width;
+    if(px<ML||px>w-MR){tip.style.display='none';hoverLines.forEach(l=>{l.setAttribute('x1',-10);l.setAttribute('x2',-10);});return;}
+    const t=dd.a+(px-ML)/(w-ML-MR)*86400;
+    const c=nearestCycle(dd,t);
+    if(!c){tip.style.display='none';return;}
+    const hx=X(c.t);
+    hoverLines.forEach(l=>{l.setAttribute('x1',hx);l.setAttribute('x2',hx);});
+    const seg=rateAt(dd,c.t);
+    let html=`<b>${hhmm(c.t)}</b> — loop cycle`;
+    html+=`<br>glucose <b>${f1(M(c.bg))}</b> mmol/L`;
+    if(seg) html+=`<br>basal <b>${f2(seg.rate)}</b> U/h ${seg.temp?'(temp)':'(scheduled)'}`;
+    html+=`<br>IOB <b>${f2(c.iob)}</b> U`;
+    const lk=limitKeys(c);
+    if(lk.length) html+=`<br><span style="color:${css('--muted')}">limit: ${lk.map(k=>LIMROWS.find(r=>r.key===k)?.label||k).join(', ')}</span>`;
+    tip.innerHTML=html;
+    tip.style.display='block';
+    const gb=boxG.getBoundingClientRect();
+    let lx=hx+14; if(lx>gb.width-180) lx=hx-170;
+    tip.style.left=lx+'px';
+    tip.style.top=Math.max(0,(ev.clientY-gb.top+12))+'px';
+  });
+  svg.addEventListener('mouseleave',()=>{tip.style.display='none';
+    hoverLines.forEach(l=>{l.setAttribute('x1',-10);l.setAttribute('x2',-10);});});
+  svg.addEventListener('click',ev=>{
+    const r=svg.getBoundingClientRect();
+    const px=ev.clientX-r.left, w=r.width;
+    const t=dd.a+(px-ML)/(w-ML-MR)*86400;
+    const c=nearestCycle(dd,t);
+    if(c){ selCycle=c; renderAll(false); }
+  });
+}
+
+/* keyboard nav */
+document.addEventListener('keydown',ev=>{
+  if(!selCycle) return;
+  if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
+  const dd=dayData(curDay);
+  const i=dd.cycles.indexOf(selCycle);
+  if(i<0) return;
+  const j=ev.key==='ArrowLeft'?i-1:i+1;
+  if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; renderAll(false); ev.preventDefault(); }
+});
+
+/* ---------- panel ---------- */
+function renderPanel(dd){
+  if(!selCycle){ panel.innerHTML=`<h2>Loop decision</h2><div class="empty">Click a moment in the chart to dissect that loop cycle.</div>`; return; }
+  const c=selCycle, p=parseReason(c);
+  const i=dd.cycles.indexOf(c);
+  const smbGiven=p.smb||c.units||0;
+  const req=c.req==null?null:c.req;
+  const maxbar=Math.max(req||0, smbGiven, 0.01);
+  const pv = (v)=> v==null?'—':f1(v);
+  const predChips=[];
+  if(p.iobPred!=null) predChips.push(`<span><span class="dotc" style="background:var(--iob)"></span>IOB → <b>${f1(p.iobPred)}</b></span>`);
+  if(p.minGuard!=null) predChips.push(`<span><span class="dotc" style="background:var(--zt)"></span>ZT min → <b>${f1(p.minGuard)}</b></span>`);
+  if(p.cobPred!=null) predChips.push(`<span><span class="dotc" style="background:var(--cob)"></span>COB → <b>${f1(p.cobPred)}</b></span>`);
+  if(p.uamPred!=null) predChips.push(`<span><span class="dotc" style="background:var(--uam)"></span>UAM → <b>${f1(p.uamPred)}</b></span>`);
+  const limHtml = p.limits.length
+    ? `<div class="badges">${p.limits.map(l=>`<div class="lim"><span class="chip" style="background:var(${l.c})"></span><div><b>${l.t}</b><div class="why">${l.why}</div></div></div>`).join('')}</div>`
+    : (req!=null && req>0.01
+      ? `<div class="none-lim"><span class="chip" style="background:var(--good);width:10px;height:10px;border-radius:3px;display:inline-block"></span> No limit active — Trio could deliver what it calculated.</div>`
+      : `<div class="none-lim"><span class="chip" style="background:var(--muted);width:10px;height:10px;border-radius:3px;display:inline-block;opacity:.55"></span> Not applicable — Trio wanted no additional insulin (need ≤ 0), so there was nothing to limit.</div>`);
+  let deliverRows='';
+  if(req!=null && req>0){
+    deliverRows+=`<div class="flowrow"><span class="lbl">needed</span><span class="bar"><span class="req" style="width:${Math.min(100,req/maxbar*100)}%"></span></span><span class="bar-note">${f2(req)} U</span></div>`;
+    deliverRows+=`<div class="flowrow"><span class="lbl">SMB now</span><span class="bar"><span class="giv" style="width:${Math.min(100,smbGiven/maxbar*100)}%"></span></span><span class="bar-note">${smbGiven?f2(smbGiven)+' U':'0 U'}</span></div>`;
+  } else if(req!=null && req<0){
+    deliverRows+=`<div class="flowrow"><span class="lbl">needed</span><span class="bar-note" style="flex:1">${f2(req)} U — less insulin is needed, not more</span></div>`;
+  }
+  const rateTxt = c.rate!=null ? `${f2(c.rate)} U/h${c.dur?` for ${Math.round(c.dur)} min`:''}` : 'current temp continues';
+  panel.innerHTML=`
+  <h2>Loop decision</h2>
+  <div class="when">
+    <button class="navbtn" id="prevC" aria-label="previous">←</button>
+    <span class="t">${hhmm(c.t)}</span>
+    <button class="navbtn" id="nextC" aria-label="next">→</button>
+    <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span>
+  </div>
+  <div class="sect"><h3>What Trio knew</h3>
+    <div class="grid2">
+      <div class="kv"><span class="k">glucose</span><span class="v">${f1(M(c.bg))} mmol/L</span></div>
+      <div class="kv"><span class="k">IOB</span><span class="v">${f2(c.iob)} U</span></div>
+      <div class="kv"><span class="k">COB</span><span class="v">${c.cob||0} g</span></div>
+      <div class="kv"><span class="k">target</span><span class="v">${pv(c.tgt)} mmol/L</span></div>
+      <div class="kv"><span class="k">autosens</span><span class="v">${p.autosens!=null?('×'+p.autosens):'—'}</span></div>
+      <div class="kv"><span class="k">effective ISF</span><span class="v">${p.isf!=null?f1(p.isf):'—'}</span></div>
+      <div class="kv"><span class="k">carb ratio</span><span class="v">${p.cr!=null?p.cr:'—'} g/U</span></div>
+      <div class="kv"><span class="k">TDD</span><span class="v">${c.tdd!=null?f1(c.tdd)+' U':'—'}</span></div>
+    </div>
+  </div>
+  <div class="sect"><h3>What it forecast</h3>
+    <div class="kv" style="margin-bottom:4px"><span class="k">outcome if nothing changes (eventualBG)</span>
+      <span class="v">${c.ebg!=null?f1(M(c.ebg)):'—'} mmol/L</span></div>
+    ${predChips.length?`<div class="predleg">${predChips.join('')}</div>`:''}
+  </div>
+  <div class="sect"><h3>What it decided</h3>
+    <div class="flow">${deliverRows}
+      <div class="flowrow"><span class="lbl">basal</span><span class="bar-note" style="flex:1">${rateTxt}</span></div>
+    </div>
+  </div>
+  <div class="sect"><h3>Limits this cycle</h3>${limHtml}</div>
+  <div class="sect"><h3>Raw reasoning (log)</h3><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></div>`;
+  document.getElementById('prevC').onclick=()=>{ if(i>0){selCycle=dd.cycles[i-1]; renderAll(false);} };
+  document.getElementById('nextC').onclick=()=>{ if(i<dd.cycles.length-1){selCycle=dd.cycles[i+1]; renderAll(false);} };
+}
+
+/* ---------- decision tree ---------- *//* ---------- beslissingsboom ---------- */
+const boxT=document.getElementById('boxT');
+function renderTree(dd){
+  boxT.querySelectorAll('svg').forEach(e=>e.remove());
+  const W=920,H=708, svg=svgEl(W,H); boxT.appendChild(svg);
+  const c=selCycle, p=c?parseReason(c):null;
+  const lk=c?p.limits.map(l=>l.key):[];
+  const req=c?(c.req||0):0;
+  const guard=lk.includes('guard'), zero=lk.includes('zero'), wait=lk.includes('smbwait'),
+        capS=lk.includes('maxbolus'), capB=lk.includes('maxbasal');
+  const idle=c&&!guard&&!zero&&!wait&&req<=0.01;
+  const give=c&&!guard&&!zero&&!idle;
+  document.getElementById('treewhen').textContent = c?`— ${hhmm(c.t)}`:'— click a moment in the chart first';
+  const on=new Set(['start','n1','d1']);
+  if(c){
+    if(guard) on.add('Lguard');
+    else{ on.add('d2');
+      if(zero) on.add('Lzero');
+      else{ on.add('n4').add('d3');
+        if(idle) on.add('Lidle');
+        else{ on.add('d4');
+          if(wait&&!(c.units>0)) on.add('Lwait');
+          else on.add('n5').add('n6').add('Lgive');
+        }}}}
+  const CX=210, LX=520, LW=380;
+  const N={
+    start:{y:16,h:40,t:['New CGM reading — a loop cycle starts'],box:1},
+    n1:{y:72,h:48,t:['Compute IOB, COB and autosens \u2192 effective ISF;','draw forecasts (IOB \u00b7 ZT \u00b7 COB \u00b7 UAM)'],box:1},
+    d1:{y:150,h:56,t:[c&&p.minGuard!=null?`minGuardBG ${f1(p.minGuard)} below the 4.4 threshold?`:'Does the most cautious forecast dip below 4.4?'],dia:1},
+    Lguard:{y:150,h:52,t:['Hypo guard: zero temp, SMBs blocked','\u2014 no matter how high you are now'],leaf:'--lo'},
+    d2:{y:240,h:56,t:[c&&c.ebg!=null?`eventualBG ${f1(M(c.ebg))} below target ${f1(c.tgt||DATA.profile.target||6.1)}?`:'Does eventualBG land below target?'],dia:1},
+    Lzero:{y:240,h:52,t:['Enough insulin already on its way:','reduce basal or zero-temp, no SMB'],leaf:'--zt'},
+    n4:{y:330,h:44,t:[c?`Compute need: insulinReq = ${f2(req)} U`:'Compute need: insulinReq = (eventualBG \u2212 target) \u00f7 ISF'],box:1},
+    d3:{y:398,h:56,t:['Is additional insulin needed (need > 0)?'],dia:1},
+    Lidle:{y:398,h:52,t:['No insulin needed \u2014 nothing to limit;','basal stays (close to) schedule'],leaf:'--muted'},
+    d4:{y:486,h:56,t:['Is an SMB allowed now (interval passed)?'],dia:1},
+    Lwait:{y:486,h:52,t:['SMB interval \u2014 microbolus postponed,','only a (capped) temp basal'],leaf:'--smbwait'},
+    n5:{y:486,h:0,skip:1},n6:{y:486,h:0,skip:1},
+    Lgive:{y:486,h:0,skip:1},
+  };
+  const bottomY=576;
+  N.n5={y:bottomY,h:46,t:[`SMB: part of the need, capped by maxBolus${capS?' \u2014 LIMITED':''}`],box:1,warn:capS?'--hi':null};
+  N.n6={y:bottomY+56,h:46,t:[`Remainder via temp basal, capped by maxSafeBasal${capB?' \u2014 LIMITED':''}`],box:1,warn:capB?'--serious':null};
+  N.Lgive={y:bottomY+26,h:52,t:['Delivery: SMB + temp basal','(next cycle: start over)'],leaf:'--good'};
+  function line(x1,y1,x2,y2,act,lbl,lx,ly){
+    add(svg,'path',{d:`M${x1} ${y1} L${x2} ${y2}`,fill:'none',stroke:act?css('--sel'):css('--axis'),
+      'stroke-width':act?2:1.2,'marker-end':act?'url(#arrA)':'url(#arr)'});
+    if(lbl) add(svg,'text',{x:lx,y:ly,fill:act?css('--ink'):css('--muted'),
+      style:`font:${act?'700':'500'} 10.5px system-ui`},lbl);
+  }
+  const defs=add(svg,'defs',{});
+  for(const [id,col] of [['arr','--axis'],['arrA','--sel']]){
+    const mk=add(defs,'marker',{id,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});
+    add(mk,'path',{d:'M0 0 L10 5 L0 10 z',fill:css(col)});
+  }
+  function node(id){
+    const n=N[id]; if(!n||n.skip&&!n.t) return;
+    const act=on.has(id);
+    const cx=id.startsWith('L')?LX+LW/2:CX, cy=n.y+n.h/2;
+    if(n.dia){
+      const w=418,h=n.h;
+      add(svg,'polygon',{points:`${cx},${n.y} ${cx+w/2},${cy} ${cx},${n.y+h} ${cx-w/2},${cy}`,
+        fill:css('--page'),stroke:act?css('--sel'):css('--border'),'stroke-width':act?2:1.2});
+    } else {
+      const w=id.startsWith('L')?LW:340, x=cx-w/2;
+      add(svg,'rect',{x,y:n.y,width:w,height:n.h,rx:8,fill:css('--page'),
+        stroke:n.leaf?css(n.leaf):(n.warn?css(n.warn):(act?css('--sel'):css('--border'))),
+        'stroke-width':(act&&(n.leaf||n.warn))?2.4:(act?2:1.2),opacity:act?1:.55});
+      if(n.leaf) add(svg,'rect',{x,y:n.y,width:5,height:n.h,rx:2.5,fill:css(n.leaf),opacity:act?1:.5});
+    }
+    n.t.forEach((tt,i)=>add(svg,'text',{x:cx,y:cy+(i-(n.t.length-1)/2)*15+4,'text-anchor':'middle',
+      fill:act?css('--ink'):css('--muted'),style:`font:${act?'600':'500'} 12px system-ui`,opacity:act?1:.8},tt));
+  }
+  const seq=[['start','n1'],['n1','d1'],['d1','d2','no'],['d2','n4','no'],['n4','d3'],['d3','d4','yes'],['d4','n5','yes']];
+  for(const [a,b,lbl] of seq){
+    const na=N[a],nb=N[b];
+    const act=on.has(a)&&on.has(b);
+    line(CX,na.y+na.h,CX,nb.y-3,act,lbl,CX+8,(na.y+na.h+nb.y)/2+3);
+  }
+  const branches=[['d1','Lguard','yes'],['d2','Lzero','yes'],['d3','Lidle','no'],['d4','Lwait','no']];
+  for(const [a,b,lbl] of branches){
+    const na=N[a],nb=N[b];
+    const act=on.has(a)&&on.has(b);
+    line(CX+209,na.y+na.h/2,LX-4,nb.y+nb.h/2,act,lbl,CX+222,na.y+na.h/2-6);
+  }
+  line(CX,N.n5.y+N.n5.h,CX,N.n6.y-3,on.has('n5')&&on.has('n6'),null);
+  line(CX+172,N.n6.y+N.n6.h/2,LX-4,N.Lgive.y+N.Lgive.h/2,on.has('Lgive'),null);
+  ['start','n1','d1','Lguard','d2','Lzero','n4','d3','Lidle','d4','Lwait','n5','n6','Lgive'].forEach(node);
+}
+
+/* ---------- master render ---------- *//* ---------- master render ---------- */
+function renderAll(full=true){
+  hoverLines=[];
+  tabsEl.querySelectorAll('.tab').forEach(b=>b.setAttribute('aria-pressed', String(+b.dataset.day===curDay)));
+  const dd=dayData(curDay);
+  const w=boxG.clientWidth||900;
+  X=makeX(dd,w);
+  if(full) renderTiles(dd);
+  renderGlucose(dd,w);
+  renderIOB(dd,w);
+  renderLimits(dd,w);
+  renderPanel(dd);
+  renderTree(dd);
+}
+let rto=null;
+window.addEventListener('resize',()=>{clearTimeout(rto); rto=setTimeout(()=>renderAll(false),120);});
+new MutationObserver(()=>renderAll(false)).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+/* ---------- Nightscout access, per-day fetch & persistent cache ---------- */
+const refreshInfo=document.getElementById('refreshInfo');
+const loginCard=document.getElementById('loginCard'), appBody=document.getElementById('appbody');
+const signOutBtn=document.getElementById('signOut');
+const LS_AUTH='trioInspector.auth', LS_DAY='trioInspector.day.';
+if(SHARE && !LIVE){ try{ LIVE=JSON.parse(localStorage.getItem(LS_AUTH)||'null'); }catch(e){} }
+
+function setInfo(){
+  const dd=dayData(curDay);
+  const arr=dd.sgv.length?dd.sgv:DATA.sgv;
+  if(!arr.length){ refreshInfo.textContent=''; return; }
+  const last=arr[arr.length-1][0];
+  refreshInfo.textContent=`data through ${dayLabel(Math.floor((last+TZ)/86400)*86400-TZ)} ${hhmm(last)}`;
+}
+function buildRaw(entries,treatments,dev){
+  const pts=x=>Math.floor(Date.parse(x)/1000);
+  const r2=v=>Math.round(v*100)/100, r1=v=>Math.round(v*10)/10;
+  const sgv=entries.filter(e=>e.type==='sgv'&&e.sgv).map(e=>[pts(e.dateString),e.sgv]).sort((a,b)=>a[0]-b[0]);
+  const tb=[],smb=[],bolus=[],carbs=[],notes=[],site=[];
+  for(const t of treatments){
+    if(!t.created_at) continue;
+    const x=pts(t.created_at), et=t.eventType;
+    if(et==='Temp Basal'){ const r=t.rate!=null?t.rate:t.absolute; if(r!=null) tb.push([x,r2(r),r1(t.duration||0)]); }
+    else if(et==='SMB'){ if(t.insulin) smb.push([x,r2(t.insulin)]); }
+    else if(et==='Bolus'||et==='Correction Bolus'||et==='Meal Bolus'){ if(t.insulin) bolus.push([x,r2(t.insulin)]); if(t.carbs) carbs.push([x,r1(t.carbs)]); }
+    else if(et==='Carb Correction'||t.carbs){ if(t.carbs) carbs.push([x,r1(t.carbs)]); }
+    else if(et==='Note') notes.push([x,t.notes||'']);
+    else if(et==='Site Change') site.push(x);
+  }
+  for(const l of [tb,smb,bolus,carbs,notes]) l.sort((a,b)=>a[0]-b[0]);
+  const cmap={};
+  for(const r of dev){
+    const oa=r.openaps||{}; const en=oa.enacted||oa.suggested||{};
+    if(!en||en.bg==null) continue;
+    const da=en.deliverAt||en.timestamp; if(!da) continue;
+    const x=pts(da); if(cmap[x]) continue;
+    const preds=en.predBGs||{}; const pred={};
+    for(const k of ['IOB','ZT','COB','UAM']) if(preds[k]) pred[k]=preds[k].map(v=>Math.round(v));
+    cmap[x]={t:x,bg:en.bg,iob:r2(en.IOB||0),cob:en.COB||0,ebg:en.eventualBG,req:en.insulinReq,
+      rate:en.rate,dur:en.duration,tgt:en.current_target,sens:en.sensitivityRatio,tdd:en.TDD,
+      units:en.units,reason:String(en.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
+      rec:(oa.enacted&&oa.enacted.received)?1:0,pred};
+  }
+  return {sgv,tb,smb,bolus,carbs,notes,site,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
+}
+function loadPersisted(d){
+  if(!SHARE) return null;
+  try{ const v=JSON.parse(localStorage.getItem(LS_DAY+d)||'null'); if(v){ dayCache[d]=v; return v; } }catch(e){}
+  return null;
+}
+function pruneStore(extra){
+  try{
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY));
+    const items=keys.map(k=>({k,at:(JSON.parse(localStorage.getItem(k)||'{}').fetchedAt)||0}))
+      .sort((a,b)=>b.at-a.at);
+    const keep=extra?4:6;
+    for(const it of items.slice(keep)) localStorage.removeItem(it.k);
+  }catch(e){}
+}
+function persistDay(d){
+  if(!SHARE) return;
+  try{ localStorage.setItem(LS_DAY+d, JSON.stringify(dayCache[d])); pruneStore(); }
+  catch(e){ pruneStore(true); try{ localStorage.setItem(LS_DAY+d, JSON.stringify(dayCache[d])); }catch(e2){} }
+}
+async function fetchDay(d){
+  const from=new Date((d-3*3600)*1000).toISOString();
+  const to=new Date((d+86400+3600)*1000).toISOString();
+  const q=(p,extra)=>fetch(`${LIVE.url}/api/v1/${p}?${extra}&token=${LIVE.token}`)
+    .then(r=>{ if(!r.ok) throw new Error(p+' HTTP '+r.status); return r.json(); });
+  const [entries,treatments,dev,profileArr]=await Promise.all([
+    q('entries.json',`find[dateString][$gte]=${from}&find[dateString][$lte]=${to}&count=600`),
+    q('treatments.json',`find[created_at][$gte]=${from}&find[created_at][$lte]=${to}&count=1500`),
+    q('devicestatus.json',`find[created_at][$gte]=${from}&find[created_at][$lte]=${to}&count=1500`),
+    q('profile.json','count=1')]);
+  try{
+    const p0=profileArr[0], store=p0.store[p0.defaultProfile||'default'];
+    DATA.profile={basal:store.basal.map(x=>[x.timeAsSeconds,x.value]),target:store.target_low[0].value,
+      isf:store.sens[0].value,cr:store.carbratio.map(x=>[x.timeAsSeconds,x.value]),dia:store.dia};
+  }catch(e){}
+  const raw=buildRaw(entries,treatments,dev);
+  const a=d,b=d+86400;
+  const data={a,b,
+    sgv:raw.sgv.filter(e=>e[0]>=a&&e[0]<b),
+    cycles:raw.cycles.filter(c=>c.t>=a&&c.t<b),
+    smb:raw.smb.filter(e=>e[0]>=a&&e[0]<b),
+    bolus:raw.bolus.filter(e=>e[0]>=a&&e[0]<b),
+    carbs:raw.carbs.filter(e=>e[0]>=a&&e[0]<b),
+    notes:raw.notes.filter(e=>e[0]>=a&&e[0]<b),
+    siteChange:raw.site.filter(t=>t>=a&&t<b),
+    segs:basalSegs(a,b,raw.tb)};
+  dayCache[d]={data,fetchedAt:Date.now()};
+  persistDay(d);
+}
+
+/* ---------- connect / sign out ---------- */
+function showLogin(msg){
+  appBody.style.display='none'; loginCard.style.display='block';
+  document.getElementById('nsError').textContent=msg||'';
+}
+function hideLogin(){ loginCard.style.display='none'; appBody.style.display='block'; }
+async function connectNS(){
+  const errEl=document.getElementById('nsError');
+  let url=(document.getElementById('nsUrl').value||'').trim().replace(/\/+$/,'');
+  const token=(document.getElementById('nsToken').value||'').trim();
+  if(!/^https?:\/\//.test(url)){ errEl.textContent='Enter a full URL, starting with https://'; return; }
+  if(!token){ errEl.textContent='Enter an access token.'; return; }
+  errEl.textContent='connecting\u2026';
+  try{
+    const r=await fetch(`${url}/api/v1/status.json?token=${token}`);
+    if(!r.ok) throw new Error('HTTP '+r.status+(r.status===401?' \u2014 check the token':''));
+    await r.json();
+  }catch(e){ errEl.textContent='Could not connect: '+e.message; return; }
+  LIVE={url,token};
+  try{ localStorage.setItem(LS_AUTH,JSON.stringify(LIVE)); }catch(e){}
+  hideLogin(); signOutBtn.style.display='inline-block';
+  selectDay(todayStart(),true);
+}
+if(SHARE){
+  document.getElementById('nsConnect').onclick=connectNS;
+  document.getElementById('nsToken').addEventListener('keydown',e=>{ if(e.key==='Enter') connectNS(); });
+  signOutBtn.onclick=()=>{
+    try{
+      localStorage.removeItem(LS_AUTH);
+      Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY)).forEach(k=>localStorage.removeItem(k));
+    }catch(e){}
+    location.reload();
+  };
+}
+
+/* ---------- init ---------- */
+computeDays(); buildTabs(); setInfo(); renderAll();
+if(SHARE && !LIVE){ showLogin(); }
+else if(LIVE){ signOutBtn.style.display=SHARE?'inline-block':'none'; selectDay(todayStart()); }
+
+/* preselect: most instructive limited cycle of the current day (snapshot builds) */
+(function(){
+  const dd=dayData(curDay);
+  let best=null,score=0;
+  for(const c of dd.cycles){ const p=parseReason(c);
+    if(p.limits.length && (c.req||0)>score){score=c.req;best=c;} }
+  if(best){ selCycle=best; renderAll(false); }
+})();
+</script>
