@@ -87,6 +87,7 @@ def build_snapshot(base, token, days=3):
         preds = en.get('predBGs') or {}
         cycles[x] = {
             't': x, 'bg': en.get('bg'), 'iob': round(en.get('IOB', 0), 2),
+            'thr': en.get('threshold'),
             'cob': en.get('COB', 0), 'ebg': en.get('eventualBG'),
             'req': en.get('insulinReq'), 'rate': en.get('rate'), 'dur': en.get('duration'),
             'tgt': en.get('current_target'), 'sens': en.get('sensitivityRatio'),

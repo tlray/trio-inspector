@@ -9,7 +9,7 @@
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
   --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
-    --band:rgba(111,207,151,.13); --sel:#0b0b0b;
+    --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
 }
 @media (prefers-color-scheme: dark){
   :root{
@@ -21,7 +21,7 @@
     --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
     --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
     --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#4a67ff; --cobline:#ff9f0a;
-    --band:rgba(111,207,151,.10); --sel:#ffffff;
+    --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
   }
 }
 :root[data-theme="light"]{
@@ -33,7 +33,7 @@
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
   --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
-  --band:rgba(111,207,151,.13); --sel:#0b0b0b;
+  --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
 }
 :root[data-theme="dark"]{
   --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
@@ -44,7 +44,7 @@
     --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
     --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
     --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#4a67ff; --cobline:#ff9f0a;
-  --band:rgba(111,207,151,.10); --sel:#ffffff;
+  --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
 }
 *{box-sizing:border-box}
 body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:0}
@@ -82,11 +82,13 @@ svg{display:block;width:100%}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;position:sticky;top:8px}
 @media (max-width:1080px){.panel{position:static}}
 .panel h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
-.panel .when{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.panel .when .t{font:650 20px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.01em}
-.navbtn{border:1px solid var(--border);background:transparent;color:var(--ink2);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:13px;line-height:1}
-.navbtn:hover{color:var(--ink)}
-.badge-enact{font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;border:1px solid var(--border);color:var(--ink2);margin-left:auto}
+.panel .when{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
+.panel .when .t{font:650 19px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.01em}
+.navgrp{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+.navgrp .navbtn:first-child{border-right:1px solid var(--border)}
+.navbtn{border:none;background:transparent;color:var(--ink2);width:26px;height:24px;cursor:pointer;font-size:12px;line-height:1}
+.navbtn:hover{color:var(--ink);background:var(--hover)}
+.badge-enact{font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--ink2);margin-left:auto;background:var(--page)}
 .sect{border-top:1px solid var(--grid);padding-top:7px;margin-top:7px}
 .sect h3{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 7px;font-weight:650}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px}
@@ -112,6 +114,9 @@ svg{display:block;width:100%}
 .predleg span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
 .empty{color:var(--muted);font-size:13px;padding:8px 0 4px}
 .limstrip{margin-top:4px}
+.limleg{display:flex;flex-wrap:wrap;gap:2px 12px;margin:3px 0 0 44px;font-size:10.5px;color:var(--ink2)}
+.limleg span{display:inline-flex;align-items:center;gap:4px}
+.limleg i{width:8px;height:8px;border-radius:2px;display:inline-block;font-style:normal}
 .explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 16px}
 .explain h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:650}
 details{border-top:1px solid var(--grid);padding:2px 0}
@@ -122,19 +127,20 @@ details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .swatch{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:baseline;margin-right:3px}
 .steps{display:flex;flex-direction:column;margin-top:2px}
 .step{border-top:1px solid var(--grid)}
+.step.open>.srow{background:var(--hover)}
 .step:first-child{border-top:none}
-.srow{display:flex;gap:8px;align-items:baseline;padding:5px 0;cursor:pointer;background:none;border:none;width:100%;text-align:left;color:inherit;font:inherit}
-.srow:hover{background:rgba(127,127,127,.07)}
+.srow{display:grid;grid-template-columns:9px 96px 1fr;gap:8px;align-items:start;padding:6px 8px 6px 6px;cursor:pointer;background:none;border:none;width:100%;text-align:left;color:inherit;font:inherit;border-radius:6px}
+.srow:hover{background:var(--hover)}
 .srow:hover .slab{color:var(--ink)}
-.sdot{flex:none;width:8px;height:8px;border-radius:50%;background:var(--axis);align-self:center}
-.slab{flex:none;width:82px;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--axis);margin-top:5px;justify-self:center}
+.slab{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;line-height:1.6}
 .sval{flex:1;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.5;word-break:break-word}
 .sval .ok{color:var(--txt-good);font-weight:700}
 .sval .warn{font-weight:700}
-.scar{flex:none;color:var(--muted);font-size:9px;align-self:center}
+.scar{color:var(--muted);font-size:8px;display:inline-block;vertical-align:1px;margin-left:1px}
 .step.open .scar{transform:rotate(90deg)}
 .step.skip{opacity:.4}
-.sbody{padding:0 0 10px 16px;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.sbody{padding:2px 8px 12px 23px;font-size:12.5px;color:var(--ink2);line-height:1.5}
 .sbody p{margin:2px 0 6px}
 .frm{font:11.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:6px 0;overflow-x:auto;color:var(--ink);white-space:pre}
 .vr{background:none;border:none;border-bottom:1px dotted var(--muted);padding:0;font:inherit;color:inherit;cursor:pointer}
@@ -146,7 +152,7 @@ details.src{margin-top:4px}
 details.src summary{font-size:11px;color:var(--muted);cursor:pointer;padding:2px 0}
 details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
 details.src a{color:var(--iob);font-size:11px;text-decoration:none}
-.conc{margin:0 0 4px;padding:2px 0 8px;border-bottom:1px solid var(--grid)}
+.conc{margin:0 0 10px;padding:8px 10px;border:1px solid var(--grid);border-radius:8px;background:var(--page)}
 .conc .flowrow .lbl{width:64px;font-size:12px}
 .concnote{font-size:11px;color:var(--muted);margin-top:3px}
 .spark{display:block;margin:4px 0 2px}
@@ -197,8 +203,9 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
       <span class="lg"><span class="linec" style="border-color:var(--iobline)"></span>IOB (U)</span>
       <span class="lg"><span class="linec" style="border-color:var(--cobline)"></span>COB (g)</span></div>
     <div class="chartbox" id="boxI"></div>
-    <div class="chart-title">Safety limits <span id="limlegend" style="display:contents"></span></div>
+    <div class="chart-title">Safety limits</div>
     <div class="chartbox limstrip" id="boxL"></div>
+    <div id="limlegend" class="limleg"></div>
     <p class="hint">&#8592; &#8594; steps through loop cycles — and across midnight into the next/previous day</p>
   </div>
 
@@ -575,13 +582,15 @@ function renderLimits(dd,w){
     {key:'none',label:'unrestricted',c:'--good',op:.6,
      test:(c,keys)=>keys.length===0 && !wantsNothing(c)},
     ...LIMROWS];
-  const rowH=11, h=ALLROWS.length*rowH+16;
+  const rowH=13, h=ALLROWS.length*rowH+15;
   boxL.querySelectorAll('svg').forEach(e=>e.remove());
   const svg=svgEl(w,h); boxL.appendChild(svg);
   const counts={};
   ALLROWS.forEach((row,i)=>{
     counts[row.key]=0;
-    const yy=i*rowH+1;
+    const yy=i*rowH+2;
+    add(svg,'rect',{x:ML,y:yy,width:w-ML-MR,height:rowH-4,rx:2,fill:'none',
+      stroke:css('--grid'),'stroke-width':1});
     const runs=[]; let run=null;
     dd.cycles.forEach((c,j)=>{
       const keys=limitKeys(c);
@@ -595,11 +604,11 @@ function renderLimits(dd,w){
       } else run=null;
     });
     for(const r of runs)
-      add(svg,'rect',{x:X(r.start),y:yy,width:Math.max(1.5,X(r.end)-X(r.start)),height:rowH-2,
+      add(svg,'rect',{x:X(r.start),y:yy+1,width:Math.max(1.5,X(r.end)-X(r.start)),height:rowH-6,rx:1,
         fill:css(row.c),opacity:row.op||.9});
   });
   document.getElementById('limlegend').innerHTML = ALLROWS.map(r=>
-    `<span class="lg"><span class="dotc" style="background:var(${r.c});border-radius:0;width:8px;height:8px;opacity:${r.op?r.op+.2:1}"></span>${r.label} (${counts[r.key]}&times;)</span>`).join('');
+    `<span><i style="background:var(${r.c});opacity:${r.op?r.op+.2:1}"></i>${r.label} <span style="color:var(--muted)">${counts[r.key]}&times;</span></span>`).join('');
   for(let hr=0;hr<=24;hr+=2){ const x=X(dd.a+hr*3600);
     add(svg,'text',{x,y:h-3,'text-anchor':'middle',fill:css('--muted'),style:'font:10px ui-monospace,Menlo,monospace'},String(hr).padStart(2,'0')); }
   if(selCycle) add(svg,'line',{x1:X(selCycle.t),x2:X(selCycle.t),y1:0,y2:h-12,stroke:css('--sel'),'stroke-width':1,opacity:.5,'stroke-dasharray':'2 3'});
@@ -782,7 +791,7 @@ function buildSteps(c,p){
   const tgtV=c?(c.tgt||6.1):null;
   const isfV=c?p.isf:null;
   const sched=c?schedBasal(c.t):null;
-  const thr=(c&&p.thr)??4.4;
+  const thr=(c&&(c.thr??p.thr)) ?? (c&&(c.tgt||null)!=null ? Math.max(3.3,Math.min(6.7,(c.tgt)-0.5*((c.tgt)-2.2))) : 4.4);
   const rows=[];
   const skipAfter = n => exited && n>exited;
   const cy=t=>`\n<span class="cy">» ${t}</span>`;
@@ -866,14 +875,14 @@ function buildSteps(c,p){
   if(skipAfter(6)||idle){ smbVal = idle?'skipped — no need':'not reached'; smbSt='skip'; }
   else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
   else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-smbwait)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--smbwait'; }
-  else if(capS){ smbVal=`min(${F2(req)} × 0.5, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
+  else if(capS){ smbVal=`min(need × ratio, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
   else { smbVal='no SMB this cycle'; }
   rows.push({id:'smb',lab:'SMB',st:smbSt,dot:smbDot,skip:skipAfter(6)||idle,
     val:smbVal,
     body:((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
       `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three safety limits apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs — and SMBs are only considered at all while BG is above the safety threshold (and not right after a &gt;20%-of-BG jump, which suggests a sensor calibration). The remainder waits for the next cycles.</p>
-      <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(`min(${F2(req)} × 0.5, ${capVal!=null?F2(capVal):'cap'}) = ${F2(smbGiven)} U${capVal!=null&&req*0.5>capVal?' — cap wins':''}`):''}</div>`
+      <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)   // ratio setting, default 0.5 — not part of Nightscout exports${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(capS?`cap ${capVal!=null?F2(capVal):'?'} U wins → ${F2(smbGiven)} U`:`${F2(req)} × ratio(≈${(smbGiven/req).toFixed(2)}) = ${F2(smbGiven)} U`):''}</div>`
       +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
 
   /* 7 — basal */
@@ -904,9 +913,8 @@ function renderPanel(dd){
   const i=c?dd.cycles.indexOf(c):-1;
   const head = c
     ? `<div class="when">
-        <button class="navbtn" id="prevC" aria-label="previous">←</button>
         <span class="t">${hhmm(c.t)}</span>
-        <button class="navbtn" id="nextC" aria-label="next">→</button>
+        <span class="navgrp"><button class="navbtn" id="prevC" aria-label="previous">←</button><button class="navbtn" id="nextC" aria-label="next">→</button></span>
         <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span></div>`
     : `<div class="empty" style="padding:2px 0 6px">The oref1 pipeline — click a cycle in the chart to fill in its real values.</div>`;
   const {rows,conc}=buildSteps(c,p);
@@ -1004,7 +1012,7 @@ function buildRaw(entries,treatments,dev){
     const x=pts(da); if(cmap[x]) continue;
     const preds=en.predBGs||{}; const pred={};
     for(const k of ['IOB','ZT','COB','UAM']) if(preds[k]) pred[k]=preds[k].map(v=>Math.round(v));
-    cmap[x]={t:x,bg:en.bg,iob:r2(en.IOB||0),cob:en.COB||0,ebg:en.eventualBG,req:en.insulinReq,
+    cmap[x]={t:x,bg:en.bg,iob:r2(en.IOB||0),cob:en.COB||0,thr:en.threshold,ebg:en.eventualBG,req:en.insulinReq,
       rate:en.rate,dur:en.duration,tgt:en.current_target,sens:en.sensitivityRatio,tdd:en.TDD,
       units:en.units,reason:String(en.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
       rec:(oa.enacted&&oa.enacted.received)?1:0,pred};
