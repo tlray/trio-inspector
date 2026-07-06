@@ -41,8 +41,10 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
   ratio, impliedF, impliedSmbMin) and fills `VALS` (live values shown in glossary chips).
 - Per-day fetch+cache: `fetchDay` (4 API calls, 25s timeout), `dayCache` in-memory,
   localStorage persistence in SHARE mode (max ~6 days, pruned). Day switch auto-fetches.
-- The forecast fan extends past midnight via `dd.ext` (fixed +4h zone, shaded, when the
-  selected cycle is in the last 4h of a day).
+- The x-axis is ALWAYS exactly 24h — never stretch or shift it. A forecast fan that crosses
+  midnight is clipped at `dd.b`: each clipped curve ends in a small arrowhead in its own
+  color, plus a clickable hint that opens the forecast step (whose sparkline holds the
+  full 4h fan). The user explicitly rejected any "extra space / forecast-only zone".
 
 ## Conventions & pitfalls
 - English UI, Trio/Nightscout terminology, U (not E), dots as decimal separator.
