@@ -522,6 +522,26 @@ function renderGlucose(dd,w){
       add(svg,'path',{d:dstr,fill:'none',stroke:css(colors[k]),'stroke-width':2,
         opacity:.9,'stroke-dasharray':k==='ZT'?'3 3':'none'});
     }
+    /* beslispunt-markers op de curves */
+    for(const mk of decisionMarkers(selCycle)){
+      const t=selCycle.t+mk.i*300; if(t>dd.b) continue;
+      const arr=selCycle.pred[mk.k]; if(!arr) continue;
+      const mx=X(t), my=y(Math.min(maxbg,Math.max(dLO,M(arr[mk.i]))));
+      const ccol=css(colors[mk.k]);
+      if(mk.kind==='ebg'){
+        add(svg,'circle',{cx:mx,cy:my,r:4,fill:ccol,stroke:css('--surface'),'stroke-width':1.5});
+        add(svg,'text',{x:mx+7,y:my+3,fill:css('--ink2'),'paint-order':'stroke',stroke:css('--surface'),'stroke-width':3,
+          style:'font:600 9px ui-monospace,Menlo,monospace'},'eventualBG');
+      } else if(mk.kind==='guard'){
+        add(svg,'circle',{cx:mx,cy:my,r:5,fill:'none',stroke:css(mk.fired?'--lo':'--muted'),'stroke-width':2});
+        if(!mk.blend) add(svg,'text',{x:mx+8,y:my+9,fill:css(mk.fired?'--txt-lo':'--ink2'),'paint-order':'stroke',stroke:css('--surface'),'stroke-width':3,
+          style:'font:600 9px ui-monospace,Menlo,monospace'},'minGuardBG');
+      } else {
+        add(svg,'circle',{cx:mx,cy:my,r:4.5,fill:'none',stroke:ccol,'stroke-width':1.6,'stroke-dasharray':'2 2'});
+        add(svg,'text',{x:mx+7,y:my-5,fill:css('--ink2'),'paint-order':'stroke',stroke:css('--surface'),'stroke-width':3,
+          style:'font:600 9px ui-monospace,Menlo,monospace'},'minPredBG');
+      }
+    }
   }
   /* sgv dots — app-kleuren: groen in range, oranje hoog, rood laag */
   for(const [t,v] of dd.sgv){
@@ -776,6 +796,37 @@ function vchips(list){ return '<div class="vrow">'+list.map(v=>{
 function srcBlock(k){ const x=SRC[k];
   return `<details class="src"><summary>source · ${x.loc}</summary><pre>${x.code.replace(/</g,'&lt;')}</pre><a href="${GHB}${x.gh}" target="_blank" rel="noopener">view in nightscout/trio-oref ↗</a></details>`; }
 const dash='—';
+/* beslispunten: welke curvepunten voedden de beslissing (guard-min, minPredBG, eventualBG-eindpunt) */
+function decisionMarkers(c){
+  if(!c||!c.pred) return [];
+  const p=parseReason(c), pr=c.pred, out=[];
+  const tol=isMmol()?0.16:3;
+  const minInfo=k=>{ const a=pr[k]; if(!a||a.length<2) return null;
+    let mi=0; a.forEach((v,i)=>{ if(v<a[mi]) mi=i; }); return {k,i:mi,v:M(a[mi])}; };
+  const endInfo=k=>{ const a=pr[k]; if(!a||a.length<2) return null; return {k,i:a.length-1,v:M(a[a.length-1])}; };
+  const guardFired=p.limits.some(l=>l.key==='guard');
+  if(p.minGuard!=null){
+    const cands=['UAM','COB','IOB'].map(minInfo).filter(Boolean);
+    let best=null;
+    for(const x of cands){ const d=Math.abs(x.v-p.minGuard); if(d<tol&&(!best||d<best.d)) best={...x,d}; }
+    if(best) out.push({k:best.k,i:best.i,kind:'guard',fired:guardFired});
+    else if(pr.COB&&pr.UAM){ /* blend: markeer beide bronnen */
+      for(const k of ['COB','UAM']){ const m=minInfo(k); if(m) out.push({...m,kind:'guard',fired:guardFired,blend:true}); } }
+  }
+  if(c.ebg!=null){
+    const ev=M(c.ebg); let best=null;
+    for(const x of ['UAM','COB','ZT','IOB'].map(endInfo).filter(Boolean)){
+      const d=Math.abs(x.v-ev); if(d<tol&&(!best||d<best.d)) best={...x,d}; }
+    if(best) out.push({k:best.k,i:best.i,kind:'ebg'});
+  }
+  if(p.minPred!=null && !(p.minGuard!=null&&Math.abs(p.minPred-p.minGuard)<tol)){
+    let best=null;
+    for(const x of ['IOB','COB','UAM'].map(minInfo).filter(Boolean)){
+      const d=Math.abs(x.v-p.minPred); if(d<tol&&(!best||d<best.d)) best={...x,d}; }
+    if(best) out.push({k:best.k,i:best.i,kind:'minpred'});
+  }
+  return out;
+}
 let SPARK=null;
 function sparkline(c,thr){
   const pr=c.pred||{}; const keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
@@ -804,6 +855,13 @@ function sparkline(c,thr){
   for(const k of keys){
     let d=''; pr[k].forEach((v,i)=>{d+=(d?'L':'M')+x(i).toFixed(1)+' '+y(Math.max(mn,Math.min(mx,M(v)))).toFixed(1)+' ';});
     out+=`<path d="${d}" fill="none" stroke="var(${cols[k]})" stroke-width="1.6"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
+  }
+  for(const mk of decisionMarkers(c)){
+    const arr=pr[mk.k]; if(!arr||mk.i>=arr.length) continue;
+    const px=x(mk.i).toFixed(1), py=y(Math.max(mn,Math.min(mx,M(arr[mk.i])))).toFixed(1);
+    if(mk.kind==='ebg') out+=`<circle cx="${px}" cy="${py}" r="3" fill="var(${cols[mk.k]})" stroke="var(--surface)" stroke-width="1.2"/>`;
+    else if(mk.kind==='guard') out+=`<circle cx="${px}" cy="${py}" r="3.5" fill="none" stroke="var(${mk.fired?'--lo':'--muted'})" stroke-width="1.6"/>`;
+    else out+=`<circle cx="${px}" cy="${py}" r="3.2" fill="none" stroke="var(${cols[mk.k]})" stroke-width="1.2" stroke-dasharray="2 2"/>`;
   }
   out+=`<line id="sparkx" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7"/>`;
   out+='</svg>';
@@ -930,7 +988,7 @@ function buildSteps(c,p){
     val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
        :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
     body:(c?sparkline(c,thr):'')+
-      `<p>Four futures are drawn: <b>IOB</b> — active insulin plays out; <b>ZT</b> — worst case if delivery stopped now; <b>COB</b> — announced carbs still absorbing; <b>UAM</b> — the current <i>unexplained</i> rise carried forward and decayed at the slope of the last hour’s deviations. Dosing follows the most cautious relevant curve — high side: the highest; low side: the lowest. With SMB forecasts enabled, eventualBG is refined from the curve endpoints, which is why it can sit well above naive + deviation.</p>
+      `<p>Four futures are drawn: <b>IOB</b> — active insulin plays out; <b>ZT</b> — worst case if delivery stopped now; <b>COB</b> — announced carbs still absorbing; <b>UAM</b> — the current <i>unexplained</i> rise carried forward and decayed at the slope of the last hour’s deviations. Dosing follows the most cautious relevant curve — high side: the highest; low side: the lowest. With SMB forecasts enabled, eventualBG is refined from the curve endpoints, which is why it can sit well above naive + deviation. <b>Marked points</b> show what the decision actually used: a <b>ring</b> on the guard minimum (red when the hypo guard fired), a <b>dashed ring</b> on the minPredBG point, and a <b>filled dot</b> on the endpoint that became eventualBG — in both this sparkline and the main chart.</p>
       ${c?`<div class="frm">${['IOB','ZT','COB','UAM'].filter(k=>pr[k]&&pr[k].length>1).map(k=>{
         const a=pr[k];
         return `<span style="color:var(--txt-${k.toLowerCase()})">${k.padEnd(3)}</span> ${fBG(M(a[0]))} → min ${fBG(M(Math.min(...a)))} → end ${fBG(M(a[a.length-1]))}`;
