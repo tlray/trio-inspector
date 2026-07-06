@@ -35,6 +35,13 @@ so revisiting is instant; "Today" auto-refreshes when the cache is older than 2 
 > for offline use. That file (and `trio_data.json`) is git-ignored on purpose: it contains
 > medical data. Don't commit or share it.
 
+## Experiments
+
+`playground.html` is a standalone prototype that renders the ~35-line decision layer of
+determine-basal.js as live, executable annotated code: pick a real cycle as a starting point,
+drag the input sliders (BG, forecasts, ISF, target, SMB settings) and watch the code re-run —
+untaken branches fade, safety limits light up, and the outcome recomputes. Educational only.
+
 ## Develop
 
 `template.html` is the single source. It contains three placeholders:

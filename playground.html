@@ -1,0 +1,328 @@
+<title>oref Playground — Trio Loop Inspector</title>
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --hover:rgba(9,9,9,.045);
+  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7; --insulin:#1e96fc;
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --txt-iob:#0968c3; --txt-lo:#d32f2f; --txt-good:#1e7d47; --txt-hi:#996a00; --txt-zt:#5b4bd6;
+  --sel:#0b0b0b;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.06);
+    --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
+    --txt-iob:#1e96fc; --txt-lo:#eb5757; --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-zt:#8d80f0;
+    --sel:#ffffff;
+  }
+}
+:root[data-theme="light"]{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --hover:rgba(9,9,9,.045);
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --txt-iob:#0968c3; --txt-lo:#d32f2f; --txt-good:#1e7d47; --txt-hi:#996a00; --txt-zt:#5b4bd6;
+  --sel:#0b0b0b;
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.06);
+  --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
+  --txt-iob:#1e96fc; --txt-lo:#eb5757; --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-zt:#8d80f0;
+  --sel:#ffffff;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding:14px 16px 60px}
+h1{font-size:19px;font-weight:650;margin:0 0 2px}
+.sub{color:var(--ink2);font-size:12.5px;margin:0 0 12px;max-width:100ch}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}
+.pre{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
+  padding:6px 12px;font:600 12.5px system-ui;cursor:pointer}
+.pre[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.pre:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;align-items:start}
+@media (max-width:980px){.main{grid-template-columns:1fr}}
+.codebox{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 0;overflow-x:auto}
+.code{font:12px/1.75 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre;min-width:640px}
+.ln{display:block;padding:0 14px 0 8px}
+.ln .no{display:inline-block;width:34px;color:var(--axis);text-align:right;margin-right:14px;user-select:none;font-size:10px}
+.ln.cm{color:var(--muted)}
+.ln.ph{color:var(--muted);font-weight:700;letter-spacing:.05em;margin-top:6px}
+.blk.dim .ln{opacity:.32}
+.blk.dim .ln .tag{opacity:1}
+.ln.hot{background:var(--hover)}
+.tag{font:600 9.5px system-ui;letter-spacing:.03em;border-radius:8px;padding:1px 7px;margin-left:10px;vertical-align:1px}
+.tag.no{background:none;border:1px dashed var(--axis);color:var(--muted)}
+.tag.yes{background:var(--good);color:#fff}
+.tag.fire{color:#fff}
+.cv{font-weight:700;border-bottom:1px dotted var(--muted);cursor:pointer;color:var(--txt-iob)}
+.cv.res{color:var(--ink)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:sticky;top:10px}
+.panel h2{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
+.sl{display:grid;grid-template-columns:118px 1fr 52px;gap:8px;align-items:center;margin:5px 0}
+.sl label{font-size:11.5px;color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
+.sl input[type=range]{width:100%;accent-color:var(--insulin);height:20px}
+.sl .v{font:600 12px ui-monospace,Menlo,monospace;text-align:right;font-variant-numeric:tabular-nums}
+.sl.changed label{color:var(--txt-hi);font-weight:700}
+.out{border:1px solid var(--grid);border-radius:8px;background:var(--page);padding:9px 11px;margin-top:10px}
+.out .big{font:650 15px ui-monospace,Menlo,monospace;margin:2px 0 4px}
+.out .why{font-size:12px;color:var(--ink2);line-height:1.5}
+.lim{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink2);margin-right:10px}
+.lim i{width:8px;height:8px;border-radius:2px;display:inline-block}
+.note{font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5}
+.rst{border:1px solid var(--border);background:none;color:var(--ink2);border-radius:6px;padding:4px 10px;font:600 11.5px system-ui;cursor:pointer;margin-top:8px}
+.rst:hover{color:var(--ink);background:var(--hover)}
+.flash{animation:fl 1s ease-out}
+@keyframes fl{0%{background:var(--hi);}100%{background:transparent}}
+@media (prefers-reduced-motion: reduce){.flash{animation:none;background:var(--hover)}}
+</style>
+
+<div class="wrap">
+<h1>oref Playground <span style="font:600 11px system-ui;color:var(--page);background:var(--serious);border-radius:9px;padding:2px 8px;vertical-align:3px">experiment</span></h1>
+<p class="sub">The decision layer of <b>determine-basal.js</b>, re-implemented line-for-line and actually <i>executed</i> in your browser.
+Pick a real moment from the data as a starting point, then drag the sliders: the code re-runs, values update in place,
+and branches that are not taken fade out. Forecast values (eventualBG, minPredBG, minGuardBG) are frozen inputs here —
+in reality they come from the prediction curves. Educational tool; not dosing advice.</p>
+
+<div class="presets" id="presets"></div>
+
+<div class="main">
+  <div class="codebox"><div class="code" id="code"></div></div>
+  <aside class="panel">
+    <h2>Inputs — drag me</h2>
+    <div id="sliders"></div>
+    <button class="rst" id="reset">↺ reset to the real cycle</button>
+    <h2 style="margin-top:14px">Outcome</h2>
+    <div class="out" id="out"></div>
+    <div class="note" id="note"></div>
+  </aside>
+</div>
+</div>
+
+<script>
+/* ---------- vijf echte momenten als vertrekpunt ---------- */
+const PRESETS=[
+ {name:'17:50 — SMB capped', d:'a rise: big need, capped SMB',
+  v:{bg:9.2, ebg:12.6, minPred:10.4, minGuard:9.7, target:6.1, thrSet:4.4, isf:2.5, iob:2.01, basal:0.35, maxSMBmin:69, ratio:0.5, lastBolus:10}},
+ {name:'22:27 — hypo guard', d:'worst-case forecast 0.3: everything stops',
+  v:{bg:10.7, ebg:3.9, minPred:3.1, minGuard:0.3, target:6.1, thrSet:4.4, isf:2.5, iob:3.37, basal:0.45, maxSMBmin:69, ratio:0.5, lastBolus:10}},
+ {name:'13:12 — below target', d:'eventualBG under target: wind down',
+  v:{bg:6.6, ebg:5.7, minPred:5.3, minGuard:5.3, target:6.1, thrSet:4.4, isf:2.1, iob:0.41, basal:0.35, maxSMBmin:69, ratio:0.5, lastBolus:10}},
+ {name:'15:30 — nothing needed', d:'negative need: low temp',
+  v:{bg:9.1, ebg:7.2, minPred:5.5, minGuard:5.5, target:6.1, thrSet:4.4, isf:2.5, iob:3.3, basal:0.35, maxSMBmin:69, ratio:0.5, lastBolus:10}},
+ {name:'13:39 — SMB interval', d:'temp target active; SMB must wait',
+  v:{bg:6.8, ebg:12.7, minPred:10.2, minGuard:6.9, target:8.5, thrSet:5.4, isf:5.0, iob:0.78, basal:0.35, maxSMBmin:69, ratio:0.5, lastBolus:2}},
+];
+const SLIDERS=[
+ ['bg','current BG',2,20,0.1],['ebg','eventualBG',2,20,0.1],['minPred','minPredBG',0,16,0.1],
+ ['minGuard','minGuardBG',-1,12,0.1],['target','target',5,10,0.1],['thrSet','threshold setting',3.3,5.5,0.1],
+ ['isf','ISF (mmol/U)',0.5,8,0.1],['iob','IOB (U)',0,8,0.05],['basal','sched. basal (U/h)',0.05,2,0.05],
+ ['maxSMBmin','maxSMBBasalMinutes',15,180,1],['ratio','smb_delivery_ratio',0.1,1,0.05],['lastBolus','min since last SMB',0,15,0.5],
+];
+let cur={...PRESETS[0].v}, base={...PRESETS[0].v}, activePreset=0;
+
+/* ---------- de beslissingslaag, getrouw nagebouwd ---------- */
+function decide(v){
+  const r={vals:{},taken:{},limits:[]};
+  const round05=x=>Math.max(0,Math.round(x*20)/20);
+  /* threshold (≈ l. 621) */
+  let thrBase=v.target-0.5*(v.target-2.2);
+  const thr=Math.min(Math.max(v.thrSet,thrBase,3.3),6.7);
+  r.vals.thrBase=thrBase; r.vals.thr=thr;
+  /* hypo guard (≈ l. 1261) */
+  if(v.bg<thr || v.minGuard<thr){
+    r.taken.guard=true;
+    const under=v.target-v.minGuard, wc=under/v.isf;
+    let dur=Math.round(60*wc/v.basal/30)*30; dur=Math.min(120,Math.max(30,dur));
+    r.vals.under=under; r.vals.wc=wc; r.vals.gdur=dur;
+    r.out={kind:'guard',rate:0,dur,smb:0};
+    r.limits.push(['hypo guard','--lo']);
+    return r;
+  }
+  r.taken.noguard=true;
+  /* below target (≈ l. 1322) */
+  if(v.ebg<v.target){
+    r.taken.low=true;
+    const req=Math.round(2*Math.min(0,(v.ebg-v.target)/v.isf)*100)/100;
+    const rate=round05(v.basal+2*req);
+    r.vals.lreq=req; r.vals.lrate=rate;
+    r.out={kind:'low',rate,dur:30,smb:0,req};
+    r.limits.push(['forecast < target','--zt']);
+    return r;
+  }
+  r.taken.need=true;
+  /* insulinReq (≈ l. 1463) */
+  let req=(Math.min(v.minPred,v.ebg)-v.target)/v.isf;
+  req=Math.round(req*100)/100;
+  r.vals.req0=req;
+  const maxIOB=10; /* niet in Nightscout-export; ruim gekozen */
+  if(req>maxIOB-v.iob){ req=Math.round((maxIOB-v.iob)*100)/100; r.taken.iobclip=true; }
+  r.vals.req=req;
+  if(req<=0.01){
+    r.out={kind:'idle',rate:round05(v.basal+2*req),dur:30,smb:0,req};
+    return r;
+  }
+  r.taken.smb=true;
+  /* SMB (≈ l. 1534–1600) */
+  const maxBolus=Math.round(v.basal*v.maxSMBmin/60*10)/10;
+  let micro=Math.min(req*v.ratio,maxBolus);
+  micro=Math.floor(micro*20)/20;
+  r.vals.maxBolus=maxBolus; r.vals.micro0=Math.round(req*v.ratio*100)/100;
+  const SMBInterval=3;
+  let smb=0;
+  if(v.lastBolus>SMBInterval){ r.taken.smbgo=true; smb=micro; }
+  else { r.taken.smbwait=true; r.limits.push(['SMB interval','--smbwait']); }
+  if(smb>0&&req*v.ratio>maxBolus){ r.limits.push(['maxBolus','--hi']); r.taken.cap=true; }
+  r.vals.smb=smb;
+  /* temp basal + maxSafeBasal (≈ l. 1478 · 1611) */
+  let rate=round05(v.basal+2*req);
+  const maxDaily=Math.max(v.basal,0.5);
+  const maxSafe=Math.round(Math.min(3.0, 3*maxDaily, 4*v.basal)*100)/100;
+  r.vals.rate0=rate; r.vals.maxSafe=maxSafe;
+  if(rate>maxSafe){ rate=maxSafe; r.taken.basalcap=true; r.limits.push(['maxSafeBasal','--serious']); }
+  r.vals.rate=rate;
+  /* na een SMB parkeert oref een compenserende nul/lage temp (≈ l. 1553) */
+  const finalRate=smb>0?0:rate, finalDur=30;
+  r.out={kind:smb>0?'smb':'temp',rate:finalRate,dur:finalDur,smb,req};
+  return r;
+}
+
+/* ---------- de code, regel voor regel ---------- */
+const V=k=>`<span class="cv" data-k="${k}">·</span>`;      /* invoer-chip */
+const R=k=>`<span class="cv res" data-r="${k}">·</span>`;  /* berekende waarde */
+const LINES=[
+ {t:'// ── the decision layer of determine-basal.js — live mirror ──',c:'ph'},
+ {t:'// threshold: safety floor from target, raised by your setting        ≈ l. 621'},
+ {t:`threshold = target ${V('target')} − 0.5 × (target − 2.2)  = ${R('thrBase')}`},
+ {t:`threshold = clamp( max( setting ${V('thrSet')}, ${R('thrBase')} ), 3.3 … 6.7 )  = ${R('thr')}`},
+ {t:''},
+ {t:'// 1 · HYPO GUARD — checked first, beats everything                    ≈ l. 1261',c:'ph'},
+ {t:`if ( bg ${V('bg')} < threshold ${R('thr')}  ||  minGuardBG ${V('minGuard')} < ${R('thr')} ) {`,br:'guard',tagYes:'FIRES',tagNo:'not taken'},
+ {t:`    bgUndershoot        = target ${V('target')} − minGuardBG ${V('minGuard')}  = ${R('under')}`,blk:'guard'},
+ {t:`    worstCaseInsulinReq = ${R('under')} ÷ ISF ${V('isf')}  = ${R('wc')} U`,blk:'guard'},
+ {t:`    durationReq         = clamp( 60 × ${R('wc')} ÷ basal ${V('basal')}, 30…120 )  = ${R('gdur')} m`,blk:'guard'},
+ {t:`    return zeroTemp( 0 U/h, ${R('gdur')} m )   // no SMB, whatever BG is`,blk:'guard'},
+ {t:'}'},
+ {t:''},
+ {t:'// 2 · BELOW TARGET — enough insulin on board already                  ≈ l. 1322',c:'ph'},
+ {t:`if ( eventualBG ${V('ebg')} < target ${V('target')} ) {`,br:'low',tagYes:'TAKEN',tagNo:'not taken'},
+ {t:`    insulinReq = 2 × min(0, (eventualBG − target) ÷ ISF)  = ${R('lreq')} U   // ×2 for hypo safety`,blk:'low'},
+ {t:`    return lowTemp( basal + 2×insulinReq → ${R('lrate')} U/h, 30 m )`,blk:'low'},
+ {t:'}'},
+ {t:''},
+ {t:'// 3 · THE NEED — forecast gap in units                                ≈ l. 1463',c:'ph'},
+ {t:`insulinReq = ( min( minPredBG ${V('minPred')}, eventualBG ${V('ebg')} ) − target ${V('target')} ) ÷ ISF ${V('isf')}  = ${R('req0')} U`},
+ {t:`insulinReq = min( insulinReq, maxIOB − IOB ${V('iob')} )  = ${R('req')} U`,br:'iobclip',tagYes:'CLIPPED',tagNo:'no clip'},
+ {t:''},
+ {t:'// 4 · SMB — half the need, fenced three ways                          ≈ l. 1534',c:'ph'},
+ {t:`maxBolus   = basal ${V('basal')} × maxSMBBasalMinutes ${V('maxSMBmin')} ÷ 60  = ${R('maxBolus')} U`},
+ {t:`microBolus = min( insulinReq × ratio ${V('ratio')} = ${R('micro0')},  maxBolus ${R('maxBolus')} )`,br:'cap',tagYes:'CAP WINS',tagNo:'ratio wins'},
+ {t:`if ( lastBolusAge ${V('lastBolus')} m > SMBInterval 3 m )  → deliver SMB = ${R('smb')} U`,br:'smbgo',tagYes:'DELIVERS',tagNo:''},
+ {t:`else  → "Waiting to microbolus again"  (SMB = 0 this cycle)`,br:'smbwait',tagYes:'WAITING',tagNo:''},
+ {t:''},
+ {t:'// 5 · TEMP BASAL — the revocable channel, with a ceiling              ≈ l. 1478',c:'ph'},
+ {t:`rate         = basal ${V('basal')} + 2 × insulinReq ${R('req')}  = ${R('rate0')} U/h`},
+ {t:`maxSafeBasal = min( pump max, 3 × max daily basal, 4 × basal )  = ${R('maxSafe')} U/h`},
+ {t:`rate         = min( rate, maxSafeBasal )  = ${R('rate')} U/h`,br:'basalcap',tagYes:'CAPPED',tagNo:'under ceiling'},
+ {t:'after an SMB: park a compensating zero temp as buffer                // ≈ l. 1553'},
+];
+function esc(s){return s;}
+const codeEl=document.getElementById('code');
+codeEl.innerHTML=LINES.map((l,i)=>{
+  const cls='ln'+(l.c?' '+l.c:'')+(String(l.t).startsWith('//')&&!l.c?' cm':'');
+  const open=l.blk?`<span class="blkin" data-blk="${l.blk}">`:'';
+  return `<span class="${cls}" data-br="${l.br||''}" data-blk="${l.blk||''}"><span class="no">${l.t?i+1:''}</span>${l.t}${l.br?`<span class="tag" data-tag="${l.br}"></span>`:''}</span>`;
+}).join('');
+
+/* ---------- render ---------- */
+const fmt=(x,dec)=>x==null?'—':(+x).toFixed(dec!=null?dec:(Math.abs(x)>=10?1:2)).replace(/\.00$/,'.0');
+function render(){
+  const r=decide(cur);
+  /* invoer-chips */
+  codeEl.querySelectorAll('.cv[data-k]').forEach(e=>{
+    const k=e.dataset.k; const s=SLIDERS.find(s=>s[0]===k);
+    e.textContent=fmt(cur[k], s&&s[4]>=1?0:s&&s[4]>=0.1?1:2);
+    e.classList.toggle('res',false);
+  });
+  /* berekende chips */
+  codeEl.querySelectorAll('.cv[data-r]').forEach(e=>{
+    const v=r.vals[e.dataset.r];
+    e.textContent=v==null?'—':fmt(v, e.dataset.r==='gdur'?0:e.dataset.r==='thr'||e.dataset.r==='thrBase'?1:2);
+  });
+  /* takken dimmen + tags */
+  const dimBlk={guard:!r.taken.guard, low:!(r.taken.low)};
+  codeEl.querySelectorAll('.ln').forEach(e=>{
+    const blk=e.dataset.blk;
+    if(blk) e.style.opacity = dimBlk[blk] ? .32 : 1;
+  });
+  /* alles na een vroege exit dimmen */
+  const exit = r.taken.guard? 12 : r.taken.low? 18 : 999;
+  codeEl.querySelectorAll('.ln').forEach((e,i)=>{
+    if(i>exit && !e.dataset.blk) e.style.opacity=.32;
+    else if(!e.dataset.blk) e.style.opacity=1;
+  });
+  codeEl.querySelectorAll('.tag').forEach(t=>{
+    const br=t.dataset.tag;
+    const yes=!!r.taken[br];
+    const meta={guard:['--lo'],low:['--zt'],iobclip:['--hi'],cap:['--hi'],smbgo:['--good'],smbwait:['--smbwait'],basalcap:['--serious']}[br];
+    const line=LINES.find(l=>l.br===br);
+    if(br==='smbgo'&&!r.taken.smb){ t.textContent=''; return; }
+    if(br==='smbwait'&&!r.taken.smb){ t.textContent=''; return; }
+    if(yes){ t.textContent=line.tagYes; t.className='tag yes fire'; t.style.background=`var(${meta[0]})`; t.style.color='#fff'; }
+    else { t.textContent=line.tagNo||''; t.className='tag no'; t.style.background='none'; t.style.color='var(--muted)'; }
+  });
+  /* uitkomst */
+  const o=r.out, outEl=document.getElementById('out');
+  const kindTxt={guard:'zero temp — hypo guard',low:'wind down',idle:'nothing needed',smb:'SMB + buffer',temp:'temp basal only'}[o.kind];
+  outEl.innerHTML=`<div style="font-size:11px;color:var(--muted)">${kindTxt}</div>
+    <div class="big">SMB ${fmt(o.smb)} U · temp ${fmt(o.rate)} U/h${o.dur?` · ${o.dur} m`:''}</div>
+    ${o.req!=null?`<div class="why">need ${fmt(o.req)} U → given now ${fmt(o.smb)} U${o.req>0?` (${Math.round(o.smb/o.req*100)}%)`:''}</div>`:''}
+    <div style="margin-top:6px">${r.limits.length?r.limits.map(l=>`<span class="lim"><i style="background:var(${l[1]})"></i>${l[0]}</span>`).join(''):'<span class="lim"><i style="background:var(--good)"></i>no limits hit</span>'}</div>`;
+  /* slider-highlight bij afwijking van het echte rondje */
+  document.querySelectorAll('.sl').forEach(el=>{
+    const k=el.dataset.k;
+    el.classList.toggle('changed', Math.abs(cur[k]-base[k])>1e-9);
+  });
+  document.getElementById('note').textContent = Object.keys(base).some(k=>Math.abs(cur[k]-base[k])>1e-9)
+    ? 'Values in orange differ from the real cycle — this outcome is hypothetical.'
+    : `This is the real ${PRESETS[activePreset].name.split(' — ')[0]} cycle from the data (${PRESETS[activePreset].d}).`;
+}
+
+/* ---------- sliders ---------- */
+const slBox=document.getElementById('sliders');
+slBox.innerHTML=SLIDERS.map(([k,lab,mn,mx,st])=>`
+  <div class="sl" data-k="${k}">
+    <label for="s_${k}">${lab}</label>
+    <input type="range" id="s_${k}" min="${mn}" max="${mx}" step="${st}">
+    <span class="v" id="v_${k}"></span>
+  </div>`).join('');
+SLIDERS.forEach(([k,,mn,mx,st])=>{
+  const inp=document.getElementById('s_'+k);
+  inp.addEventListener('input',()=>{ cur[k]=+inp.value; document.getElementById('v_'+k).textContent=fmt(cur[k],st>=1?0:st>=0.1?1:2); render(); });
+});
+function syncSliders(){
+  SLIDERS.forEach(([k,,mn,mx,st])=>{
+    document.getElementById('s_'+k).value=cur[k];
+    document.getElementById('v_'+k).textContent=fmt(cur[k],st>=1?0:st>=0.1?1:2);
+  });
+}
+/* klik op een chip in de code → flash de bijbehorende slider */
+codeEl.addEventListener('click',ev=>{
+  const cv=ev.target.closest('.cv[data-k]'); if(!cv) return;
+  const row=document.querySelector(`.sl[data-k="${cv.dataset.k}"]`);
+  if(row){ row.scrollIntoView({block:'nearest'}); row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash');
+    document.getElementById('s_'+cv.dataset.k).focus({preventScroll:true}); }
+});
+/* presets */
+const preBox=document.getElementById('presets');
+PRESETS.forEach((p,i)=>{
+  const b=document.createElement('button'); b.className='pre'; b.textContent=p.name; b.title=p.d;
+  b.onclick=()=>{ activePreset=i; base={...p.v}; cur={...p.v}; syncSliders(); render();
+    preBox.querySelectorAll('.pre').forEach((x,j)=>x.setAttribute('aria-pressed',String(j===i))); };
+  preBox.appendChild(b);
+});
+document.getElementById('reset').onclick=()=>{ cur={...base}; syncSliders(); render(); };
+preBox.querySelector('.pre').setAttribute('aria-pressed','true');
+syncSliders(); render();
+</script>
