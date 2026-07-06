@@ -146,6 +146,7 @@ details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 .vr{background:none;border:none;border-bottom:1px dotted var(--muted);padding:0;font:inherit;color:inherit;cursor:pointer}
 .vrow{display:flex;flex-wrap:wrap;gap:4px 10px;margin:5px 0 2px;font-size:11.5px}
 .vrow .vr{color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
+.vr .vv{color:var(--ink);font-weight:600;margin-left:4px;border-bottom:none}
 .vardef{font-size:12px;color:var(--ink2);background:var(--page);border-left:3px solid var(--iob);padding:5px 9px;margin:6px 0;border-radius:0 6px 6px 0}
 .vardef b{font-family:ui-monospace,Menlo,monospace}
 details.src{margin-top:4px}
@@ -767,7 +768,11 @@ const VD={
  maxSafeBasal:'maxSafeBasal — temp-basal ceiling: min(max basal setting, 3 × highest scheduled basal, 4 × current scheduled basal).',
  enacted:'enacted — the pump confirmed this command. "Suggested only" means it was computed but not (yet) delivered.',
 };
-function vchips(list){ return '<div class="vrow">'+list.map(v=>`<button type="button" class="vr" data-v="${v}" aria-expanded="false">${v}</button>`).join('')+'</div>'; }
+let VALS={};
+function vchips(list){ return '<div class="vrow">'+list.map(v=>{
+  const val=VALS[v];
+  return `<button type="button" class="vr" data-v="${v}" aria-expanded="false">${v}${val?`<span class="vv">${val}</span>`:''}</button>`;
+}).join('')+'</div>'; }
 function srcBlock(k){ const x=SRC[k];
   return `<details class="src"><summary>source · ${x.loc}</summary><pre>${x.code.replace(/</g,'&lt;')}</pre><a href="${GHB}${x.gh}" target="_blank" rel="noopener">view in nightscout/trio-oref ↗</a></details>`; }
 const dash='—';
@@ -853,6 +858,39 @@ function buildSteps(c,p){
   const rows=[];
   const skipAfter = n => exited && n>exited;
   const cy=t=>`\n<span class="cy">» ${t}</span>`;
+  /* alle afgeleide grootheden centraal, zodat elke stap en elke chip ermee kan rekenen */
+  const naive=c&&isfV!=null?M(c.bg)-c.iob*isfV:null;
+  const gm=c?{IOB:minOf('IOB'),COB:minOf('COB'),UAM:minOf('UAM'),ZT:minOf('ZT')}:{};
+  const capVal = capS ? +(capS.why.match(/capped at ([0-9.]+)/)?.[1]??NaN) : null;
+  const mmB=capB?capB.why.match(/basal ([0-9.]+) U\/h, capped at the ([0-9.]+)/):null;
+  const ratioNum=(!capS&&smbGiven>0&&req>0.01)?smbGiven/req:null;
+  let impliedF=null;
+  if(c&&pr.COB&&pr.UAM&&p.minGuard!=null&&gm.COB!=null&&gm.UAM!=null&&Math.abs(gm.COB-gm.UAM)>(isMmol()?0.05:1))
+    impliedF=Math.max(0,Math.min(1,(p.minGuard-gm.UAM)/(gm.COB-gm.UAM)));
+  const impliedSmbMin=(capVal!=null&&sched>0)?Math.round(capVal/sched*60):null;
+  VALS = c ? {
+    IOB:F2(c.iob)+' U', COB:(c.cob||0)+' g',
+    autosens:p.autosens!=null?('\u00d7'+p.autosens):'\u2014',
+    ISF:isfV!=null?fBG(isfV):'\u2014', CR:p.cr!=null?(p.cr+' g/U'):'\u2014',
+    TDD:c.tdd!=null?(f1(c.tdd)+' U'):'\u2014',
+    BGI:p.bgi!=null?String(p.bgi):'\u2014', deviation:p.dev!=null?((p.dev>0?'+':'')+p.dev):'\u2014',
+    delta:'\u2014', short_avgdelta:'\u2014',
+    naive_eventualBG:naive!=null?fBG(naive):'\u2014',
+    eventualBG:c.ebg!=null?fBG(M(c.ebg)):'\u2014',
+    minPredBG:minPred!=null?((minApprox?'\u2248':'')+fBG(minPred)):'\u2014',
+    minGuardBG:p.minGuard!=null?fBG(p.minGuard):'\u2014',
+    threshold:fBG(thr),
+    ZT:gm.ZT!=null?('\u2198'+fBG(gm.ZT)):'\u2014',
+    UAM:gm.UAM!=null?('\u2198'+fBG(gm.UAM)):'\u2014',
+    insulinReq:req!=null?(F2(req)+' U'):'\u2014',
+    maxIOB:'\u2014 (not exported)',
+    maxBolus:capVal!=null?(F2(capVal)+' U'):'\u2014',
+    smb_delivery_ratio:ratioNum!=null?('\u2248'+ratioNum.toFixed(2)):'0.5 (default)',
+    SMBInterval:wait?'waiting':'\u2014',
+    maxSafeBasal:mmB?(mmB[2]+' U/h'):'\u2014',
+    fractionCarbsLeft:impliedF!=null?('\u2248'+impliedF.toFixed(2)):'\u2014',
+    enacted:c.rec?'yes':'suggested only',
+  } : {};
 
   /* conclusie-blok */
   let conc='';
@@ -888,29 +926,28 @@ function buildSteps(c,p){
     if(ztM!=null)chips.push(`<span style="color:var(--txt-zt)">ZT↘${F(ztM)}</span>`);
     if(cobE!=null)chips.push(`<span style="color:var(--txt-cob)">COB→${F(cobE)}</span>`);
     if(uamE!=null)chips.push(`<span style="color:var(--txt-uam)">UAM→${F(uamE)}</span>`); }
-  const naive=c&&isfV!=null?M(c.bg)-c.iob*isfV:null;
   rows.push({id:'forecast',lab:'forecast',
     val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
        :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
-    body:(c?sparkline(c,p.thr??4.4):'')+
+    body:(c?sparkline(c,thr):'')+
       `<p>Four futures are drawn: <b>IOB</b> — active insulin plays out; <b>ZT</b> — worst case if delivery stopped now; <b>COB</b> — announced carbs still absorbing; <b>UAM</b> — the current <i>unexplained</i> rise carried forward and decayed at the slope of the last hour’s deviations. Dosing follows the most cautious relevant curve — high side: the highest; low side: the lowest. With SMB forecasts enabled, eventualBG is refined from the curve endpoints, which is why it can sit well above naive + deviation.</p>
+      ${c?`<div class="frm">${['IOB','ZT','COB','UAM'].filter(k=>pr[k]&&pr[k].length>1).map(k=>{
+        const a=pr[k];
+        return `<span style="color:var(--txt-${k.toLowerCase()})">${k.padEnd(3)}</span> ${fBG(M(a[0]))} → min ${fBG(M(Math.min(...a)))} → end ${fBG(M(a[a.length-1]))}`;
+      }).join('\n')}</div>`:''}
       <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with 15-min, then 45-min avg delta\neventualBG = naive_eventualBG + deviation${naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>`
       +vchips(['BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
 
   /* 3 — hypo guard: afleiding van minGuardBG + nul-temp-dimensionering */
   let guardDeriv='';
   if(c){
-    const gm={IOB:minOf('IOB'),COB:minOf('COB'),UAM:minOf('UAM'),ZT:minOf('ZT')};
     const gchips=['IOB','COB','UAM','ZT'].filter(k=>gm[k]!=null)
       .map(k=>`<span style="color:var(--txt-${k.toLowerCase()})">${k}↘${fBG(gm[k])}</span>`).join(' ');
     const hasCOB=!!pr.COB, hasUAM=!!pr.UAM;
     let grule, gdetail='';
     if(hasCOB&&hasUAM){
       grule='carbs still absorbing & UAM on\n→ minGuardBG = f × minCOBGuard + (1−f) × minUAMGuard';
-      if(p.minGuard!=null&&gm.COB!=null&&gm.UAM!=null&&Math.abs(gm.COB-gm.UAM)>(isMmol()?0.05:1)){
-        let gf=(p.minGuard-gm.UAM)/(gm.COB-gm.UAM); gf=Math.max(0,Math.min(1,gf));
-        gdetail=`logged ${fBG(p.minGuard)} → implied f ≈ ${gf.toFixed(2)} (fractionCarbsLeft)`;
-      }
+      if(impliedF!=null) gdetail=`logged ${fBG(p.minGuard)} → implied f ≈ ${impliedF.toFixed(2)} (fractionCarbsLeft)`;
     } else if(hasCOB){ grule='carbs active, UAM off → minGuardBG = minCOBGuardBG'; }
     else if(hasUAM){ grule='no carbs absorbing, UAM on → minGuardBG = minUAMGuardBG'; }
     else { grule='no carbs, no UAM → minGuardBG = minIOBGuardBG'; }
@@ -954,7 +991,6 @@ function buildSteps(c,p){
       +vchips(['insulinReq','minPredBG','maxIOB'])+srcBlock('need')});
 
   /* 6 — SMB */
-  const capVal = capS ? +(capS.why.match(/capped at ([0-9.]+)/)?.[1]??NaN) : null;
   let smbVal, smbSt=null, smbDot=null;
   if(skipAfter(6)||idle){ smbVal = idle?'skipped — no need':'not reached'; smbSt='skip'; }
   else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
@@ -966,12 +1002,11 @@ function buildSteps(c,p){
     val:smbVal,
     body:((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
       `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three safety limits apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs — and SMBs are only considered at all while BG is above the safety threshold (and not right after a &gt;20%-of-BG jump, which suggests a sensor calibration). The remainder waits for the next cycles.</p>
-      <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)   // ratio setting, default 0.5 — not part of Nightscout exports${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(capS?`cap ${capVal!=null?F2(capVal):'?'} U wins → ${F2(smbGiven)} U`:`${F2(req)} × ratio(≈${(smbGiven/req).toFixed(2)}) = ${F2(smbGiven)} U`):''}</div>`
+      <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)   // ratio setting, default 0.5 — not part of Nightscout exports${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(capS?`cap ${capVal!=null?F2(capVal):'?'} U wins → ${F2(smbGiven)} U${impliedSmbMin!=null?` · implies max(UAM)SMBBasalMinutes ≈ ${impliedSmbMin} m (cap ÷ basal ${f2(sched)})`:''}`:`${F2(req)} × ratio(≈${(smbGiven/req).toFixed(2)}) = ${F2(smbGiven)} U`):''}</div>`
       +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
 
   /* 7 — basal */
   let basVal, basSt=null, basDot=null;
-  const mmB=capB?capB.why.match(/basal ([0-9.]+) U\/h, capped at the ([0-9.]+)/):null;
   if(skipAfter(7)){ basVal='not reached'; basSt='skip'; }
   else if(!c){ basVal='temp = basal + 2×insulinReq, capped at maxSafeBasal'; }
   else if(capB){ basVal=`req ${mmB?.[1]??''} U/h → <b>${mmB?.[2]??''} U/h</b> <span class="warn" style="color:var(--txt-serious)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--serious'; }
@@ -1029,7 +1064,7 @@ panel.addEventListener('click',ev=>{
       const wasOpen = def.style.display!=='none'&&def.dataset.v===vr.dataset.v;
       body.querySelectorAll('.vr').forEach(x=>x.setAttribute('aria-expanded','false'));
       if(wasOpen){ def.style.display='none'; }
-      else { def.innerHTML='<b>'+vr.dataset.v+'</b> — '+d.slice(d.indexOf('—')+2); def.dataset.v=vr.dataset.v; def.style.display='block'; vr.setAttribute('aria-expanded','true'); } }
+      else { const cur=VALS[vr.dataset.v]; def.innerHTML='<b>'+vr.dataset.v+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+d.slice(d.indexOf('—')+2); def.dataset.v=vr.dataset.v; def.style.display='block'; vr.setAttribute('aria-expanded','true'); } }
     return;
   }
   const row=ev.target.closest('.srow');
