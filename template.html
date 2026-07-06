@@ -199,7 +199,7 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
     <div class="chartbox" id="boxI"></div>
     <div class="chart-title">Safety limits <span id="limlegend" style="display:contents"></span></div>
     <div class="chartbox limstrip" id="boxL"></div>
-    <p class="hint">&#8592; &#8594; steps through loop cycles · clicking past the last point selects the latest</p>
+    <p class="hint">&#8592; &#8594; steps through loop cycles — and across midnight into the next/previous day</p>
   </div>
 
   <aside class="panel" id="panel">
@@ -658,15 +658,37 @@ function attachHover(svg,dd,which){
 }
 
 /* keyboard nav */
+let stepping=false;
+async function stepCycle(dir){
+  if(stepping) return;
+  const dd=dayData(curDay);
+  const i=selCycle?dd.cycles.indexOf(selCycle):-1;
+  if(i>=0){
+    const j=i+dir;
+    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; renderAll(false); return; }
+  } else if(dd.cycles.length){ /* nog niets geselecteerd: begin bij het laatste rondje */
+    selCycle=dd.cycles[dd.cycles.length-1]; renderAll(false); return;
+  }
+  /* voorbij de dagrand: door naar de aangrenzende dag */
+  const nd=curDay+dir*86400;
+  if(!LIVE && !days.includes(nd)) return;
+  if(LIVE && nd>todayStart()) return;
+  stepping=true;
+  try{
+    selCycle=null;
+    await selectDay(nd);
+    const dd2=dayData(curDay);
+    if(dd2.cycles.length){
+      selCycle = dir>0 ? dd2.cycles[0] : dd2.cycles[dd2.cycles.length-1];
+      renderAll(false);
+    }
+  } finally { stepping=false; }
+}
 document.addEventListener('keydown',ev=>{
   if(ev.target.matches('input,textarea,select')) return;
   if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
-  const dd=dayData(curDay);
-  if(!selCycle){ if(dd.cycles.length){ selCycle=dd.cycles[dd.cycles.length-1]; renderAll(false); ev.preventDefault(); } return; }
-  const i=dd.cycles.indexOf(selCycle);
-  if(i<0) return;
-  const j=ev.key==='ArrowLeft'?i-1:i+1;
-  if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; renderAll(false); ev.preventDefault(); }
+  ev.preventDefault();
+  stepCycle(ev.key==='ArrowLeft'?-1:1);
 });
 
 /* ---------- panel ---------- */
@@ -903,8 +925,8 @@ function renderPanel(dd){
   if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${rows[rows.length-1].val.replace(/<[^>]+>/g,'')}`;
   if(c){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
-    if(pb) pb.onclick=()=>{ if(i>0){selCycle=dd.cycles[i-1]; renderAll(false); document.getElementById('prevC')?.focus();} };
-    if(nb) nb.onclick=()=>{ if(i<dd.cycles.length-1){selCycle=dd.cycles[i+1]; renderAll(false); document.getElementById('nextC')?.focus();} };
+    if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
+    if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
   }
 }
 panel.addEventListener('click',ev=>{
