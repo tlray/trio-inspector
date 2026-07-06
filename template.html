@@ -159,6 +159,12 @@ details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::before{content:'▸ ';color:var(--muted)}
 details.more[open]>summary::before{content:'▾ '}
 details.more>.mbody{padding:0 10px 4px}
+.pcard{margin-top:6px;border:1px solid var(--grid);border-left:3px solid var(--grid);border-radius:7px;background:var(--page);padding:6px 9px;font-size:11.5px;line-height:1.45;color:var(--ink2);min-height:46px}
+.pcard .pchead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:2px}
+.pcard .pchead b{font-size:12px}
+.pcard .pchead span{color:var(--muted);font:10px ui-monospace,SFMono-Regular,Menlo,monospace}
+#sparksvg [data-pt]{cursor:pointer}
+#sparksvg [data-pt]:hover{stroke:var(--muted);stroke-width:1.2}
 .conc{margin:0 0 10px;padding:8px 10px;border:1px solid var(--grid);border-radius:8px;background:var(--page)}
 .crow{display:grid;grid-template-columns:74px 1fr 56px 32px;gap:7px;align-items:center}
 .crow .clbl{white-space:nowrap;font-size:10px}
@@ -801,15 +807,15 @@ function fanPoints(c){
   const endI=k=>{ const a=pr[k]; if(!a||a.length<2) return null; return {k,i:a.length-1,v:M(a[a.length-1])}; };
   const mins={}, ends={};
   for(const k of ['IOB','ZT','COB','UAM']){ const m=minI(k,0); if(m) mins[k]=m; const e=endI(k); if(e) ends[k]=e; }
-  function resolve(val,cands){
+  function resolve(val,cands,noBlend){
     let best=null;
     for(const x of cands){ const d=Math.abs(x.v-val); if(d<tol&&(!best||d<best.d)) best={pt:x,d}; }
     if(best) return {i:best.pt.i,v:best.pt.v,k:best.pt.k,srcs:[]};
     let lo=null,hi=null; /* blend: omsluitend paar → punt op de lijn tussen beide bronnen */
-    for(const x of cands){ if(x.v<=val&&(!lo||x.v>lo.v)) lo=x; if(x.v>=val&&(!hi||x.v<hi.v)) hi=x; }
+    if(!noBlend) for(const x of cands){ if(x.v<=val&&(!lo||x.v>lo.v)) lo=x; if(x.v>=val&&(!hi||x.v<hi.v)) hi=x; }
     if(lo&&hi&&hi.v>lo.v){
       const f=(val-lo.v)/(hi.v-lo.v);
-      return {i:lo.i+(hi.i-lo.i)*f,v:val,k:null,srcs:[lo,hi]};
+      return {i:lo.i+(hi.i-lo.i)*f,v:val,k:null,srcs:[lo,hi],f};
     }
     let near=null; /* geen omsluitend paar: zweef naast het dichtstbijzijnde punt */
     for(const x of cands) if(!near||Math.abs(x.v-val)<Math.abs(near.v-val)) near=x;
@@ -827,7 +833,8 @@ function fanPoints(c){
     if(r) decisions.push({kind:'minpred',label:'minPredBG',val:p.minPred,...r});
   }
   if(c.ebg!=null){
-    const r=resolve(M(c.ebg),['UAM','COB','ZT','IOB'].map(k=>ends[k]).filter(Boolean));
+    /* ebg = max(formule, eindpunten): nooit een blend — bij geen match zweven bij het dichtstbijzijnde eindpunt */
+    const r=resolve(M(c.ebg),['UAM','COB','ZT','IOB'].map(k=>ends[k]).filter(Boolean),true);
     if(r) decisions.push({kind:'ebg',label:'eventualBG',val:M(c.ebg),...r});
   }
   return {mins,ends,decisions};
@@ -856,7 +863,7 @@ function layoutLabels(items,b){
 /* env: {xi:i→px, y:v→py (display-units), lo/hi: klembereik, s: schaal, fs: labelfont,
    maxI: laatste zichtbare tick, b:{x0,y0,x1,y1}: labelgrenzen} → lijst tekenspecs */
 function drawFan(c,env){
-  const pr=c.pred||{}, fp=fanPoints(c), specs=[];
+  const pr=c.pred||{}, fp=env.fp||fanPoints(c), specs=[];
   if(!fp) return specs;
   const P=(i,v)=>[env.xi(i),env.y(Math.max(env.lo,Math.min(env.hi,v)))];
   const maxI=env.maxI??1e9, s=env.s;
@@ -901,41 +908,95 @@ let SPARK=null;
 function sparkline(c,thr){
   const pr=c.pred||{}; const keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
   if(!keys.length){ SPARK=null; return ''; }
-  const W=286,H=122,PL=26,PR=8,PT=9,PB=17;
+  /* zo breed als het paneel toelaat; rechts een goot zodat labels naast de lijnen passen */
+  const W=Math.max(300,Math.min(430,((typeof panel!=='undefined'&&panel&&panel.clientWidth)||340)-38));
+  const H=176,PL=28,PR=Math.round(W*0.27),PT=10,PB=18;
   let mn=Infinity,mx=-Infinity;
   for(const k of keys) for(const v of pr[k]){ const m=M(v); if(m<mn)mn=m; if(m>mx)mx=m; }
   mn=Math.min(mn,thr-(isMmol()?0.5:9)); mx=Math.max(mx,M(186));
   const y=v=>H-PB-((v-mn)/(mx-mn))*(H-PT-PB);
   const n=Math.max(...keys.map(k=>pr[k].length));
   const x=i=>PL+i/(n-1)*(W-PL-PR);
-  SPARK={t0:c.t,n,pr,PL,PR,W};
+  SPARK={t0:c.t,n,pr,PL,PR,W,pts:[]};
   const tgt=c.tgt||(isMmol()?6.1:110);
   let out=`<svg class="spark" id="sparksvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%" role="img" aria-label="forecast curves, next 4 hours">`;
-  for(const g of (isMmol()?[4,8,12,16]:[80,140,200,260])) if(g>mn&&g<mx-(isMmol()?0.4:7)){
-    out+=`<line x1="${PL}" x2="${W-PR}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>`;
-    out+=`<text x="${PL-4}" y="${(y(g)+3).toFixed(1)}" text-anchor="end" fill="var(--muted)" style="font:9px ui-monospace,Menlo,monospace">${g}</text>`;
+  for(const g of (isMmol()?[4,6,8,10,12,14,16]:[80,110,140,170,200,230,260])) if(g>mn&&g<mx-(isMmol()?0.4:7)){
+    out+=`<line x1="${PL}" x2="${W-PR+14}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>`;
+    out+=`<text x="${PL-4}" y="${(y(g)+3).toFixed(1)}" text-anchor="end" fill="var(--muted)" style="font:9.5px ui-monospace,Menlo,monospace">${g}</text>`;
   }
   for(let k=0;k<=4;k++){
     const xi=x(Math.min(n-1,k*12));
-    out+=`<text x="${xi.toFixed(1)}" y="${H-4}" text-anchor="${k===0?'start':k===4?'end':'middle'}" fill="var(--muted)" style="font:9px ui-monospace,Menlo,monospace">${hhmm(c.t+k*3600)}</text>`;
+    out+=`<text x="${xi.toFixed(1)}" y="${H-4}" text-anchor="${k===0?'start':'middle'}" fill="var(--muted)" style="font:9.5px ui-monospace,Menlo,monospace">${hhmm(c.t+k*3600)}</text>`;
   }
-  out+=`<line x1="${PL}" x2="${W-PR}" y1="${y(tgt).toFixed(1)}" y2="${y(tgt).toFixed(1)}" stroke="var(--good)" stroke-dasharray="4 3" stroke-width="1" opacity=".8"/>`;
-  out+=`<line x1="${PL}" x2="${W-PR}" y1="${y(thr).toFixed(1)}" y2="${y(thr).toFixed(1)}" stroke="var(--lo)" stroke-dasharray="3 3" stroke-width="1" opacity=".7"/>`;
-  out+=fanSpecStr(drawFan(c,{xi:x,y,lo:mn,hi:mx,s:0.72,fs:8.5,maxI:n-1,
-    b:{x0:PL+1,y0:PT,x1:W-2,y1:H-PB-1}}));
-  out+=`<line id="sparkx" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7"/>`;
+  out+=`<line x1="${PL}" x2="${W-PR+14}" y1="${y(tgt).toFixed(1)}" y2="${y(tgt).toFixed(1)}" stroke="var(--good)" stroke-dasharray="4 3" stroke-width="1" opacity=".8"/>`;
+  out+=`<line x1="${PL}" x2="${W-PR+14}" y1="${y(thr).toFixed(1)}" y2="${y(thr).toFixed(1)}" stroke="var(--lo)" stroke-dasharray="3 3" stroke-width="1" opacity=".7"/>`;
+  const fp=fanPoints(c);
+  out+=fanSpecStr(drawFan(c,{xi:x,y,lo:mn,hi:mx,s:0.85,fs:9.5,maxI:n-1,fp,
+    b:{x0:PL+1,y0:PT,x1:W-3,y1:H-PB-1}}));
+  /* onzichtbare hit-cirkels + uitlegkaart per punt (kleine dots eerst; beslispunten winnen bij overlap) */
+  if(fp){
+    const py=v=>y(Math.max(mn,Math.min(mx,v)));
+    const rel=i=>{const m=Math.round(i)*5;return m<60?`+${m}m`:`+${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`;};
+    const CN={IOB:'--txt-iob',ZT:'--txt-zt',COB:'--txt-cob',UAM:'--txt-uam'};
+    const head=(g,title,col,i)=>`<div class="pchead"><b style="color:var(${col})">${g} ${title}</b><span>${rel(i)} · ${hhmm(c.t+Math.round(i)*300)}</span></div>`;
+    const addPt=(i,v,accent,html)=>{ SPARK.pts.push({X:x(i),Y:py(v),accent,html}); };
+    for(const k in fp.mins){ const m=fp.mins[k];
+      addPt(m.i,m.v,`var(${FANCOL[k]})`, head('●',`${k} minimum ${fBG(m.v)}`,CN[k],m.i)+(k==='ZT'
+        ?`Lowest point of the zero-temp curve — the “all delivery stops now” floor. It never argues for insulin: it floors the averaged forecast and tempers the UAM dosing minimum.`
+        :`Lowest point of the ${k} curve, counting from <i>now</i>. Candidate for minGuardBG — if the chosen guard minimum dips under threshold ${fBG(thr)}, the hypo guard cuts all insulin.`)); }
+    for(const k in fp.ends){ const e=fp.ends[k];
+      addPt(e.i,e.v,`var(${FANCOL[k]})`, head('●',`${k} endpoint ${fBG(e.v)}`,CN[k],e.i)+`Where the ${k} curve lands.`+(k==='COB'||k==='UAM'
+        ?` The COB and UAM endpoints can <i>raise</i> eventualBG above naive + deviation.`
+        :k==='IOB'?` Reference: where BG settles on the insulin already delivered alone.`:` Where the no-delivery future settles.`)); }
+    for(const dc of fp.decisions){
+      const two=dc.srcs.length===2, pct=two?Math.round(dc.f*100):null;
+      const src2=two?`Not on any single curve: ≈${100-pct}% ${dc.srcs[0].k} (${fBG(dc.srcs[0].v)}) + ${pct}% ${dc.srcs[1].k} (${fBG(dc.srcs[1].v)}) — it sits on the dashed line between its two source points. `:'';
+      const near=dc.srcs.length===1?`Logged value; nearest curve point is the ${dc.srcs[0].k} minimum (${fBG(dc.srcs[0].v)}). `:'';
+      let html,accent;
+      if(dc.kind==='guard'){
+        accent=dc.fired?'var(--lo)':(dc.k?`var(${FANCOL[dc.k]})`:'var(--muted)');
+        html=head('○',`minGuardBG ${fBG(dc.val)}`,dc.fired?'--txt-lo':(dc.k?CN[dc.k]:'--ink2'),dc.i)
+          +(dc.k?`The ${dc.k} curve’s minimum — the no-wait floor of the guarding curves (mid-meal it’s blended from COB and UAM by carbs left). `:two?src2+`Blend of the COB/UAM guard minima, weighted by how many announced carbs are still left. `:near)
+          +`vs threshold ${fBG(thr)} → ${dc.fired?`<b style="color:var(--txt-lo)">FIRED — zero temp, SMBs blocked</b>`:'passes'}.`;
+      } else if(dc.kind==='minpred'){
+        accent=dc.k?`var(${FANCOL[dc.k]})`:'var(--muted)';
+        html=head('◌',`minPredBG ${fBG(dc.val)}`,dc.k?CN[dc.k]:'--ink2',dc.i)
+          +(dc.k?`The ${dc.k} curve’s lowest point <i>after</i> the insulin-peak wait (~90 m; 60 m for UAM) — the dip that insulin already underway will fix is skipped. `
+             :two?src2+`oref blends the post-wait minima, weighted by carbs left and tempered by the ZT floor. `:near)
+          +`Caps dosing: insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF.`;
+      } else {
+        accent=dc.k?`var(${FANCOL[dc.k]})`:'var(--muted)';
+        html=head('●',`eventualBG ${fBG(dc.val)}`,dc.k?CN[dc.k]:'--ink2',dc.i)
+          +(dc.k?`Adopted from the ${dc.k} curve’s endpoint — the highest of naive + deviation and the curve endpoints. `
+             :`From the formula naive + deviation — higher than any curve endpoint this cycle. `)
+          +`This is the value compared against target in the next step.`;
+      }
+      addPt(dc.i,dc.v,accent,html);
+    }
+    out+=SPARK.pts.map((p,j)=>`<circle cx="${p.X.toFixed(1)}" cy="${p.Y.toFixed(1)}" r="${j>=Object.keys(fp.mins).length+Object.keys(fp.ends).length?9:7}" fill="transparent" data-pt="${j}"/>`).join('');
+  }
+  out+=`<line id="sparkx" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7" pointer-events="none"/>`;
   out+='</svg>';
   const def=`hover for values · <span style="color:var(--txt-good)">– – target</span> · <span style="color:var(--txt-lo)">– – threshold ${fBG(thr)}</span>`;
   out+=`<div id="sparkro" data-def="${def.replace(/"/g,'&quot;')}" style="font:10.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:15px;color:var(--ink2)">${def}</div>`;
+  const pdef=`<span style="color:var(--muted)">hover a dot to see how that point is determined — small dots: each curve’s minimum &amp; endpoint · labeled markers: the values the decision used</span>`;
+  out+=`<div id="sparkpt" class="pcard" data-def="${pdef.replace(/"/g,'&quot;')}">${pdef}</div>`;
   return out;
 }
 panel.addEventListener('mousemove',ev=>{
-  const ro=document.getElementById('sparkro');
+  const ro=document.getElementById('sparkro'), card=document.getElementById('sparkpt');
   const svg=ev.target.closest&&ev.target.closest('#sparksvg');
   if(!svg||!SPARK){
     if(ro&&ro.dataset.on){ ro.innerHTML=ro.dataset.def; delete ro.dataset.on;
       const xl=document.getElementById('sparkx'); if(xl){xl.setAttribute('x1',-9);xl.setAttribute('x2',-9);} }
+    if(card&&card.dataset.on){ card.innerHTML=card.dataset.def; card.style.borderLeftColor=''; delete card.dataset.on; delete card.dataset.pt; }
     return;
+  }
+  /* uitlegkaart bij hover op een punt; blijft staan tot een ander punt of tot de muis de svg verlaat */
+  const hit=ev.target.closest&&ev.target.closest('[data-pt]');
+  if(hit&&card&&SPARK.pts&&card.dataset.pt!==hit.dataset.pt){
+    const pt=SPARK.pts[+hit.dataset.pt];
+    if(pt){ card.innerHTML=pt.html; card.style.borderLeftColor=pt.accent||''; card.dataset.on='1'; card.dataset.pt=hit.dataset.pt; }
   }
   const r=svg.getBoundingClientRect();
   const plPx=SPARK.PL/SPARK.W*r.width, prPx=SPARK.PR/SPARK.W*r.width;
