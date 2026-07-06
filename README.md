@@ -24,7 +24,7 @@ Everything is one self-contained HTML file: no server, no build step, no depende
 Open `index.html` in a browser (double-click works). On first use it asks for:
 
 - your **Nightscout URL**, and
-- an **access token** with read permission (Nightscout admin → Access tokens).
+- an **access token** with the *readable* role (Nightscout → Admin tools → Subjects).
 
 Both are stored **only in your browser** (`localStorage`) — they are never part of the file, so
 `index.html` is safe to share or host. Fetched days are cached in the browser too (last ~6 days),
@@ -48,8 +48,10 @@ so revisiting is instant; "Today" auto-refreshes when the cache is older than 2 
 `python3 build.py` regenerates `index.html` from the template (and, with `NIGHTSCOUT_URL` /
 `NIGHTSCOUT_TOKEN` set, a personal snapshot).
 
-Units are currently displayed in mmol/L. Times use a fixed UTC+2 offset (`tzOffsetHours` in the
-dataset skeleton) — adjust for your timezone/DST if needed.
+Units follow your Nightscout profile automatically (mmol/L or mg/dL). Times are shown in your
+browser's local timezone (Nightscout stores UTC), DST-safe. The tool reads Trio and other
+oref-based uploads (OpenAPS/AAPS `devicestatus.openaps`); sites uploaded by Loop show glucose
+but no loop decisions.
 
 ## Origin
 
