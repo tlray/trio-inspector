@@ -153,6 +153,12 @@ details.src{margin-top:4px}
 details.src summary{font-size:11px;color:var(--muted);cursor:pointer;padding:2px 0}
 details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
 details.src a{color:var(--iob);font-size:11px;text-decoration:none}
+details.more{margin:7px 0;border:1px solid var(--grid);border-radius:7px;background:var(--page)}
+details.more>summary{font-size:12px;color:var(--ink2);cursor:pointer;padding:6px 10px;font-weight:650;list-style:none}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::before{content:'▸ ';color:var(--muted)}
+details.more[open]>summary::before{content:'▾ '}
+details.more>.mbody{padding:0 10px 4px}
 .conc{margin:0 0 10px;padding:8px 10px;border:1px solid var(--grid);border-radius:8px;background:var(--page)}
 .crow{display:grid;grid-template-columns:74px 1fr 56px 32px;gap:7px;align-items:center}
 .crow .clbl{white-space:nowrap;font-size:10px}
@@ -515,37 +521,15 @@ function renderGlucose(dd,w){
       style:'font:10.5px ui-monospace,Menlo,monospace'},g);
     add(svg,'line',{x1:ML,x2:w-MR,y1:y(g),y2:y(g),stroke:css('--grid'),'stroke-width':1,opacity:.7});
   }
-  /* prediction fan */
+  /* prediction fan — gedeelde renderer, identiek aan de sparkline in stap 2 */
   if(selCycle && selCycle.pred){
-    const colors={IOB:'--iob',ZT:'--zt',COB:'--cob',UAM:'--uam'};
-    for(const k of ['ZT','COB','UAM','IOB']){
-      const arr=selCycle.pred[k]; if(!arr) continue;
-      let dstr='';
-      arr.forEach((v,i)=>{ const t=selCycle.t+i*300; if(t>dd.b+(dd.ext||0)) return;
-        const vy=y(Math.min(maxbg,Math.max(dLO,M(v))));
-        dstr+=(dstr?'L':'M')+X(t).toFixed(1)+' '+vy.toFixed(1)+' '; });
-      add(svg,'path',{d:dstr,fill:'none',stroke:css(colors[k]),'stroke-width':2,
-        opacity:.9,'stroke-dasharray':k==='ZT'?'3 3':'none'});
-    }
-    /* beslispunt-markers op de curves */
-    for(const mk of decisionMarkers(selCycle)){
-      const t=selCycle.t+mk.i*300; if(t>dd.b+(dd.ext||0)) continue;
-      const arr=selCycle.pred[mk.k]; if(!arr) continue;
-      const mx=X(t), my=y(Math.min(maxbg,Math.max(dLO,M(arr[mk.i]))));
-      const ccol=css(colors[mk.k]);
-      if(mk.kind==='ebg'){
-        add(svg,'circle',{cx:mx,cy:my,r:4,fill:ccol,stroke:css('--surface'),'stroke-width':1.5});
-        add(svg,'text',{x:mx+7,y:my+3,fill:css('--ink2'),'paint-order':'stroke',stroke:css('--surface'),'stroke-width':3,
-          style:'font:600 9px ui-monospace,Menlo,monospace'},'eventualBG');
-      } else if(mk.kind==='guard'){
-        add(svg,'circle',{cx:mx,cy:my,r:5,fill:'none',stroke:css(mk.fired?'--lo':'--muted'),'stroke-width':2});
-        if(!mk.blend) add(svg,'text',{x:mx+8,y:my+9,fill:css(mk.fired?'--txt-lo':'--ink2'),'paint-order':'stroke',stroke:css('--surface'),'stroke-width':3,
-          style:'font:600 9px ui-monospace,Menlo,monospace'},'minGuardBG');
-      } else {
-        add(svg,'circle',{cx:mx,cy:my,r:4.5,fill:'none',stroke:ccol,'stroke-width':1.6,'stroke-dasharray':'2 2'});
-        add(svg,'text',{x:mx+7,y:my-5,fill:css('--ink2'),'paint-order':'stroke',stroke:css('--surface'),'stroke-width':3,
-          style:'font:600 9px ui-monospace,Menlo,monospace'},'minPredBG');
-      }
+    const t0=selCycle.t, end=dd.b+(dd.ext||0);
+    /* labels mijden ook de cyclusmarker en de "next day"-notitie */
+    const seeds=[{x:X(t0)-9,y:y(M(selCycle.bg))-9,w:18,h:18}];
+    if(dd.ext) seeds.push({x:X(dd.b)+2,y:STRIP+4,w:132,h:13});
+    for(const sp of drawFan(selCycle,{xi:i=>X(t0+i*300),y,lo:dLO,hi:maxbg,s:1,fs:9.5,
+        maxI:Math.floor((end-t0)/300),avoid:seeds,b:{x0:ML+2,y0:TOP-8,x1:w-MR-2,y1:ha-4}})){
+      const {t,_,...at}=sp; add(svg,t,at,_);
     }
   }
   /* sgv dots — app-kleuren: groen in range, oranje hoog, rood laag */
@@ -803,42 +787,121 @@ function vchips(list){ return '<div class="vrow">'+list.map(v=>{
 function srcBlock(k){ const x=SRC[k];
   return `<details class="src"><summary>source · ${x.loc}</summary><pre>${x.code.replace(/</g,'&lt;')}</pre><a href="${GHB}${x.gh}" target="_blank" rel="noopener">view in nightscout/trio-oref ↗</a></details>`; }
 const dash='—';
-/* beslispunten: welke curvepunten voedden de beslissing (guard-min, minPredBG, eventualBG-eindpunt) */
-function decisionMarkers(c){
-  if(!c||!c.pred) return [];
-  const p=parseReason(c), pr=c.pred, out=[];
-  const tol=isMmol()?0.16:3;
-  const minInfo=k=>{ const a=pr[k]; if(!a||a.length<2) return null;
-    let mi=0; a.forEach((v,i)=>{ if(v<a[mi]) mi=i; }); return {k,i:mi,v:M(a[mi])}; };
-  const endInfo=k=>{ const a=pr[k]; if(!a||a.length<2) return null; return {k,i:a.length-1,v:M(a[a.length-1])}; };
+/* ---- forecast-fan: één gedeelde renderer voor hoofdgrafiek én sparkline ---- */
+const FANCOL={IOB:'--iob',ZT:'--zt',COB:'--cob',UAM:'--uam'};
+/* kandidaat-punten (min + eindpunt per curve) en beslisswaarden (guard/minPred/ebg).
+   Een besliswaarde matcht een curvepunt, of ligt als blend TUSSEN twee bronpunten
+   (srcs), of zweeft bij het dichtstbijzijnde kandidaat-punt. Alles in display-units. */
+function fanPoints(c){
+  if(!c||!c.pred) return null;
+  const p=parseReason(c), pr=c.pred, tol=isMmol()?0.16:3;
+  const minI=(k,from)=>{ const a=pr[k]; if(!a||a.length<2) return null;
+    let mi=Math.min(from||0,a.length-1); for(let i=mi;i<a.length;i++) if(a[i]<a[mi]) mi=i;
+    return {k,i:mi,v:M(a[mi])}; };
+  const endI=k=>{ const a=pr[k]; if(!a||a.length<2) return null; return {k,i:a.length-1,v:M(a[a.length-1])}; };
+  const mins={}, ends={};
+  for(const k of ['IOB','ZT','COB','UAM']){ const m=minI(k,0); if(m) mins[k]=m; const e=endI(k); if(e) ends[k]=e; }
+  function resolve(val,cands){
+    let best=null;
+    for(const x of cands){ const d=Math.abs(x.v-val); if(d<tol&&(!best||d<best.d)) best={pt:x,d}; }
+    if(best) return {i:best.pt.i,v:best.pt.v,k:best.pt.k,srcs:[]};
+    let lo=null,hi=null; /* blend: omsluitend paar → punt op de lijn tussen beide bronnen */
+    for(const x of cands){ if(x.v<=val&&(!lo||x.v>lo.v)) lo=x; if(x.v>=val&&(!hi||x.v<hi.v)) hi=x; }
+    if(lo&&hi&&hi.v>lo.v){
+      const f=(val-lo.v)/(hi.v-lo.v);
+      return {i:lo.i+(hi.i-lo.i)*f,v:val,k:null,srcs:[lo,hi]};
+    }
+    let near=null; /* geen omsluitend paar: zweef naast het dichtstbijzijnde punt */
+    for(const x of cands) if(!near||Math.abs(x.v-val)<Math.abs(near.v-val)) near=x;
+    return near?{i:near.i,v:val,k:null,srcs:[near]}:null;
+  }
+  const decisions=[];
   const guardFired=p.limits.some(l=>l.key==='guard');
   if(p.minGuard!=null){
-    const cands=['UAM','COB','IOB'].map(minInfo).filter(Boolean);
-    let best=null;
-    for(const x of cands){ const d=Math.abs(x.v-p.minGuard); if(d<tol&&(!best||d<best.d)) best={...x,d}; }
-    if(best) out.push({k:best.k,i:best.i,kind:'guard',fired:guardFired});
-    else if(pr.COB&&pr.UAM){ /* blend: markeer beide bronnen */
-      for(const k of ['COB','UAM']){ const m=minInfo(k); if(m) out.push({...m,kind:'guard',fired:guardFired,blend:true}); } }
-  }
-  if(c.ebg!=null){
-    const ev=M(c.ebg); let best=null;
-    for(const x of ['UAM','COB','ZT','IOB'].map(endInfo).filter(Boolean)){
-      const d=Math.abs(x.v-ev); if(d<tol&&(!best||d<best.d)) best={...x,d}; }
-    if(best) out.push({k:best.k,i:best.i,kind:'ebg'});
+    const r=resolve(p.minGuard,['UAM','COB','IOB'].map(k=>mins[k]).filter(Boolean));
+    if(r) decisions.push({kind:'guard',label:'minGuardBG',val:p.minGuard,fired:guardFired,...r});
   }
   if(p.minPred!=null && !(p.minGuard!=null&&Math.abs(p.minPred-p.minGuard)<tol)){
+    /* minPredBG telt pas mee na de insulinepiek-wachttijd: ~90 m (60 m voor UAM) */
+    const r=resolve(p.minPred,[minI('IOB',18),minI('COB',18),minI('UAM',12)].filter(Boolean));
+    if(r) decisions.push({kind:'minpred',label:'minPredBG',val:p.minPred,...r});
+  }
+  if(c.ebg!=null){
+    const r=resolve(M(c.ebg),['UAM','COB','ZT','IOB'].map(k=>ends[k]).filter(Boolean));
+    if(r) decisions.push({kind:'ebg',label:'eventualBG',val:M(c.ebg),...r});
+  }
+  return {mins,ends,decisions};
+}
+/* labels zonder overlap: 8 kandidaat-posities, botsingsscore tegen geplaatste labels + punten */
+function layoutLabels(items,b){
+  const fs=b.fs, cw=fs*0.62, hh=fs+2, placed=(b.avoid||[]).slice(), out=[];
+  const C=[[7,3,'start'],[7,-6,'start'],[7,12,'start'],[-7,3,'end'],[-7,-6,'end'],[-7,12,'end'],[0,-9,'middle'],[0,fs+8,'middle']];
+  const inter=(a,q)=>Math.max(0,Math.min(a.x+a.w,q.x+q.w)-Math.max(a.x,q.x))*Math.max(0,Math.min(a.y+a.h,q.y+q.h)-Math.max(a.y,q.y));
+  for(const it of items){
+    const w=it.text.length*cw;
     let best=null;
-    for(const x of ['IOB','COB','UAM'].map(minInfo).filter(Boolean)){
-      const d=Math.abs(x.v-p.minPred); if(d<tol&&(!best||d<best.d)) best={...x,d}; }
-    if(best) out.push({k:best.k,i:best.i,kind:'minpred'});
+    for(const [dx,dy,anchor] of C){
+      const lx=it.x+dx, ly=it.y+dy;
+      const rx=anchor==='end'?lx-w:anchor==='middle'?lx-w/2:lx;
+      const r={x:rx,y:ly-fs+1,w,h:hh};
+      if(r.x<b.x0||r.x+r.w>b.x1||r.y<b.y0||r.y+r.h>b.y1) continue;
+      const ov=placed.reduce((a,q)=>a+inter(r,q),0);
+      if(!best||ov<best.ov){ best={lx,ly,anchor,r,ov}; if(!ov) break; }
+    }
+    if(!best){ const lx=it.x+7,ly=it.y+3; best={lx,ly,anchor:'start',r:{x:lx,y:ly-fs+1,w:it.text.length*cw,h:hh},ov:0}; }
+    placed.push(best.r); out.push({...it,lx:best.lx,ly:best.ly,anchor:best.anchor});
   }
   return out;
 }
+/* env: {xi:i→px, y:v→py (display-units), lo/hi: klembereik, s: schaal, fs: labelfont,
+   maxI: laatste zichtbare tick, b:{x0,y0,x1,y1}: labelgrenzen} → lijst tekenspecs */
+function drawFan(c,env){
+  const pr=c.pred||{}, fp=fanPoints(c), specs=[];
+  if(!fp) return specs;
+  const P=(i,v)=>[env.xi(i),env.y(Math.max(env.lo,Math.min(env.hi,v)))];
+  const maxI=env.maxI??1e9, s=env.s;
+  for(const k of ['ZT','COB','UAM','IOB']){
+    const a=pr[k]; if(!a||a.length<2) continue;
+    let d='';
+    a.forEach((v,i)=>{ if(i>maxI) return; const [px,py]=P(i,M(v)); d+=(d?'L':'M')+px.toFixed(1)+' '+py.toFixed(1)+' '; });
+    const sp={t:'path',d,fill:'none',stroke:`var(${FANCOL[k]})`,'stroke-width':2*s,opacity:.9};
+    if(k==='ZT') sp['stroke-dasharray']=`${3*s} ${3*s}`;
+    specs.push(sp);
+  }
+  const avoid=(env.avoid||[]).slice();
+  const dot=(pt,r)=>{ if(pt.i>maxI) return; const [px,py]=P(pt.i,pt.v);
+    specs.push({t:'circle',cx:px,cy:py,r,fill:`var(${FANCOL[pt.k]})`,stroke:'var(--surface)','stroke-width':s});
+    avoid.push({x:px-r-1,y:py-r-1,w:2*(r+1),h:2*(r+1)}); };
+  for(const k in fp.mins) dot(fp.mins[k],2.1*s);
+  for(const k in fp.ends) dot(fp.ends[k],2.1*s);
+  const labels=[];
+  for(const dc of fp.decisions){
+    if(dc.i>maxI) continue;
+    const [px,py]=P(dc.i,dc.v);
+    for(const src of dc.srcs){ const [sx,sy]=P(src.i,src.v);
+      specs.push({t:'line',x1:sx,y1:sy,x2:px,y2:py,stroke:'var(--muted)','stroke-width':s,'stroke-dasharray':`${2*s} ${2*s}`,opacity:.85}); }
+    const col=dc.k?`var(${FANCOL[dc.k]})`:'var(--ink2)';
+    if(dc.kind==='ebg') specs.push({t:'circle',cx:px,cy:py,r:4*s,fill:col,stroke:'var(--surface)','stroke-width':1.5*s});
+    else if(dc.kind==='guard') specs.push({t:'circle',cx:px,cy:py,r:5*s,fill:'none',stroke:`var(${dc.fired?'--lo':'--muted'})`,'stroke-width':2*s});
+    else specs.push({t:'circle',cx:px,cy:py,r:4.5*s,fill:'none',stroke:col,'stroke-width':1.6*s,'stroke-dasharray':`${2*s} ${2*s}`});
+    avoid.push({x:px-6*s,y:py-6*s,w:12*s,h:12*s});
+    labels.push({x:px,y:py,text:`${dc.label} ${fBG(dc.val)}`,fill:dc.kind==='guard'&&dc.fired?'var(--txt-lo)':'var(--ink2)'});
+  }
+  for(const L of layoutLabels(labels,{...env.b,fs:env.fs,avoid}))
+    specs.push({t:'text',x:L.lx,y:L.ly,'text-anchor':L.anchor,fill:L.fill,'paint-order':'stroke',stroke:'var(--surface)','stroke-width':3*s,
+      style:`font:600 ${env.fs}px ui-monospace,Menlo,monospace`,_:L.text});
+  return specs;
+}
+function fanSpecStr(specs){ return specs.map(sp=>{
+  const {t,_,...at}=sp;
+  const a=Object.entries(at).map(([k,v])=>`${k}="${String(v).replace(/"/g,'&quot;')}"`).join(' ');
+  return _!=null?`<${t} ${a}>${_}</${t}>`:`<${t} ${a}/>`;
+}).join(''); }
 let SPARK=null;
 function sparkline(c,thr){
   const pr=c.pred||{}; const keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
   if(!keys.length){ SPARK=null; return ''; }
-  const W=286,H=104,PL=26,PR=7,PT=5,PB=17;
+  const W=286,H=122,PL=26,PR=8,PT=9,PB=17;
   let mn=Infinity,mx=-Infinity;
   for(const k of keys) for(const v of pr[k]){ const m=M(v); if(m<mn)mn=m; if(m>mx)mx=m; }
   mn=Math.min(mn,thr-(isMmol()?0.5:9)); mx=Math.max(mx,M(186));
@@ -846,7 +909,6 @@ function sparkline(c,thr){
   const n=Math.max(...keys.map(k=>pr[k].length));
   const x=i=>PL+i/(n-1)*(W-PL-PR);
   SPARK={t0:c.t,n,pr,PL,PR,W};
-  const cols={IOB:'--iob',ZT:'--zt',COB:'--cob',UAM:'--uam'};
   const tgt=c.tgt||(isMmol()?6.1:110);
   let out=`<svg class="spark" id="sparksvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%" role="img" aria-label="forecast curves, next 4 hours">`;
   for(const g of (isMmol()?[4,8,12,16]:[80,140,200,260])) if(g>mn&&g<mx-(isMmol()?0.4:7)){
@@ -859,17 +921,8 @@ function sparkline(c,thr){
   }
   out+=`<line x1="${PL}" x2="${W-PR}" y1="${y(tgt).toFixed(1)}" y2="${y(tgt).toFixed(1)}" stroke="var(--good)" stroke-dasharray="4 3" stroke-width="1" opacity=".8"/>`;
   out+=`<line x1="${PL}" x2="${W-PR}" y1="${y(thr).toFixed(1)}" y2="${y(thr).toFixed(1)}" stroke="var(--lo)" stroke-dasharray="3 3" stroke-width="1" opacity=".7"/>`;
-  for(const k of keys){
-    let d=''; pr[k].forEach((v,i)=>{d+=(d?'L':'M')+x(i).toFixed(1)+' '+y(Math.max(mn,Math.min(mx,M(v)))).toFixed(1)+' ';});
-    out+=`<path d="${d}" fill="none" stroke="var(${cols[k]})" stroke-width="1.6"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
-  }
-  for(const mk of decisionMarkers(c)){
-    const arr=pr[mk.k]; if(!arr||mk.i>=arr.length) continue;
-    const px=x(mk.i).toFixed(1), py=y(Math.max(mn,Math.min(mx,M(arr[mk.i])))).toFixed(1);
-    if(mk.kind==='ebg') out+=`<circle cx="${px}" cy="${py}" r="3" fill="var(${cols[mk.k]})" stroke="var(--surface)" stroke-width="1.2"/>`;
-    else if(mk.kind==='guard') out+=`<circle cx="${px}" cy="${py}" r="3.5" fill="none" stroke="var(${mk.fired?'--lo':'--muted'})" stroke-width="1.6"/>`;
-    else out+=`<circle cx="${px}" cy="${py}" r="3.2" fill="none" stroke="var(${cols[mk.k]})" stroke-width="1.2" stroke-dasharray="2 2"/>`;
-  }
+  out+=fanSpecStr(drawFan(c,{xi:x,y,lo:mn,hi:mx,s:0.72,fs:8.5,maxI:n-1,
+    b:{x0:PL+1,y0:PT,x1:W-2,y1:H-PB-1}}));
   out+=`<line id="sparkx" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7"/>`;
   out+='</svg>';
   const def=`hover for values · <span style="color:var(--txt-good)">– – target</span> · <span style="color:var(--txt-lo)">– – threshold ${fBG(thr)}</span>`;
@@ -995,20 +1048,30 @@ function buildSteps(c,p){
     val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
        :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
     body:(c?sparkline(c,thr):'')+
-      `<p><b>How a curve is built.</b> Every curve starts at the current BG and is stepped forward in 5-minute ticks, up to 4 hours out. Each tick adds the <b>insulin effect</b> for that future moment — the activity of all insulin already delivered, taken from the pump history and your insulin curve, scaled by the autosens-adjusted ISF — plus one curve-specific extra term. That extra term is the only difference between the four:</p>
+      `<p>Four futures, one per assumption, each stepped from the current BG in 5-minute ticks, 4 hours ahead: <b style="color:var(--txt-iob)">IOB</b> — the insulin already delivered plays out, nothing else happens; <b style="color:var(--txt-zt)">ZT</b> — delivery stops right now (the dashed safety floor); <b style="color:var(--txt-cob)">COB</b> — announced carbs keep absorbing; <b style="color:var(--txt-uam)">UAM</b> — the unexplained rise fades out. Safety is read from the lowest relevant points, dosing from the highest endpoints. The labeled markers — drawn identically here and in the main chart — are the values this cycle’s decision actually used.</p>
+      ${c?`<div class="frm">${['IOB','ZT','COB','UAM'].filter(k=>pr[k]&&pr[k].length>1).map(k=>{
+        const a=pr[k];
+        return `<span style="color:var(--txt-${k.toLowerCase()})">${k.padEnd(3)}</span> ${fBG(M(a[0]))} → min ${fBG(M(Math.min(...a)))} → end ${fBG(M(a[a.length-1]))}`;
+      }).join('\n')}</div>`:''}
+      <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with 15-min, then 45-min avg delta\neventualBG = naive_eventualBG + deviation${c&&naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>
+      <details class="more"><summary>How each curve is built</summary><div class="mbody">
+      <p>Every curve is stepped forward in 5-minute ticks. Each tick adds the <b>insulin effect</b> for that future moment — the activity of all insulin already delivered, taken from the pump history and your insulin curve, scaled by the autosens-adjusted ISF — plus one curve-specific extra term. That extra term is the only difference between the four:</p>
       <p style="margin-left:10px"><b style="color:var(--txt-iob)">IOB</b> — no carb term at all: COB never enters this curve, even mid-meal. It does carry the current deviation, fading linearly to zero over the first hour, so the momentum of this moment isn’t dropped instantly. “Where BG lands if nothing new happens.”<br>
       <b style="color:var(--txt-zt)">ZT</b> (zero-temp) — the insulin effect is recomputed as if all delivery stopped right now, and <i>no</i> deviation is carried: the current rise or fall is assumed to stop immediately. Deliberately the bleakest view for lows — it exists purely as a safety floor and never argues for more insulin.<br>
       <b style="color:var(--txt-cob)">COB</b> — adds announced carbs: the carb impact observed <i>right now</i> (minDelta − BGI, capped at 30 g/h) tapers to zero as the remaining COB is used up, plus a tent-shaped bump for carbs that haven’t shown up in the CGM data yet (capped at ≈90 g). The upward part of the deviation is <i>not</i> added on top — that rise is already counted as carb impact; only downward drift carries over.<br>
       <b style="color:var(--txt-uam)">UAM</b> (unannounced meal) — takes that same unexplained impact and lets it decline at the rate deviations have been falling from their last-hour peak — or, if they are still climbing, at one-third of the climb rate — and never slower than a straight fade-out over 3 hours. Like COB, only downward drift is added on top.</p>
       <p>COB is drawn only while announced carbs are on board and absorbing; UAM only when the feature is enabled and there is unexplained impact to project. All curves are cut off at 4 hours.</p>
-      ${c?`<div class="frm">${['IOB','ZT','COB','UAM'].filter(k=>pr[k]&&pr[k].length>1).map(k=>{
-        const a=pr[k];
-        return `<span style="color:var(--txt-${k.toLowerCase()})">${k.padEnd(3)}</span> ${fBG(M(a[0]))} → min ${fBG(M(Math.min(...a)))} → end ${fBG(M(a[a.length-1]))}`;
-      }).join('\n')}</div>`:''}
-      <p><b>What the decision takes from them.</b> The safety side is read from the <i>lowest</i> relevant points: each curve’s minimum feeds minGuardBG (the hypo-guard step below shows how those minima are picked and blended), and minPredBG caps how much insulin may be given. minPredBG deliberately ignores each curve’s first ~90 minutes (60 for UAM) — the dip that insulin already underway will cause before it peaks — while minGuardBG starts counting immediately, which is what makes it the hypo tripwire. The dosing side leans the other way: with SMB forecasts enabled, eventualBG is <i>raised</i> to the highest of the formula value below, the COB endpoint and the UAM endpoint — which is why it can sit well above naive&nbsp;+&nbsp;deviation.</p>
-      <p><b>Where the deviation comes from.</b> Trio keeps three trend measurements, all expressed as change per 5 minutes: <b>delta</b> — versus the reading ~5 minutes ago; <b>short_avgdelta</b> — the average slope against every reading 2.5–17.5 minutes back (the “15-min” delta); <b>long_avgdelta</b> — the same for 17.5–42.5 minutes back (the “45-min” one). The forecast uses <b>minDelta</b>, the smaller of delta and short_avgdelta, so one jumpy reading can’t exaggerate a rise. Subtract BGI — the change the insulin on board should be causing right now — and what remains is unexplained; × 6 projects it 30 minutes ahead as the <b>deviation</b>. A negative result gets a second opinion: recomputed with the 15-min average, and if still negative, taken from the 45-min one. A single low or noisy reading therefore can’t talk the loop out of insulin — a genuine sustained fall still comes through, at the steadier long-window slope.</p>
-      <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with 15-min, then 45-min avg delta\neventualBG = naive_eventualBG + deviation${naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>
-      <p><b>Marked points</b> highlight the exact spots the decision used — on this sparkline and on the main chart: a <b>ring</b> sits on the guard minimum (minGuardBG), the lowest point counting from now — it turns red when that dipped under the threshold and the hypo guard cut all insulin; a <b>dashed ring</b> marks minPredBG, the low point the safety caps are computed from (it skips the brief dip before fresh insulin peaks); and a <b>filled dot</b> marks the curve endpoint that was adopted as eventualBG.</p>`
+      </div></details>
+      <details class="more"><summary>What the decision takes from the curves</summary><div class="mbody">
+      <p>The safety side is read from the <i>lowest</i> relevant points: each curve’s minimum feeds minGuardBG (the hypo-guard step below shows how those minima are picked and blended), and minPredBG caps how much insulin may be given. minPredBG deliberately ignores each curve’s first ~90 minutes (60 for UAM) — the dip that insulin already underway will cause before it peaks — while minGuardBG starts counting immediately, which is what makes it the hypo tripwire. The dosing side leans the other way: with SMB forecasts enabled, eventualBG is <i>raised</i> to the highest of the formula value above, the COB endpoint and the UAM endpoint — which is why it can sit well above naive&nbsp;+&nbsp;deviation.</p>
+      </div></details>
+      <details class="more"><summary>Where the deviation comes from</summary><div class="mbody">
+      <p>Trio keeps three trend measurements, all expressed as change per 5 minutes: <b>delta</b> — versus the reading ~5 minutes ago; <b>short_avgdelta</b> — the average slope against every reading 2.5–17.5 minutes back (the “15-min” delta); <b>long_avgdelta</b> — the same for 17.5–42.5 minutes back (the “45-min” one). The forecast uses <b>minDelta</b>, the smaller of delta and short_avgdelta, so one jumpy reading can’t exaggerate a rise. Subtract BGI — the change the insulin on board should be causing right now — and what remains is unexplained; × 6 projects it 30 minutes ahead as the <b>deviation</b>. A negative result gets a second opinion: recomputed with the 15-min average, and if still negative, taken from the 45-min one. A single low or noisy reading therefore can’t talk the loop out of insulin — a genuine sustained fall still comes through, at the steadier long-window slope.</p>
+      </div></details>
+      <details class="more"><summary>Reading the marked points</summary><div class="mbody">
+      <p>Small dots mark every candidate point the decision could draw on: each curve’s minimum and its endpoint. The labeled markers are the values it actually used: a <b>ring</b> on minGuardBG, the lowest point counting from now — red when it dipped under the threshold and the hypo guard cut all insulin; a <b>dashed ring</b> on minPredBG, the low point the safety caps are computed from (it skips the dip before insulin already underway peaks); a <b>filled dot</b> on the endpoint adopted as eventualBG.</p>
+      <p>A marker in a curve’s color sits on that curve. A grey marker is a value that is on <i>no single curve</i>: it was blended from two points, and sits at its logged value on a thin dashed line connecting its two sources — mid-meal minGuardBG, for example, is blended from the COB and UAM minima by how many carbs remain. Both charts draw all of this identically.</p>
+      </div></details>`
       +vchips(['delta','short_avgdelta','BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
 
   /* 3 — hypo guard: afleiding van minGuardBG + nul-temp-dimensionering */
@@ -1100,6 +1163,9 @@ function buildSteps(c,p){
       +vchips(['enacted'])});
   return {rows,conc};
 }
+/* open/dicht-status van details (uitleg, bron, raw log) overleeft her-renders */
+const openDetails=new Set();
+const dKey=d=>d.querySelector('summary')?.textContent??'';
 function renderPanel(dd){
   const c=selCycle, p=c?parseReason(c):null;
   const i=c?dd.cycles.indexOf(c):-1;
@@ -1121,6 +1187,7 @@ function renderPanel(dd){
     </div>`;}).join('');
   const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
   panel.innerHTML=`<h2>Loop decision</h2>${head}${conc}<div class="steps">${list}</div>${raw}`;
+  panel.querySelectorAll('details').forEach(d=>{ if(openDetails.has(dKey(d))) d.open=true; });
   const lv=document.getElementById('srlive');
   if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${rows[rows.length-1].val.replace(/<[^>]+>/g,'')}`;
   if(c){
@@ -1129,6 +1196,10 @@ function renderPanel(dd){
     if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
   }
 }
+panel.addEventListener('toggle',ev=>{
+  const d=ev.target; if(!d||d.tagName!=='DETAILS') return;
+  const k=dKey(d); if(d.open) openDetails.add(k); else openDetails.delete(k);
+},true);
 panel.addEventListener('click',ev=>{
   const vr=ev.target.closest('.vr');
   if(vr){
