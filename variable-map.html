@@ -1,0 +1,329 @@
+<title>oref Variable Map — Trio Loop Inspector</title>
+<style>
+:root{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --hover:rgba(9,9,9,.045);
+  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --up:#0968c3; --down:#c96a00; --sel:#0b0b0b;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.06);
+    --cob:#ff9500; --hi:#ffc145; --good:#6fcf97;
+    --up:#4da3ff; --down:#ffab4d; --sel:#ffffff;
+  }
+}
+:root[data-theme="light"]{
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10); --hover:rgba(9,9,9,.045);
+  --cob:#e08600; --hi:#dd9a00; --good:#3daf6f;
+  --up:#0968c3; --down:#c96a00; --sel:#0b0b0b;
+}
+:root[data-theme="dark"]{
+  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10); --hover:rgba(255,255,255,.06);
+  --cob:#ff9500; --hi:#ffc145; --good:#6fcf97;
+  --up:#4da3ff; --down:#ffab4d; --sel:#ffffff;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0}
+.wrap{max-width:1280px;margin:0 auto;padding:14px 16px 60px}
+h1{font-size:19px;font-weight:650;margin:0 0 2px}
+.sub{color:var(--ink2);font-size:12.5px;margin:0 0 10px;max-width:110ch}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px;align-items:center}
+.pre{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
+  padding:6px 12px;font:600 12.5px system-ui;cursor:pointer}
+.pre[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.pre:focus-visible,.node:focus-visible{outline:2px solid var(--up);outline-offset:2px}
+.legend{margin-left:auto;font-size:11px;color:var(--ink2);display:flex;gap:12px;flex-wrap:wrap}
+.legend b{font-weight:600}
+.legend .sw{display:inline-block;width:14px;height:0;border-top:2.5px solid;vertical-align:3px;border-radius:2px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+@media (max-width:1060px){.main{grid-template-columns:1fr}}
+.mapbox{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow-x:auto}
+svg{display:block}
+.grp{fill:var(--hover)}
+.grplab{fill:var(--muted);font:700 9.5px system-ui;letter-spacing:.08em}
+.edge{fill:none;stroke:var(--axis);stroke-width:1.1;opacity:.55}
+.edge.up{stroke:var(--up);stroke-width:2;opacity:.95}
+.edge.down{stroke:var(--down);stroke-width:2;opacity:.95}
+.edge.faded{opacity:.12}
+.node{cursor:pointer}
+.node rect{fill:var(--surface);stroke:var(--border);stroke-width:1;rx:6}
+.node.dim{opacity:.28}
+.node.up rect{stroke:var(--up);stroke-width:1.8}
+.node.down rect{stroke:var(--down);stroke-width:1.8}
+.node.selnode rect{stroke:var(--sel);stroke-width:2.2}
+.node .nm{fill:var(--ink);font:600 10.5px ui-monospace,Menlo,monospace}
+.node .vl{fill:var(--ink2);font:11px ui-monospace,Menlo,monospace}
+.node.gate rect{rx:14}
+.node .st{font:700 8.5px system-ui;letter-spacing:.04em}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;position:sticky;top:10px}
+.panel h2{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:650}
+.panel .big{font:650 15px ui-monospace,Menlo,monospace;margin:0 0 6px}
+.panel p{font-size:12.5px;color:var(--ink2);line-height:1.5;margin:6px 0}
+.frm{font:11px/1.6 ui-monospace,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:7px 0;white-space:pre-wrap;color:var(--ink)}
+.rel{font-size:11.5px;color:var(--ink2);margin-top:6px}
+.rel b{font-weight:650}
+.rel .pill{display:inline-block;border:1px solid var(--grid);border-radius:9px;padding:0 7px;margin:1px 2px;font:600 10.5px ui-monospace,Menlo,monospace;cursor:pointer;color:var(--ink2)}
+.rel .pill:hover{background:var(--hover);color:var(--ink)}
+.empty{color:var(--muted);font-size:12.5px}
+</style>
+
+<div class="wrap">
+<h1>oref Variable Map <span style="font:600 11px system-ui;color:var(--page);background:var(--serious);border-radius:9px;padding:2px 8px;vertical-align:3px">experiment</span></h1>
+<p class="sub">The algorithm as a data-flow map: every variable is a node, arrows mean “feeds into”. Pick a real cycle and the map fills
+with its values; gates color by what actually happened. <b>Click any node</b> to see where its value comes from
+(<span style="color:var(--up);font-weight:600">blue = upstream</span>) and what it influences
+(<span style="color:var(--down);font-weight:600">orange = downstream</span>), plus its formula with this cycle’s numbers.</p>
+
+<div class="presets" id="presets">
+  <span class="legend"><span><span class="sw" style="border-color:var(--up)"></span> comes from</span>
+  <span><span class="sw" style="border-color:var(--down)"></span> influences</span></span>
+</div>
+
+<div class="main">
+  <div class="mapbox"><svg id="map" width="1040" height="470" viewBox="0 0 1040 470" role="img" aria-label="oref variable dependency map"></svg></div>
+  <aside class="panel" id="info">
+    <h2>Variable</h2>
+    <div class="empty">Click a node in the map.</div>
+  </aside>
+</div>
+</div>
+
+<script>
+const PRESETS = [{"name": "SMB capped", "d": "a rise: big need, SMB capped", "t": "17:50", "bg": 9.16, "ebg": 12.6, "tgt": 6.1, "thr": 4.4, "isf0": 2.5, "isf": 2.5, "autos": 1.0, "dev": 4.4, "bgi": -0.2, "cr": 5.5, "iob": 2.01, "cob": 0, "minPred": 10.4, "minGuard": 9.7, "req": 1.73, "smb": 0.4, "rate": 0, "dur": 0, "basal": 0.35, "capV": 0.4, "maxSafe": 1.4, "pred": {"IOB": {"min": 8.33, "end": 8.33, "start": 9.16}, "ZT": {"min": 5.88, "end": 6.11, "start": 9.16}, "UAM": {"min": 9.16, "end": 12.6, "start": 9.16}}, "limits": ["cap", "maxbasal"]}, {"name": "hypo guard", "d": "worst-case forecast below threshold", "t": "20:51", "bg": 6.94, "ebg": 5.22, "tgt": 6.1, "thr": 4.4, "isf0": 2.5, "isf": 2.1, "autos": 1.2, "dev": 1.8, "bgi": -0.3, "cr": 7.0, "iob": 1.69, "cob": 0, "minPred": 4.1, "minGuard": 3.9, "req": 0, "smb": 0, "rate": 0, "dur": 120, "basal": 0.45, "capV": null, "maxSafe": null, "pred": {"IOB": {"min": 4.94, "end": 4.94, "start": 6.94}, "ZT": {"min": 4.33, "end": 5.33, "start": 6.94}, "UAM": {"min": 3.94, "end": 3.94, "start": 6.94}}, "limits": ["guard"]}, {"name": "below target", "d": "forecast under target: wind down", "t": "13:12", "bg": 6.61, "ebg": 5.72, "tgt": 6.1, "thr": 4.4, "isf0": 2.5, "isf": 2.1, "autos": 1.2, "dev": -0.1, "bgi": -0.1, "cr": 6.5, "iob": 0.41, "cob": 0, "minPred": 5.3, "minGuard": 5.3, "req": 0, "smb": 0, "rate": 0, "dur": 0, "basal": 0.35, "capV": null, "maxSafe": null, "pred": {"IOB": {"min": 5.33, "end": 5.33, "start": 6.61}, "ZT": {"min": 5.99, "end": 6.27, "start": 6.61}}, "limits": ["zero"]}, {"name": "nothing needed", "d": "negative need \u2014 low temp", "t": "15:30", "bg": 9.1, "ebg": 7.16, "tgt": 6.1, "thr": 4.4, "isf0": 2.5, "isf": 2.5, "autos": 1.0, "dev": 3.7, "bgi": -0.3, "cr": 5.5, "iob": 3.3, "cob": 14, "minPred": 5.5, "minGuard": 5.5, "req": -0.24, "smb": 0, "rate": 0, "dur": 60, "basal": 0.35, "capV": null, "maxSafe": null, "pred": {"IOB": {"min": 4.44, "end": 4.44, "start": 9.1}, "ZT": {"min": 2.78, "end": 2.94, "start": 9.1}, "COB": {"min": 7.16, "end": 7.16, "start": 9.1}, "UAM": {"min": 4.11, "end": 4.11, "start": 9.1}}, "limits": []}];
+let P = PRESETS[0], selId=null;
+
+/* ---------- helpers ---------- */
+const f1=v=>v==null?'—':(+v).toFixed(1);
+const f2=v=>v==null?'—':(+v).toFixed(2);
+const curveVal=k=>{ const c=P.pred[k]; return c?`↘${f1(c.min)} →${f1(c.end)}`:'—'; };
+const fired=k=>P.limits.includes(k);
+
+/* ---------- knopen ---------- */
+/* kolommen: x-posities; nodes 132×30 */
+const NW=132, NH=30;
+const NODES=[
+ /* inputs */
+ {id:'bg',   nm:'BG',            x:16, y:52,  g:'INPUTS', v:()=>f1(P.bg),
+   def:'The current sensor glucose (mmol/L).',
+   frm:()=>`sensor reading at ${P.t}`},
+ {id:'trend',nm:'BG trend',      x:16, y:96, g:'INPUTS', v:()=>'Δ (5–45 m)',
+   def:'delta, short_avgdelta, long_avgdelta — BG change over several windows. oref uses the smallest, so one noisy point can’t dominate.',
+   frm:()=>'minDelta = min(delta, short_avgdelta)'},
+ {id:'hist', nm:'pump history',  x:16, y:140, g:'INPUTS', v:()=>'boluses·temps',
+   def:'Every bolus, SMB and temp-basal from the pump. The raw material for IOB and autosens.',
+   frm:()=>'—'},
+ {id:'carbE',nm:'carb entries',  x:16, y:184, g:'INPUTS', v:()=>P.cob+' g left',
+   def:'Announced carbs. Decayed by observed absorption into COB.',
+   frm:()=>'—'},
+ {id:'pisf', nm:'profile ISF',   x:16, y:266, g:'SETTINGS', v:()=>f1(P.isf0),
+   def:'Insulin sensitivity from your profile: how far 1 U drops BG.',
+   frm:()=>'setting'},
+ {id:'tgt',  nm:'target',        x:16, y:310, g:'SETTINGS', v:()=>f1(P.tgt),
+   def:'Target glucose (possibly shifted by a temp target).',
+   frm:()=>'profile / temp target'},
+ {id:'thrS', nm:'safety setting',x:16, y:354, g:'SETTINGS', v:()=>'floor',
+   def:'Your “glucose safety limit” setting; can raise the computed threshold.',
+   frm:()=>'setting'},
+ {id:'bas',  nm:'sched. basal',  x:16, y:398, g:'SETTINGS', v:()=>f2(P.basal)+' U/h',
+   def:'The scheduled basal rate right now. Also the yardstick for maxBolus and maxSafeBasal.',
+   frm:()=>'profile schedule'},
+ /* state */
+ {id:'iob',  nm:'IOB',           x:190,y:96,  g:'STATE', v:()=>f2(P.iob)+' U',
+   def:'Insulin on Board: all active insulin, decayed along the activity curve.',
+   frm:()=>'sum of doses × activity curve'},
+ {id:'cob',  nm:'COB',           x:190,y:184, g:'STATE', v:()=>P.cob+' g',
+   def:'Carbs on Board: announced carbs not yet absorbed.',
+   frm:()=>'entries − observed absorption'},
+ {id:'auto', nm:'autosens',      x:190,y:266, g:'STATE', v:()=>'×'+(P.autos??'—'),
+   def:'How insulin actually worked lately vs. expected. >1 = resistant.',
+   frm:()=>'deviations over last 8–24 h'},
+ {id:'isf',  nm:'effective ISF', x:190,y:310, g:'STATE', v:()=>f1(P.isf),
+   def:'The ISF the algorithm really uses this cycle.',
+   frm:()=>`profile ISF ${f1(P.isf0)} ÷ autosens ${P.autos??1} = ${f1(P.isf)}`},
+ {id:'bgi',  nm:'BGI',           x:190,y:52,  g:'STATE', v:()=>P.bgi??'—',
+   def:'Expected BG change per 5 min from insulin alone.',
+   frm:()=>'−activity × ISF × 5'},
+ {id:'dev',  nm:'deviation',     x:190,y:140, g:'STATE', v:()=>(P.dev>0?'+':'')+(P.dev??'—'),
+   def:'The part of the BG change insulin cannot explain: carbs, hormones, stress.',
+   frm:()=>`6 × (minDelta − BGI ${P.bgi??'?'}) = ${P.dev??'?'}`},
+ /* forecast */
+ {id:'iobC', nm:'IOB curve',     x:364,y:52,  g:'FORECAST', col:'--iob', v:()=>curveVal('IOB'),
+   def:'BG path if all active insulin plays out and deviations fade.',
+   frm:()=>`min ${f1(P.pred.IOB?.min)} · end ${f1(P.pred.IOB?.end)}`},
+ {id:'ztC',  nm:'ZT curve',      x:364,y:96, g:'FORECAST', col:'--zt', v:()=>curveVal('ZT'),
+   def:'Worst case: pump delivers nothing from now on. Floors the averages; tempers the UAM minimum.',
+   frm:()=>`min ${f1(P.pred.ZT?.min)}`},
+ {id:'cobC', nm:'COB curve',     x:364,y:140, g:'FORECAST', col:'--cob', v:()=>curveVal('COB'),
+   def:'Path including announced carbs still absorbing.',
+   frm:()=>P.pred.COB?`min ${f1(P.pred.COB.min)} · end ${f1(P.pred.COB.end)}`:'no carbs → no COB curve'},
+ {id:'uamC', nm:'UAM curve',     x:364,y:184, g:'FORECAST', col:'--uam', v:()=>curveVal('UAM'),
+   def:'Unannounced-meal: the current unexplained rise carried forward, decaying at the last hour’s slope.',
+   frm:()=>P.pred.UAM?`min ${f1(P.pred.UAM.min)} · end ${f1(P.pred.UAM.end)}`:'no deviation → no UAM curve'},
+ /* quantities */
+ {id:'ebg',  nm:'eventualBG',    x:538,y:96,  g:'QUANTITIES', v:()=>f1(P.ebg),
+   def:'Where BG lands if nothing changes: naive (BG − IOB×ISF) + deviation, refined upward from curve endpoints.',
+   frm:()=>`naive ${f1(P.bg-P.iob*P.isf)} + dev ${P.dev??'?'} → refined = ${f1(P.ebg)}`},
+ {id:'minP', nm:'minPredBG',     x:538,y:162, g:'QUANTITIES', v:()=>f1(P.minPred),
+   def:'The cautious low of the blended curves (skipping the pre-peak dip); tempers corrections.',
+   frm:()=>`blend of curve minima = ${f1(P.minPred)}`},
+ {id:'minG', nm:'minGuardBG',    x:538,y:228, g:'QUANTITIES', v:()=>f1(P.minGuard),
+   def:'The no-wait minimum: COB/UAM blended by remaining carbs, else UAM, else IOB.',
+   frm:()=>{const g=P.pred; const parts=['IOB','COB','UAM'].filter(k=>g[k]).map(k=>`${k}↘${f1(g[k].min)}`).join('  ');
+     return `${parts}\n→ minGuardBG = ${f1(P.minGuard)}`}},
+ {id:'thr',  nm:'threshold',     x:538,y:310, g:'QUANTITIES', v:()=>f1(P.thr),
+   def:'The safety floor below which all dosing stops.',
+   frm:()=>`max( setting, target ${f1(P.tgt)} − ½×(target−2.2) = ${f1(P.tgt-0.5*(P.tgt-2.2))} ) = ${f1(P.thr)}`},
+ /* gates */
+ {id:'guard',nm:'HYPO GUARD',    x:712,y:228, g:'DECISION', gate:1,
+   v:()=>fired('guard')?'FIRES':'passes', st:()=>fired('guard')?'--lo':'--good',
+   def:'If current BG or minGuardBG is below the threshold: zero temp 30–120 m, all SMBs blocked. Checked first; beats everything.',
+   frm:()=>`bg ${f1(P.bg)} < thr ${f1(P.thr)}?  ${P.bg<P.thr?'yes':'no'}\nminGuardBG ${f1(P.minGuard)} < ${f1(P.thr)}?  ${P.minGuard<P.thr?'yes':'no'}`},
+ {id:'vst',  nm:'VS TARGET',     x:712,y:140, g:'DECISION', gate:1,
+   v:()=>fired('zero')?'below → wind down':'≥ target', st:()=>fired('zero')?'--zt':'--good',
+   def:'eventualBG below target = enough insulin on its way: reduce or zero the basal instead of adding more.',
+   frm:()=>`eventualBG ${f1(P.ebg)} vs target ${f1(P.tgt)}`},
+ {id:'req',  nm:'insulinReq',    x:712,y:52,  g:'DECISION', v:()=>f2(P.req)+' U',
+   def:'The gap between forecast and target, in units — clipped so IOB never exceeds maxIOB.',
+   frm:()=>`(min(${f1(P.minPred)}, ${f1(P.ebg)}) − ${f1(P.tgt)}) ÷ ${f1(P.isf)} = ${f2(P.req)} U`},
+ /* delivery */
+ {id:'maxB', nm:'maxBolus',      x:886,y:398, g:'DELIVERY', v:()=>P.capV!=null?f2(P.capV)+' U':'—',
+   def:'Per-SMB cap: a few minutes’ worth of basal (maxSMBBasalMinutes, or the UAM variant).',
+   frm:()=>P.capV!=null?`basal ${f2(P.basal)} × minutes ÷ 60 = ${f2(P.capV)} U\n→ implies ≈ ${Math.round(P.capV/P.basal*60)} min`:'not logged this cycle'},
+ {id:'smb',  nm:'SMB',           x:886,y:52,  g:'DELIVERY', v:()=>f2(P.smb)+' U',
+   st:()=>fired('cap')?'--hi':fired('wait')?'--smbwait':null,
+   def:'The irreversible half: min(need × ratio, maxBolus), only after the SMB interval.',
+   frm:()=>`min(${f2(P.req)} × ratio, ${P.capV!=null?f2(P.capV):'cap'}) = ${f2(P.smb)} U${fired('cap')?'  ⚠ cap wins':''}${fired('wait')?'  ⏳ waiting':''}`},
+ {id:'maxS', nm:'maxSafeBasal',  x:886,y:354, g:'DELIVERY', v:()=>P.maxSafe!=null?f2(P.maxSafe)+' U/h':'—',
+   def:'Temp-basal ceiling: min(pump max, 3× max daily basal, 4× current basal).',
+   frm:()=>P.maxSafe!=null?`= ${f2(P.maxSafe)} U/h (≈ 4 × basal ${f2(P.basal)})`:'not hit this cycle'},
+ {id:'tmp',  nm:'temp basal',    x:886,y:140, g:'DELIVERY', v:()=>P.rate!=null&&P.dur?`${f2(P.rate)} U/h · ${P.dur} m`:'unchanged',
+   st:()=>fired('maxbasal')?'--serious':null,
+   def:'The revocable half: rate = basal + 2×insulinReq, capped at maxSafeBasal; after an SMB a compensating zero temp.',
+   frm:()=>`basal ${f2(P.basal)} + 2 × ${f2(P.req)} = ${f2(P.basal+2*(P.req||0))} U/h${fired('maxbasal')?` → capped ${f2(P.maxSafe)}`:''}\nset: ${P.rate!=null?f2(P.rate):'—'} U/h for ${P.dur??'—'} m`},
+ {id:'out',  nm:'→ DELIVER',     x:886,y:228, g:'DELIVERY', gate:1, v:()=>`SMB ${f2(P.smb)} + ${P.rate!=null?f2(P.rate):'—'} U/h`,
+   st:()=>fired('guard')?'--lo':'--good',
+   def:'What the pump gets. Five minutes later everything is recomputed.',
+   frm:()=>`SMB ${f2(P.smb)} U · temp ${P.rate!=null?f2(P.rate):'—'} U/h ${P.dur?('· '+P.dur+' m'):''}`},
+];
+const EDGES=[
+ ['hist','iob'],['hist','auto'],['carbE','cob'],
+ ['pisf','isf'],['auto','isf'],
+ ['iob','bgi'],['isf','bgi'],
+ ['trend','dev'],['bgi','dev'],
+ ['bg','iobC'],['bg','ztC'],['bg','cobC'],['bg','uamC'],
+ ['iob','iobC'],['dev','iobC'],
+ ['iob','ztC'],
+ ['cob','cobC'],['iob','cobC'],
+ ['dev','uamC'],['iob','uamC'],
+ ['bg','ebg'],['iob','ebg'],['isf','ebg'],['dev','ebg'],['uamC','ebg'],['cobC','ebg'],
+ ['iobC','minP'],['cobC','minP'],['uamC','minP'],['ztC','minP'],
+ ['iobC','minG'],['cobC','minG'],['uamC','minG'],
+ ['tgt','thr'],['thrS','thr'],
+ ['bg','guard'],['minG','guard'],['thr','guard'],
+ ['ebg','vst'],['tgt','vst'],
+ ['minP','req'],['ebg','req'],['tgt','req'],['isf','req'],['iob','req'],
+ ['bas','maxB'],['req','smb'],['maxB','smb'],
+ ['bas','maxS'],['req','tmp'],['bas','tmp'],['maxS','tmp'],
+ ['guard','out'],['vst','out'],['smb','out'],['tmp','out'],
+];
+const GROUPS=[
+ {nm:'INPUTS',x:8,y:26,w:148,h:200},{nm:'SETTINGS',x:8,y:240,w:148,h:200},
+ {nm:'STATE',x:182,y:26,w:148,h:326},{nm:'FORECAST',x:356,y:26,w:148,h:200},
+ {nm:'QUANTITIES',x:530,y:26,w:148,h:326},{nm:'DECISION',x:704,y:26,w:148,h:244},
+ {nm:'DELIVERY',x:878,y:26,w:148,h:414},
+];
+
+/* ---------- adjacency ---------- */
+const upOf={}, dnOf={};
+NODES.forEach(n=>{upOf[n.id]=new Set(); dnOf[n.id]=new Set();});
+EDGES.forEach(([a,b])=>{ dnOf[a].add(b); upOf[b].add(a); });
+function closure(start,map){ const out=new Set(); const q=[start];
+  while(q.length){ const x=q.pop(); for(const y of map[x]) if(!out.has(y)){ out.add(y); q.push(y); } }
+  return out; }
+
+/* ---------- render ---------- */
+const svg=document.getElementById('map');
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function el(t,a){const e=document.createElementNS('http://www.w3.org/2000/svg',t);for(const k in a)e.setAttribute(k,a[k]);return e;}
+const nodeById=id=>NODES.find(n=>n.id===id);
+function center(n){return {x:n.x+NW/2,y:n.y+NH/2};}
+function render(){
+  svg.innerHTML='';
+  for(const g of GROUPS){
+    svg.appendChild(el('rect',{x:g.x,y:g.y,width:g.w,height:g.h,rx:8,class:'grp'}));
+    const t=el('text',{x:g.x+8,y:g.y+14,class:'grplab'}); t.textContent=g.nm; svg.appendChild(t);
+  }
+  const up=selId?closure(selId,upOf):null, dn=selId?closure(selId,dnOf):null;
+  /* edges */
+  for(const [a,b] of EDGES){
+    const A=nodeById(a),B=nodeById(b);
+    const p1={x:A.x+NW,y:A.y+NH/2}, p2={x:B.x,y:B.y+NH/2};
+    const dx=Math.max(30,(p2.x-p1.x)/2);
+    const path=el('path',{d:`M${p1.x} ${p1.y} C ${p1.x+dx} ${p1.y}, ${p2.x-dx} ${p2.y}, ${p2.x} ${p2.y}`,class:'edge'});
+    if(selId){
+      const isUp = (b===selId||up.has(b)) && (a===selId||up.has(a)||a===selId) && (up.has(a)||a===selId) && (b===selId||up.has(b));
+      const upEdge = (up.has(a)||false) && (b===selId||up.has(b));
+      const dnEdge = (a===selId||dn.has(a)) && dn.has(b);
+      if(upEdge) path.classList.add('up');
+      else if(dnEdge) path.classList.add('down');
+      else path.classList.add('faded');
+    }
+    svg.appendChild(path);
+  }
+  /* nodes */
+  for(const n of NODES){
+    const g=el('g',{class:'node'+(n.gate?' gate':''),tabindex:0,role:'button','data-id':n.id});
+    if(selId){
+      if(n.id===selId) g.classList.add('selnode');
+      else if(up.has(n.id)) g.classList.add('up');
+      else if(dn.has(n.id)) g.classList.add('down');
+      else g.classList.add('dim');
+    }
+    const r=el('rect',{x:n.x,y:n.y,width:NW,height:NH,rx:n.gate?14:6});
+    const stc=n.st&&n.st();
+    if(stc) r.style.stroke=`var(${stc})`, r.style.strokeWidth=1.8;
+    if(n.col) r.style.stroke=`var(${n.col})`;
+    g.appendChild(r);
+    const t1=el('text',{x:n.x+8,y:n.y+12,class:'nm'}); t1.textContent=n.nm;
+    if(n.col) t1.style.fill=`var(${n.col})`;
+    if(stc&&n.gate) t1.style.fill=`var(${stc})`;
+    g.appendChild(t1);
+    const t2=el('text',{x:n.x+8,y:n.y+24,class:'vl'}); t2.textContent=n.v(); g.appendChild(t2);
+    g.addEventListener('click',()=>select(n.id));
+    g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(n.id);}});
+    svg.appendChild(g);
+  }
+}
+function select(id){
+  selId = selId===id? null : id;
+  render(); info();
+}
+function info(){
+  const box=document.getElementById('info');
+  if(!selId){ box.innerHTML='<h2>Variable</h2><div class="empty">Click a node in the map.</div>'; return; }
+  const n=nodeById(selId);
+  const ups=[...upOf[selId]].map(nodeById), dns=[...dnOf[selId]].map(nodeById);
+  box.innerHTML=`<h2>${n.g}</h2>
+    <div class="big">${n.nm} = ${n.v()}</div>
+    <p>${n.def}</p>
+    <div class="frm">${n.frm()}</div>
+    <div class="rel"><b style="color:var(--up)">comes from</b><br>${ups.length?ups.map(u=>`<span class="pill" data-id="${u.id}">${u.nm}</span>`).join(''):'<span class="empty">nothing — raw input</span>'}</div>
+    <div class="rel"><b style="color:var(--down)">influences</b><br>${dns.length?dns.map(u=>`<span class="pill" data-id="${u.id}">${u.nm}</span>`).join(''):'<span class="empty">nothing — final output</span>'}</div>`;
+  box.querySelectorAll('.pill').forEach(p=>p.onclick=()=>select(p.dataset.id));
+}
+/* presets */
+const preBox=document.getElementById('presets');
+PRESETS.forEach((pr,i)=>{
+  const b=document.createElement('button'); b.className='pre'; b.textContent=pr.t+' — '+pr.name; b.title=pr.d;
+  b.onclick=()=>{ P=pr; preBox.querySelectorAll('.pre').forEach((x,j)=>x.setAttribute('aria-pressed',String(j===i))); render(); info(); };
+  preBox.insertBefore(b, preBox.querySelector('.legend'));
+});
+preBox.querySelector('.pre').setAttribute('aria-pressed','true');
+new MutationObserver(()=>render()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+render();
+</script>
