@@ -37,6 +37,11 @@ so revisiting is instant; "Today" auto-refreshes when the cache is older than 2 
 
 ## Experiments
 
+`variable-map.html` renders the algorithm as a clickable data-flow map: ~30 variable nodes
+filled with a real cycle's values, grouped inputs → state → forecast → quantities → decision →
+delivery. Click any node to trace its full ancestry (blue) and influence (orange), with a
+definition and the formula instantiated for that cycle.
+
 `playground.html` is a standalone prototype that renders the ~35-line decision layer of
 determine-basal.js as live, executable annotated code: pick a real cycle as a starting point,
 drag the input sliders (BG, forecasts, ISF, target, SMB settings) and watch the code re-run —
