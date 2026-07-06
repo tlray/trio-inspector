@@ -729,8 +729,8 @@ const SRC={
 '// use the lower of the last delta and the 15 min average delta:\nvar minDelta = Math.min(glucose_status.delta, glucose_status.short_avgdelta);'},
  forecast:{loc:'determine-basal.js:698–716 · 933–939',gh:'determine-basal/determine-basal.js#L698',code:
 '// project deviations for 30 minutes\nvar deviation = round( 30 / 5 * ( minDelta - bgi ) );\n/* … */\nvar eventualBG = naive_eventualBG + deviation;\n\n// UAM: predicted carb impact drops at slopeFromDeviations\nvar predUCIslope = Math.max(0, uci + ( UAMpredBGs.length*slopeFromDeviations ) );\n// …or linearly to zero over 3h, whichever is sooner\nvar predUCImax = Math.max(0, uci * ( 1 - UAMpredBGs.length/Math.max(3*60/5,1) ) );\nvar predUCI = Math.min(predUCIslope, predUCImax);'},
- guard:{loc:'determine-basal.js:1266–1281',gh:'determine-basal/determine-basal.js#L1266',code:
-'rT.reason += "minGuardBG " + convert_bg(minGuardBG, profile) + "<" + convert_bg(threshold, profile);\nbgUndershoot = target_bg - minGuardBG;\nworstCaseInsulinReq = bgUndershoot / sens;\ndurationReq = round(60*worstCaseInsulinReq / profile.current_basal*overrideFactor);\n// always set a 30-120m zero temp\ndurationReq = Math.min(120,Math.max(30,durationReq));\nreturn tempBasalFunctions.setTempBasal(0, durationReq, profile, rT, currenttemp);'},
+ guard:{loc:'determine-basal.js:1073–1085 · 1266–1281',gh:'determine-basal/determine-basal.js#L1073',code:
+'// build minGuardBG from the per-curve guard minima:\nif ( (cid || remainingCIpeak > 0) ) {          // carbs still absorbing\n    if ( enableUAM ) {\n        minGuardBG = fractionCarbsLeft*minCOBGuardBG\n                   + (1-fractionCarbsLeft)*minUAMGuardBG;\n    } else { minGuardBG = minCOBGuardBG; }\n} else if ( enableUAM ) { minGuardBG = minUAMGuardBG; }\nelse { minGuardBG = minIOBGuardBG; }\n\n/* firing & sizing the zero temp: */\nrT.reason += "minGuardBG " + convert_bg(minGuardBG, profile) + "<" + convert_bg(threshold, profile);\nbgUndershoot = target_bg - minGuardBG;\nworstCaseInsulinReq = bgUndershoot / sens;\ndurationReq = round(60*worstCaseInsulinReq / profile.current_basal*overrideFactor);\ndurationReq = Math.min(120,Math.max(30,durationReq));  // always 30-120m\nreturn tempBasalFunctions.setTempBasal(0, durationReq, profile, rT, currenttemp);'},
  target:{loc:'determine-basal.js:1320–1332',gh:'determine-basal/determine-basal.js#L1320',code:
 '// calculate 30m low-temp required to get projected BG up to target\n// multiply by 2 to low-temp faster for increased hypo safety\ninsulinReq = 2 * Math.min(0, (eventualBG - target_bg) / sens);\nif (minDelta < 0 && minDelta > expectedDelta) {\n    // if we are barely falling, newinsulinReq should be barely negative\n    insulinReq = round(( insulinReq * (minDelta / expectedDelta) ), 2);\n}'},
  need:{loc:'determine-basal.js:1463–1470',gh:'determine-basal/determine-basal.js#L1463',code:
@@ -754,7 +754,8 @@ const VD={
  naive_eventualBG:'naive_eventualBG — where BG lands if all IOB works with no deviations: bg − IOB × ISF.',
  eventualBG:'eventualBG — naive_eventualBG + projected deviation impact: the forecast endpoint oref doses against.',
  minPredBG:'minPredBG — lowest point of the relevant forecast curves; used (vs eventualBG) so dosing respects the dip before the rise.',
- minGuardBG:'minGuardBG — the no-wait minimum of the active forecast curves (COB/UAM blended by remaining carbs, else UAM, else IOB). The hypo guard compares it to the threshold.',
+ minGuardBG:'minGuardBG — the no-wait minimum of the active forecast curves (COB/UAM blended by remaining carbs, else UAM, else IOB). Unlike minPredBG it does not skip the pre-peak dip. The hypo guard compares it to the threshold.',
+ fractionCarbsLeft:'fractionCarbsLeft — share of announced carbs not yet absorbed (mealCOB ÷ carbs entered). Weighs the COB vs UAM guard minima when minGuardBG is blended.',
  threshold:'threshold — safety floor: target − ½×(target − 2.2), raised to your “glucose safety limit” setting if higher, clamped to 3.3–6.7 mmol/L. Current BG or forecast below it = all dosing stops.',
  UAM:'UAM (Unannounced Meal) — forecast that extends the current unexplained rise and decays it at the slope observed over the last hour (at least linearly to zero in 3 h).',
  ZT:'ZT (zero-temp) — worst-case forecast if the pump delivers nothing from now on. Its minimum floors the averaged forecast and tempers the UAM-based dosing minimum.',
@@ -896,15 +897,41 @@ function buildSteps(c,p){
       <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with 15-min, then 45-min avg delta\neventualBG = naive_eventualBG + deviation${naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>`
       +vchips(['BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
 
-  /* 3 — hypo guard */
+  /* 3 — hypo guard: afleiding van minGuardBG + nul-temp-dimensionering */
+  let guardDeriv='';
+  if(c){
+    const gm={IOB:minOf('IOB'),COB:minOf('COB'),UAM:minOf('UAM'),ZT:minOf('ZT')};
+    const gchips=['IOB','COB','UAM','ZT'].filter(k=>gm[k]!=null)
+      .map(k=>`<span style="color:var(--txt-${k.toLowerCase()})">${k}↘${fBG(gm[k])}</span>`).join(' ');
+    const hasCOB=!!pr.COB, hasUAM=!!pr.UAM;
+    let grule, gdetail='';
+    if(hasCOB&&hasUAM){
+      grule='carbs still absorbing & UAM on\n→ minGuardBG = f × minCOBGuard + (1−f) × minUAMGuard';
+      if(p.minGuard!=null&&gm.COB!=null&&gm.UAM!=null&&Math.abs(gm.COB-gm.UAM)>(isMmol()?0.05:1)){
+        let gf=(p.minGuard-gm.UAM)/(gm.COB-gm.UAM); gf=Math.max(0,Math.min(1,gf));
+        gdetail=`logged ${fBG(p.minGuard)} → implied f ≈ ${gf.toFixed(2)} (fractionCarbsLeft)`;
+      }
+    } else if(hasCOB){ grule='carbs active, UAM off → minGuardBG = minCOBGuardBG'; }
+    else if(hasUAM){ grule='no carbs absorbing, UAM on → minGuardBG = minUAMGuardBG'; }
+    else { grule='no carbs, no UAM → minGuardBG = minIOBGuardBG'; }
+    guardDeriv=`<p style="margin-top:7px"><b>How minGuardBG is built.</b> Each curve has a “guard” minimum: its lowest point counting from <i>now</i> (minPredBG, by contrast, skips the dip before insulin peaks). oref picks or blends them; ZT’s minimum stays separate — it floors the averaged forecast and tempers the UAM dosing minimum.</p>
+      <div class="predleg" style="margin:2px 0 4px">guard minima ≈ ${gchips}</div>
+      <div class="frm">${grule}${gdetail?cy(gdetail):''}${p.minGuard!=null?cy(`minGuardBG ${fBG(p.minGuard)} vs threshold ${fBG(thr)} → ${guard?'FIRES':'passes'}`):''}</div>`;
+    if(guard&&p.minGuard!=null&&tgtV!=null&&isfV&&sched){
+      const under=tgtV-p.minGuard, wc=under/isfV, durRaw=60*wc/Math.max(0.05,sched);
+      const clamped=Math.min(120,Math.max(30,Math.round(durRaw/30)*30));
+      guardDeriv+=`<div class="frm">sizing the zero temp:\nbgUndershoot = target ${fBG(tgtV)} − minGuardBG ${fBG(p.minGuard)} = ${fBG(under)}\nworstCaseReq = ${fBG(under)} ÷ ISF ${fBG(isfV)} = ${f2(wc)} U\ndurationReq  = 60 × ${f2(wc)} ÷ basal ${f2(sched)} = ${Math.round(durRaw)} m → clamp 30–120 → ${clamped} m${(c.dur&&c.rate!=null)?cy(`actual: ${f2(c.rate)} U/h for ${Math.round(c.dur)} m`):''}</div>`;
+    }
+  }
   rows.push({id:'guard',lab:'hypo guard',st:guard?'fired':'pass',dot:guard?'--lo':(c?'--good':null),
     val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; ${F(thr)} → <span class="warn" style="color:var(--txt-lo)">zero temp, SMBs blocked</span>`
               :(p.minGuard!=null?`minGuardBG ${F(p.minGuard)} ≥ ${F(thr)} <span class="ok">✓</span>`:`no dip below threshold <span class="ok">✓</span>`))
        :'BG or minGuardBG &lt; threshold? → zero temp + block SMBs',
     body:(guard?`<p><b>${guard.t}.</b> ${guard.why}</p>`:'')+
-      `<p>The strongest brake, checked first. If the <i>current BG</i> or the worst-case forecast (minGuardBG) is below the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot. One escape hatch: it is skipped when IOB is already strongly negative and BG is rising faster than expected. Nothing after this step runs.</p>
+      `<p>The strongest brake, checked first. If the <i>current BG</i> or the worst-case forecast (minGuardBG) is below the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot. One escape hatch: it is skipped when IOB is already strongly negative and BG is rising faster than expected. Nothing after this step runs.</p>`
+      +guardDeriv+`
       <div class="frm">if (bg &lt; threshold || minGuardBG &lt; threshold) → setTempBasal(0, 30–120 min); no SMB${c&&p.minGuard!=null?cy(`${F(p.minGuard)} ${guard?`&lt; ${F(thr)} → STOP`:`≥ ${F(thr)} → continue`}`):''}</div>`
-      +vchips(['minGuardBG','threshold','ZT'])+srcBlock('guard')});
+      +vchips(['minGuardBG','fractionCarbsLeft','threshold','ZT'])+srcBlock('guard')});
 
   /* 4 — target check */
   rows.push({id:'target',lab:'vs target',st:zero?'fired':(skipAfter(4)?'skip':(c?'pass':null)),dot:zero?'--zt':(c&&!skipAfter(4)?'--good':null),skip:skipAfter(4),
