@@ -18,7 +18,7 @@ import json, os, sys, datetime, urllib.request, urllib.parse
 
 TEMPLATE = open(os.path.join(os.path.dirname(__file__) or '.', 'template.html')).read()
 EMPTY = ('{"generatedAt":"","tzOffsetHours":2,"profile":{"basal":[],"target":null,'
-         '"isf":null,"cr":[],"dia":10},"sgv":[],"tempBasal":[],"smb":[],"bolus":[],'
+         '"isf":null,"cr":[],"dia":10,"units":"mmol"},"sgv":[],"tempBasal":[],"smb":[],"bolus":[],'
          '"carbs":[],"notes":[],"siteChange":[],"cycles":[]}')
 
 def build_share():
@@ -103,6 +103,7 @@ def build_snapshot(base, token, days=3):
         'profile': {
             'basal': [[b['timeAsSeconds'], b['value']] for b in store['basal']],
             'target': store['target_low'][0]['value'],
+            'units': store.get('units', profile[0].get('units', 'mmol')),
             'isf': store['sens'][0]['value'],
             'cr': [[c['timeAsSeconds'], c['value']] for c in store['carbratio']],
             'dia': store['dia'],
