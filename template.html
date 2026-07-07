@@ -10,6 +10,9 @@
   --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
     --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
+  --accent:#5e6ad2; --accent-hover:#515db8;
+  --sans:'Inter','Inter var',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){
   :root{
@@ -47,26 +50,32 @@
   --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
 }
 *{box-sizing:border-box}
-body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:0}
-.wrap{max-width:1280px;margin:0 auto;padding:12px 16px 50px}
-header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin-bottom:6px}
-h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
-.sub{color:var(--ink2);font-size:12.5px;margin:0 0 8px;max-width:110ch}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
-.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
-  padding:6px 13px;font:600 13px system-ui,sans-serif;cursor:pointer}
+body{background:var(--page);color:var(--ink);font:14px/1.45 var(--sans);margin:0;padding:0;
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+.wrap{max-width:1280px;margin:0 auto;padding:16px 20px 50px}
+header.top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+h1{font-size:18px;font-weight:600;margin:0;letter-spacing:-.02em}
+header.top h1{cursor:pointer;transition:color .12s}
+header.top h1:hover{color:var(--accent)}
+.refresh{color:var(--muted);font-size:12px;margin-left:auto;font-variant-numeric:tabular-nums}
+.controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0}
+.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:6px;
+  padding:5px 11px;font:600 12.5px var(--sans);cursor:pointer;letter-spacing:-.005em}
+.tab:hover{border-color:var(--axis);color:var(--ink)}
 .tab[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
-.tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:9px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px 6px}
-.tile .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
-.tile .v{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
-.tile .v small{font-size:12px;font-weight:500;color:var(--ink2)}
-.tirbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;background:var(--grid)}
+.tab[aria-pressed="true"]:hover{color:var(--page)}
+.tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tiles{display:flex;flex-wrap:wrap;gap:6px;margin:0}
+.tile{display:flex;flex-direction:column;gap:1px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:5px 11px}
+.tile .k{font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.tile .v{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.tile .v small{font-size:10.5px;font-weight:500;color:var(--ink2);margin-left:2px}
+.tirbar{display:flex;height:4px;border-radius:2px;overflow:hidden;margin-top:5px;background:var(--grid)}
 .tirbar div{height:100%}
 .main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}
 @media (max-width:1080px){.main{grid-template-columns:1fr}}
-.charts{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px 4px;min-width:0}
+.charts{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px 4px;min-width:0}
 .chart-title{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 0 0 44px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 .chart-title .lg{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink2)}
 .dotc{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -75,11 +84,11 @@ h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
 svg{display:block;width:100%}
 .tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);
   border-radius:7px;padding:7px 10px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
-  box-shadow:0 3px 14px rgba(0,0,0,.14);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
+  box-shadow:0 2px 10px rgba(0,0,0,.10);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
 .tooltip b{font-weight:650}
 .hint{color:var(--muted);font-size:11.5px;margin:3px 0 0 44px}
 @media (pointer:coarse){.hint{display:none}.tooltip{display:none !important}}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;position:sticky;top:8px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;position:sticky;top:8px}
 @media (max-width:1080px){.panel{position:static}}
 .panel h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
 .panel .when{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
@@ -117,7 +126,7 @@ svg{display:block;width:100%}
 .limleg{display:flex;flex-wrap:wrap;gap:2px 12px;margin:3px 0 0 44px;font-size:10.5px;color:var(--ink2)}
 .limleg span{display:inline-flex;align-items:center;gap:4px}
 .limleg i{width:8px;height:8px;border-radius:2px;display:inline-block;font-style:normal}
-.explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 16px}
+.explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 16px}
 .explain h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:650}
 details{border-top:1px solid var(--grid);padding:2px 0}
 details:first-of-type{border-top:none}
@@ -152,7 +161,7 @@ details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 details.src{margin-top:4px}
 details.src summary{font-size:11px;color:var(--muted);cursor:pointer;padding:2px 0}
 details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
-details.src a{color:var(--iob);font-size:11px;text-decoration:none}
+details.src a{color:var(--accent);font-size:11px;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
 details.more{margin:7px 0;border:1px solid var(--grid);border-radius:7px;background:var(--page)}
 details.more>summary{font-size:12px;color:var(--ink2);cursor:pointer;padding:6px 10px;font-weight:650;list-style:none}
 details.more>summary::-webkit-details-marker{display:none}
@@ -178,7 +187,8 @@ details.more>.mbody{padding:0 10px 4px}
 .frm .cy{color:var(--txt-iob)}
 details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:7px 0 4px;font-weight:650}
 #loginCard label{display:block;font-size:12.5px;color:var(--ink2);margin:10px 0 4px;font-weight:600}
-#loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+#loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--page);color:var(--ink);font:13px var(--mono)}
+#loginCard input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
 #loginCard .err{color:var(--lo);font-size:12.5px;margin-top:8px;min-height:1em}
 @media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .12s,color .12s}.scar{transition:transform .12s}}
 </style>
@@ -186,10 +196,9 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
 <div class="wrap">
 <header class="top">
   <h1>Trio Loop Inspector</h1>
+  <span id="refreshInfo" class="refresh"></span>
   <button class="tab" id="signOut" style="display:none">Sign out</button>
-  <span id="refreshInfo" style="color:var(--muted);font-size:12px"></span>
 </header>
-<p class="sub">Click any point to see what Trio knew, what it forecast, what it decided — and which safety limits cut in.</p>
 
 <div class="panel" id="loginCard" style="display:none;max-width:440px;margin:26px auto;position:static">
   <h2>Connect to Nightscout</h2>
@@ -197,14 +206,16 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
   <p style="font-size:12px;color:var(--muted);margin:2px 0 0">Create a token in Nightscout under <b>Admin&nbsp;tools → Subjects</b> with the <i>readable</i> role. Works with Trio and other oref-based (OpenAPS/AAPS) uploads.</p>
   <label for="nsUrl">Nightscout URL</label><input id="nsUrl" type="url" placeholder="https://my-site.example.com">
   <label for="nsToken">Access token</label><input id="nsToken" type="text" placeholder="token with readable permission">
-  <div style="margin-top:12px"><button class="tab" id="nsConnect" style="background:var(--ink);color:var(--page)">Connect</button></div>
+  <div style="margin-top:12px"><button class="tab" id="nsConnect" style="background:var(--accent);color:#fff;border-color:var(--accent);padding:7px 16px">Connect</button></div>
   <div class="err" id="nsError"></div>
 </div>
 
 <div id="appbody">
 
-<div class="tabs" id="tabs" role="toolbar" aria-label="day navigation"></div>
-<div class="tiles" id="tiles"></div>
+<div class="controls">
+  <div class="tabs" id="tabs" role="toolbar" aria-label="day navigation"></div>
+  <div class="tiles" id="tiles"></div>
+</div>
 
 <div class="main">
   <div class="charts">
@@ -439,13 +450,13 @@ function renderTiles(dd){
   const s=stats(dd), el=document.getElementById('tiles');
   if(!s){el.innerHTML='';return;}
   el.innerHTML=`
-  <div class="tile"><div class="k">Time in Range (${isMmol()?'3.9\u201310':'70\u2013180'})</div><div class="v">${Math.round(s.tir*100)}<small> %</small></div>
+  <div class="tile" title="Time in range ${isMmol()?'3.9\u201310':'70\u2013180'} ${bgUnit()}"><div class="k">Time in range</div><div class="v">${Math.round(s.tir*100)}<small>%</small></div>
     <div class="tirbar"><div style="width:${s.lo*100}%;background:var(--lo)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--hi)"></div></div></div>
-  <div class="tile"><div class="k">Average</div><div class="v">${fBG(s.mean)}<small> ${bgUnit()}</small></div></div>
-  <div class="tile"><div class="k">Insulin (SMB + bolus)</div><div class="v">${f1(s.smbU)} + ${f1(s.bolU)}<small> U</small></div></div>
-  <div class="tile"><div class="k">Basal delivered</div><div class="v">${f1(s.basalU)}<small> U</small></div></div>
-  <div class="tile"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small> g</small></div></div>
-  <div class="tile"><div class="k">Loop cycles</div><div class="v">${s.nC}<small> · ${s.limN} hit a safety limit</small></div></div>`;
+  <div class="tile"><div class="k">Average</div><div class="v">${fBG(s.mean)}<small>${bgUnit()}</small></div></div>
+  <div class="tile" title="SMB + bolus"><div class="k">Insulin</div><div class="v">${f1(s.smbU)}+${f1(s.bolU)}<small>U</small></div></div>
+  <div class="tile" title="Basal delivered"><div class="k">Basal</div><div class="v">${f1(s.basalU)}<small>U</small></div></div>
+  <div class="tile"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small>g</small></div></div>
+  <div class="tile" title="loop cycles · ${s.limN} hit a safety limit"><div class="k">Cycles</div><div class="v">${s.nC}<small>· ${s.limN} limited</small></div></div>`;
 }
 
 /* ---------- charts ---------- *//* ---------- charts ---------- */
