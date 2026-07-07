@@ -698,7 +698,7 @@ function attachHover(svg,dd,which){
     const px=ev.clientX-r.left, w=r.width;
     const t=dd.a+(px-ML)/(w-ML-MR)*86400;
     const c=nearestCycle(dd,t);
-    if(c){ selCycle=c; renderAll(false); tip.style.display='none';
+    if(c){ selCycle=c; setDeep(c); renderAll(false); tip.style.display='none';
       if(matchMedia('(max-width:1080px)').matches) panel.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: no-preference)').matches?'smooth':'auto'});
     }
   });
@@ -712,9 +712,9 @@ async function stepCycle(dir){
   const i=selCycle?dd.cycles.indexOf(selCycle):-1;
   if(i>=0){
     const j=i+dir;
-    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; renderAll(false); return; }
+    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; setDeep(selCycle); renderAll(false); return; }
   } else if(dd.cycles.length){ /* nog niets geselecteerd: begin bij het laatste rondje */
-    selCycle=dd.cycles[dd.cycles.length-1]; renderAll(false); return;
+    selCycle=dd.cycles[dd.cycles.length-1]; setDeep(selCycle); renderAll(false); return;
   }
   /* voorbij de dagrand: door naar de aangrenzende dag */
   const nd=dir>0?nextDay(curDay):prevDay(curDay);
@@ -727,7 +727,7 @@ async function stepCycle(dir){
     const dd2=dayData(curDay);
     if(dd2.cycles.length){
       selCycle = dir>0 ? dd2.cycles[0] : dd2.cycles[dd2.cycles.length-1];
-      renderAll(false);
+      setDeep(selCycle); renderAll(false);
     }
   } finally { stepping=false; }
 }
@@ -1303,6 +1303,7 @@ function renderPanel(dd){
     ? `<div class="when">
         <span class="t">${hhmm(c.t)}</span>
         <span class="navgrp"><button class="navbtn" id="prevC" aria-label="previous">←</button><button class="navbtn" id="nextC" aria-label="next">→</button></span>
+        <button class="navbtn" id="copyLink" aria-label="copy a link to this decision" title="Copy link to this decision">🔗</button>
         <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span></div>`
     : `<div class="empty" style="padding:2px 0 6px">The oref1 pipeline — click a cycle in the chart to fill in its real values.</div>`;
   const {rows,conc}=buildSteps(c,p);
@@ -1324,6 +1325,16 @@ function renderPanel(dd){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
     if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
     if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
+    const cl=document.getElementById('copyLink');
+    if(cl) cl.onclick=async()=>{
+      setDeep(c); /* this decision's deep link is the current URL */
+      const link=location.href;
+      try{ await navigator.clipboard.writeText(link); }
+      catch(e){ const ta=document.createElement('textarea'); ta.value=link; document.body.appendChild(ta); ta.select();
+        try{ document.execCommand('copy'); }catch(e2){} ta.remove(); }
+      const o=cl.textContent; cl.textContent='✓'; cl.disabled=true;
+      setTimeout(()=>{ cl.textContent=o; cl.disabled=false; },1100);
+    };
   }
 }
 panel.addEventListener('toggle',ev=>{
@@ -1489,7 +1500,8 @@ async function connectNS(){
   LIVE={url,token};
   try{ localStorage.setItem(LS_AUTH,JSON.stringify(LIVE)); }catch(e){}
   hideLogin(); signOutBtn.style.display='inline-block';
-  selectDay(todayStart(),true);
+  const t=deepT();
+  if(t) goDeep(t); else { await selectDay(todayStart(),true); goLatest(true); }
 }
 if(SHARE){
   document.getElementById('nsConnect').onclick=connectNS;
@@ -1503,17 +1515,34 @@ if(SHARE){
   };
 }
 
+/* ---------- deep-linking ----------
+   URL hash `#<epoch>` points at one decision; a clean URL (no hash) always resolves to the
+   newest decision. Explicit navigation writes the hash; the title / fresh load clears it. */
+function deepT(){ const h=(location.hash||'').replace(/^#/,''); const t=parseInt(h,10); return (h&&isFinite(t)&&t>1e9)?t:null; }
+function setDeep(c){ try{ history.replaceState(null,'',location.pathname+location.search+(c?('#'+c.t):'')); }catch(e){} }
+function newestCycle(){ const dd=dayData(curDay); return dd.cycles.length?dd.cycles[dd.cycles.length-1]:null; }
+async function goLatest(clearUrl){
+  try{ if(LIVE) await selectDay(todayStart()); }catch(e){}
+  const c=newestCycle(); if(c) selCycle=c;
+  if(clearUrl) setDeep(null);
+  renderAll(false);
+}
+async function goDeep(t){
+  try{ await selectDay(localMidnight(t)); }catch(e){}
+  const dd=dayData(curDay);
+  const c=dd.cycles.find(x=>x.t===t)||nearestCycle(dd,t);
+  if(c){ selCycle=c; setDeep(c); renderAll(false); } else { await goLatest(true); }
+}
+window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); else goLatest(false); });
+(function(){ const h=document.querySelector('header.top h1'); if(h){ h.style.cursor='pointer';
+  h.title='Go to the latest decision'; h.addEventListener('click',()=>goLatest(true)); } })();
+
 /* ---------- init ---------- */
 computeDays(); buildTabs(); setInfo(); renderAll();
 if(SHARE && !LIVE){ showLogin(); }
-else if(LIVE){ signOutBtn.style.display=SHARE?'inline-block':'none'; selectDay(todayStart()); }
-
-/* preselect: most instructive limited cycle of the current day (snapshot builds) */
-(function(){
-  const dd=dayData(curDay);
-  let best=null,score=0;
-  for(const c of dd.cycles){ const p=parseReason(c);
-    if(p.limits.length && (c.req||0)>score){score=c.req;best=c;} }
-  if(best){ selCycle=best; renderAll(false); }
-})();
+else {
+  if(LIVE) signOutBtn.style.display=SHARE?'inline-block':'none';
+  const t0=deepT();
+  (async()=>{ if(t0) await goDeep(t0); else await goLatest(true); })();
+}
 </script>

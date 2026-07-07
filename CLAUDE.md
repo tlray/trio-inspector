@@ -67,6 +67,17 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
 - The reference algorithm source lives in the Trio repo (`trio-oref/lib/determine-basal/`) —
   add `tlray/Trio` to the session only when verifying algorithm claims.
 
+## Deep-linking & default selection
+- On load with a clean URL (no hash) the app selects the NEWEST decision. `#<epoch>` selects
+  that specific decision (cross-day: `goDeep` does `selectDay(localMidnight(t))` then matches
+  by `t`). Explicit navigation (chart click, arrows, panel nav) writes the hash via
+  `setDeep`; clicking the `<h1>` title (`goLatest(true)`) jumps to newest AND clears the hash,
+  so a shared clean URL always resolves to newest. `renderAll` never touches the hash.
+  The panel header 🔗 button copies the current decision's deep link.
+- Hosting: `.github/workflows/pages.yml` deploys `index.html` to GitHub Pages on push to
+  `main`. Stable origin ⇒ the entered Nightscout URL/token persists in localStorage across
+  releases (no re-login). No secrets are ever in `index.html`.
+
 ## Publishing
 - The app is published as a claude.ai artifact. To keep updating the SAME page from a new
   session, pass the existing URL to the Artifact tool:
