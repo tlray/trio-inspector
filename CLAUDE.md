@@ -43,6 +43,15 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
   localStorage persistence in SHARE mode (max ~6 days, pruned). Day switch auto-fetches.
 - The forecast fan extends past midnight via `dd.ext` (fixed +4h zone, shaded, when the
   selected cycle is in the last 4h of a day).
+- Forecast rendering: `fanPoints(c)` resolves each decision value (minGuardBG/minPredBG/
+  eventualBG) to a curve point, a two-source blend (`srcs.length===2`, `f`=weight), or a
+  float near the nearest point. The MAIN chart uses `drawFan()` (on-curve markers + labels
+  via `layoutLabels`). The PANEL sparkline is a separate richer renderer: curves stop at a
+  right RAIL where derived values sit as name-only chips at their BG level, vertically
+  de-collided by `dodge1d`; value + full explanation appear in the `#sparkpt` card on hover,
+  connectors to source points render into `#sparkhover` only on hover. Y-axis zooms to the
+  data; threshold/target lines only drawn when in view (else a "↓ below" tag). `.sparkwrap`
+  reclaims the step-body indent. Hit targets are `[data-pt]` → `SPARK.pts[]`.
 
 ## Conventions & pitfalls
 - English UI, Trio/Nightscout terminology, U (not E), dots as decimal separator.
