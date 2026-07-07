@@ -1409,18 +1409,34 @@ function buildRaw(entries,treatments,dev){
     else if(et==='Site Change') site.push(x);
   }
   for(const l of [tb,smb,bolus,carbs,notes]) l.sort((a,b)=>a[0]-b[0]);
-  const cmap={};
+  const cmap={}, enFreshAt={};
   for(const r of dev){
-    const oa=r.openaps||{}; const en=oa.enacted||oa.suggested||{};
-    if(!en||en.bg==null) continue;
-    const da=en.deliverAt||en.timestamp; if(!da) continue;
-    const x=pts(da); if(cmap[x]) continue;
-    const preds=en.predBGs||{}; const pred={};
+    const oa=r.openaps||{}; const su=oa.suggested, en=oa.enacted;
+    /* A loop cycle is identified by the SUGGESTED deliverAt — the moment the recommendation
+       was computed, which advances every ~5 min. The ENACTED deliverAt only advances when a
+       NEW temp basal/SMB is actually sent to the pump; on a "no change" cycle Trio re-reports
+       the PREVIOUS enact, so keying on it collapses every unchanged cycle onto the last
+       enacted one and silently drops it. Trio also uploads a cycle twice (a suggestion, then
+       an enacted confirmation) — both share the same suggested.deliverAt, so this key merges
+       them. */
+    const suT=su&&(su.deliverAt||su.timestamp), enT=en&&(en.deliverAt||en.timestamp);
+    const cycT=suT||enT; if(!cycT) continue;
+    const x=pts(cycT);
+    /* The enacted block belongs to THIS cycle only when its deliverAt matches; otherwise it is
+       a stale re-report. A fresh enacted block is the richer source (received flag, TDD, and a
+       profile-unit reason/target); when it is stale we read the suggested block, whose reason
+       and threshold/current_target are also in profile units on a "no change" upload. */
+    const enFresh=(en&&enT&&pts(enT)===x)?en:null;
+    const dec=enFresh||su||en; if(!dec||dec.bg==null) continue;
+    /* Prefer the fresh-enacted upload when both uploads of a cycle are present, regardless of order. */
+    if(cmap[x]&&!(enFresh&&!enFreshAt[x])) continue;
+    const preds=dec.predBGs||{}; const pred={};
     for(const k of ['IOB','ZT','COB','UAM']) if(preds[k]) pred[k]=preds[k].map(v=>Math.round(v));
-    cmap[x]={t:x,bg:en.bg,iob:r2(en.IOB||0),cob:en.COB||0,thr:en.threshold,ebg:en.eventualBG,req:en.insulinReq,
-      rate:en.rate,dur:en.duration,tgt:en.current_target,sens:en.sensitivityRatio,tdd:en.TDD,
-      units:en.units,reason:String(en.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
-      rec:(oa.enacted&&oa.enacted.received)?1:0,pred};
+    cmap[x]={t:x,bg:dec.bg,iob:r2(dec.IOB||0),cob:dec.COB||0,thr:dec.threshold,ebg:dec.eventualBG,req:dec.insulinReq,
+      rate:dec.rate,dur:dec.duration,tgt:dec.current_target,sens:dec.sensitivityRatio,tdd:dec.TDD,
+      units:dec.units,reason:String(dec.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
+      rec:(enFresh&&enFresh.received)?1:0,pred};
+    enFreshAt[x]=!!enFresh;
   }
   return {sgv,tb,smb,bolus,carbs,notes,site,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
 }

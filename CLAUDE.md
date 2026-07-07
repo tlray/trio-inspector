@@ -39,6 +39,12 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
   Numbers may be negative and may have a colon (`minGuardBG: -0.6`) — regexes must allow both.
 - `buildSteps(c,p)` computes ALL derived values once (thr, naive, guard minima gm, capVal,
   ratio, impliedF, impliedSmbMin) and fills `VALS` (live values shown in glossary chips).
+- Cycle identity (`buildRaw`/`build.py`): key each loop cycle on `suggested.deliverAt`, NOT
+  `enacted.deliverAt`. The enacted deliverAt only advances when a NEW temp/SMB is sent; on a
+  "no change" cycle Trio re-reports the previous enact, so keying on it silently drops every
+  unchanged cycle. Read the enacted block only when its deliverAt matches this cycle (fresh);
+  otherwise read `suggested`. Both carry reason + threshold/current_target in profile units on
+  the upload we keep — only the enacted-confirmation upload's `suggested` block leaks mg/dL.
 - Per-day fetch+cache: `fetchDay` (4 API calls, 25s timeout), `dayCache` in-memory,
   localStorage persistence in SHARE mode (max ~6 days, pruned). Day switch auto-fetches.
 - `dd.ext` is retired (always 0); forecast curves clip at day end. The MAIN chart shows

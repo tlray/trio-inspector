@@ -74,29 +74,42 @@ def build_snapshot(base, token, days=3):
     for l in (tb, smb, bolus, carbs, notes):
         l.sort()
 
-    cycles = {}
+    # A loop cycle is identified by the SUGGESTED deliverAt (advances every ~5 min).
+    # The ENACTED deliverAt only advances when a new temp basal/SMB is actually sent;
+    # on a "no change" cycle Trio re-reports the previous enact, so keying on it drops
+    # every unchanged cycle. See the matching note in template.html buildRaw().
+    cycles, en_fresh_at = {}, {}
     for r in dev:
         oa = r.get('openaps') or {}
-        en = oa.get('enacted') or oa.get('suggested') or {}
-        da = en.get('deliverAt') or en.get('timestamp')
-        if not en or en.get('bg') is None or not da:
+        su, en = oa.get('suggested'), oa.get('enacted')
+        su_t = (su.get('deliverAt') or su.get('timestamp')) if su else None
+        en_t = (en.get('deliverAt') or en.get('timestamp')) if en else None
+        cyc_t = su_t or en_t
+        if not cyc_t:
             continue
-        x = ts(da)
-        if x in cycles:
+        x = ts(cyc_t)
+        # enacted belongs to this cycle only when its deliverAt matches; else it is stale.
+        en_fresh = en if (en and en_t and ts(en_t) == x) else None
+        dec = en_fresh or su or en
+        if not dec or dec.get('bg') is None:
             continue
-        preds = en.get('predBGs') or {}
+        # Prefer the fresh-enacted upload when a cycle was uploaded twice, regardless of order.
+        if x in cycles and not (en_fresh and not en_fresh_at.get(x)):
+            continue
+        preds = dec.get('predBGs') or {}
         cycles[x] = {
-            't': x, 'bg': en.get('bg'), 'iob': round(en.get('IOB', 0), 2),
-            'thr': en.get('threshold'),
-            'cob': en.get('COB', 0), 'ebg': en.get('eventualBG'),
-            'req': en.get('insulinReq'), 'rate': en.get('rate'), 'dur': en.get('duration'),
-            'tgt': en.get('current_target'), 'sens': en.get('sensitivityRatio'),
-            'tdd': en.get('TDD'), 'units': en.get('units'),
-            'reason': (en.get('reason') or '').replace('&lt;', '<').replace('&gt;', '>'),
-            'rec': 1 if (oa.get('enacted') and oa['enacted'].get('received')) else 0,
+            't': x, 'bg': dec.get('bg'), 'iob': round(dec.get('IOB', 0), 2),
+            'thr': dec.get('threshold'),
+            'cob': dec.get('COB', 0), 'ebg': dec.get('eventualBG'),
+            'req': dec.get('insulinReq'), 'rate': dec.get('rate'), 'dur': dec.get('duration'),
+            'tgt': dec.get('current_target'), 'sens': dec.get('sensitivityRatio'),
+            'tdd': dec.get('TDD'), 'units': dec.get('units'),
+            'reason': (dec.get('reason') or '').replace('&lt;', '<').replace('&gt;', '>'),
+            'rec': 1 if (en_fresh and en_fresh.get('received')) else 0,
             'pred': {k: [int(v) for v in preds[k]]
                      for k in ('IOB', 'ZT', 'COB', 'UAM') if k in preds},
         }
+        en_fresh_at[x] = bool(en_fresh)
     data = json.dumps({
         'generatedAt': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
         'tzOffsetHours': 2,
