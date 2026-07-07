@@ -2,3 +2,6 @@
 trio_data.json
 *-snapshot.html
 *-live.html
+
+# Local dev/test dependencies (e.g. Playwright for browser tests)
+node_modules/
