@@ -41,17 +41,19 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
   ratio, impliedF, impliedSmbMin) and fills `VALS` (live values shown in glossary chips).
 - Per-day fetch+cache: `fetchDay` (4 API calls, 25s timeout), `dayCache` in-memory,
   localStorage persistence in SHARE mode (max ~6 days, pruned). Day switch auto-fetches.
-- The forecast fan extends past midnight via `dd.ext` (fixed +4h zone, shaded, when the
-  selected cycle is in the last 4h of a day).
+- `dd.ext` is retired (always 0); forecast curves clip at day end. The MAIN chart shows
+  ONLY the four forecast curves for the selected cycle — no points/labels (curves-only loop
+  in `renderGlucose`); all point detail lives in the panel sparkline.
 - Forecast rendering: `fanPoints(c)` resolves each decision value (minGuardBG/minPredBG/
   eventualBG) to a curve point, a two-source blend (`srcs.length===2`, `f`=weight), or a
-  float near the nearest point. The MAIN chart uses `drawFan()` (on-curve markers + labels
-  via `layoutLabels`). The PANEL sparkline is a separate richer renderer: curves stop at a
-  right RAIL where derived values sit as name-only chips at their BG level, vertically
-  de-collided by `dodge1d`; value + full explanation appear in the `#sparkpt` card on hover,
-  connectors to source points render into `#sparkhover` only on hover. Y-axis zooms to the
-  data; threshold/target lines only drawn when in view (else a "↓ below" tag). `.sparkwrap`
-  reclaims the step-body indent. Hit targets are `[data-pt]` → `SPARK.pts[]`.
+  float near the nearest point. `drawFan()` still exists (on-curve markers + `layoutLabels`)
+  but is no longer called. The PANEL sparkline is the richer renderer: green target band +
+  `niceTicks` (pixel-aware gridlines, shows 5 when there's room); threshold & target lines
+  ALWAYS drawn, labels on the LEFT; curves stop before a right RAIL where derived values sit
+  as name-only chips at their BG level, vertically de-collided by `dodge1d`. Value + full
+  explanation appear in the `#sparkpt` card on hover; a level guide + curved connectors to
+  source points render into `#sparkhover` only on hover (no per-point value in the label).
+  `.sparkwrap` reclaims the step-body indent. Hit targets are `[data-pt]` → `SPARK.pts[]`.
 
 ## Conventions & pitfalls
 - English UI, Trio/Nightscout terminology, U (not E), dots as decimal separator.
