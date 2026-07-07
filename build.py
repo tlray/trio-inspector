@@ -19,7 +19,7 @@ import json, os, sys, datetime, urllib.request, urllib.parse
 TEMPLATE = open(os.path.join(os.path.dirname(__file__) or '.', 'template.html')).read()
 EMPTY = ('{"generatedAt":"","tzOffsetHours":2,"profile":{"basal":[],"target":null,'
          '"isf":null,"cr":[],"dia":10,"units":"mmol"},"sgv":[],"tempBasal":[],"smb":[],"bolus":[],'
-         '"carbs":[],"notes":[],"siteChange":[],"cycles":[]}')
+         '"carbs":[],"notes":[],"siteChange":[],"overrides":[],"cycles":[]}')
 
 def build_share():
     out = (TEMPLATE.replace('/*__DATA__*/null', EMPTY)
@@ -46,7 +46,7 @@ def build_snapshot(base, token, days=3):
 
     sgv = sorted([[ts(e['dateString']), e['sgv']] for e in entries
                   if e.get('type') == 'sgv' and e.get('sgv')])
-    tb, smb, bolus, carbs, notes, site = [], [], [], [], [], []
+    tb, smb, bolus, carbs, notes, site, over = [], [], [], [], [], [], []
     for t in treatments:
         ca = t.get('created_at')
         if not ca:
@@ -71,7 +71,10 @@ def build_snapshot(base, token, days=3):
             notes.append([x, t.get('notes', '')])
         elif et == 'Site Change':
             site.append(x)
-    for l in (tb, smb, bolus, carbs, notes):
+        elif et == 'Exercise':
+            # Trio uploads Overrides / temp targets as Exercise events (notes = preset name)
+            over.append([x, round(t.get('duration', 0) or 0, 1), t.get('notes', '') or ''])
+    for l in (tb, smb, bolus, carbs, notes, over):
         l.sort()
 
     cycles = {}
@@ -109,7 +112,7 @@ def build_snapshot(base, token, days=3):
             'dia': store['dia'],
         },
         'sgv': sgv, 'tempBasal': tb, 'smb': smb, 'bolus': bolus, 'carbs': carbs,
-        'notes': notes, 'siteChange': site,
+        'notes': notes, 'siteChange': site, 'overrides': over,
         'cycles': sorted(cycles.values(), key=lambda c: c['t']),
     }, separators=(',', ':'))
     assert '</script' not in data.lower()

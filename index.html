@@ -3,7 +3,7 @@
 :root{
   --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
   --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
-  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
+  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7; --override:#af52de;
   --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
   --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
@@ -18,7 +18,7 @@
   :root{
     --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
     --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-    --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
+    --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7; --override:#bf5af2;
     --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
     --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
     --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
@@ -30,7 +30,7 @@
 :root[data-theme="light"]{
   --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
   --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
-  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
+  --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7; --override:#af52de;
   --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
   --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
@@ -41,7 +41,7 @@
 :root[data-theme="dark"]{
   --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
   --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-  --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
+  --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7; --override:#bf5af2;
   --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
     --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
     --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
@@ -175,6 +175,7 @@ details.more>.mbody{padding:0 10px 4px}
 .pcard .pchead b{font-size:12px}
 .pcard .pchead span{color:var(--muted);font:10px ui-monospace,SFMono-Regular,Menlo,monospace}
 #sparksvg [data-pt]{cursor:pointer;fill:transparent;stroke:none}
+.ovline{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--ink2);background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:3px 9px;margin:0 0 9px}
 .conc{margin:0 0 10px;padding:8px 10px;border:1px solid var(--grid);border-radius:8px;background:var(--page)}
 .crow{display:grid;grid-template-columns:74px 1fr 56px 32px;gap:7px;align-items:center}
 .crow .clbl{white-space:nowrap;font-size:10px}
@@ -253,7 +254,7 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
 </div>
 
 <script>
-let DATA = {"generatedAt":"","tzOffsetHours":2,"profile":{"basal":[],"target":null,"isf":null,"cr":[],"dia":10,"units":"mmol"},"sgv":[],"tempBasal":[],"smb":[],"bolus":[],"carbs":[],"notes":[],"siteChange":[],"cycles":[]};
+let DATA = {"generatedAt":"","tzOffsetHours":2,"profile":{"basal":[],"target":null,"isf":null,"cr":[],"dia":10,"units":"mmol"},"sgv":[],"tempBasal":[],"smb":[],"bolus":[],"carbs":[],"notes":[],"siteChange":[],"overrides":[],"cycles":[]};
 let LIVE = /*__LIVE__*/null;
 const SHARE = /*__SHARE__*/true;
 
@@ -266,6 +267,9 @@ const isMmol=()=>String((DATA.profile&&DATA.profile.units)||'mmol').toLowerCase(
 const M = v => isMmol()? v/18.016 : v;
 const fBG = v => isMmol()? f1(v) : String(Math.round(v));
 const bgUnit = ()=> isMmol()? 'mmol/L':'mg/dL';
+/* current_target is normally in profile units but Trio occasionally exports it in mg/dL
+   (e.g. 110 instead of 6.1) — coerce to display units so it never blows up the scale */
+const Mtgt = v => v==null?null : (isMmol()? (v>30? v/18.016 : v) : (v<30? v*18.016 : v));
 const f1 = v => (Math.round(v*10)/10).toFixed(1);
 const f2 = v => (Math.round(v*100)/100).toFixed(2);
 const hhmm = t => { const d=new Date(t*1000); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
@@ -368,6 +372,7 @@ function dayData(d){
     carbs:DATA.carbs.filter(e=>e[0]>=a&&e[0]<b),
     notes:DATA.notes.filter(e=>e[0]>=a&&e[0]<b),
     siteChange:DATA.siteChange.filter(t=>t>=a&&t<b),
+    overrides:(DATA.overrides||[]).filter(o=>o[0]<b&&o[0]+o[1]*60>a),
   };
   const lastT=Math.max(ds.sgv.length?ds.sgv[ds.sgv.length-1][0]:a, ds.cycles.length?ds.cycles[ds.cycles.length-1].t:a);
   ds.segs=basalSegs(a,Math.min(b,lastT+300),DATA.tempBasal);
@@ -531,9 +536,28 @@ function renderGlucose(dd,w){
   }
   /* target band 3.9-10 */
   add(svg,'rect',{x:ML,y:y(M(180)),width:w-ML-MR,height:y(M(70))-y(M(180)),fill:css('--band')});
-  if(DATA.profile.target!=null)
+  /* target line follows the per-cycle target, so it steps with overrides / temp targets */
+  const tgtC=dd.cycles.filter(c=>c.tgt!=null);
+  if(tgtC.length){
+    let td='';
+    tgtC.forEach((c,i)=>{ const yy=y(Mtgt(c.tgt)).toFixed(1), x1=X(i+1<tgtC.length?tgtC[i+1].t:dd.b).toFixed(1);
+      td+=(td?'L'+X(c.t).toFixed(1)+' '+yy+' ':'M'+X(c.t).toFixed(1)+' '+yy+' ')+'L'+x1+' '+yy+' '; });
+    add(svg,'path',{d:td,fill:'none',stroke:css('--good'),'stroke-width':1,'stroke-dasharray':'5 4',opacity:.7});
+  } else if(DATA.profile.target!=null){
     add(svg,'line',{x1:ML,x2:w-MR,y1:y(DATA.profile.target),y2:y(DATA.profile.target),
       stroke:css('--good'),'stroke-width':1,'stroke-dasharray':'5 4',opacity:.7});
+  }
+  /* overrides — rendered like the Trio app: a thick, semi-transparent purple bar at the
+     override's target level, spanning its window (Trio: Color.purple.opacity(0.4), 8pt RuleMark) */
+  for(const [ot,odur,oname] of (dd.overrides||[])){
+    const oa=Math.max(dd.a,ot), ob=Math.min(dd.b, ot+(odur||0)*60);
+    if(ob<=oa) continue;
+    const mid=(oa+ob)/2; let tc=null,bd=1e12;
+    for(const c of dd.cycles){ if(c.tgt==null) continue; const d=Math.abs(c.t-mid); if(d<bd){bd=d;tc=c;} }
+    const tv=tc?Mtgt(tc.tgt):(DATA.profile.target!=null?DATA.profile.target:(isMmol()?6.1:110));
+    const bar=add(svg,'line',{x1:X(oa),x2:X(ob),y1:y(tv),y2:y(tv),stroke:css('--override'),'stroke-width':8,'stroke-linecap':'butt',opacity:.4});
+    bar.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title')).textContent=`override${oname?': '+String(oname).trim():''} · target ${fBG(tv)} ${bgUnit()}`;
+  }
   for(const g of (isMmol()?[4,6,8,10,12,14,16]:[70,110,150,190,230,270])) if(g<maxbg&&g>dLO){
     add(svg,'text',{x:ML-6,y:y(g)+3.5,'text-anchor':'end',fill:css('--muted'),
       style:'font:10.5px ui-monospace,Menlo,monospace'},g);
@@ -695,6 +719,8 @@ function attachHover(svg,dd,which){
     html+=`<br><span style="color:var(--iobline)">●</span> IOB <b>${f2(c.iob)}</b> U · <span style="color:var(--cobline)">●</span> COB <b>${c.cob||0}</b> g`;
     const lk=limitKeys(c);
     if(lk.length) html+=`<br>${lk.map(k=>{const r=LIMROWS.find(r=>r.key===k);return `<span style="color:var(${r?r.c:'--muted'})">●</span> ${r?r.label:k}`;}).join(' · ')}`;
+    const ovh=(dd.overrides||[]).find(o=>c.t>=o[0]&&c.t<o[0]+(o[1]||0)*60);
+    if(ovh) html+=`<br><span style="color:var(--override)">⚑</span> override${ovh[2]?': '+String(ovh[2]).trim().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}`;
     tip.innerHTML=html;
     tip.style.display='block';
     const gb=boxG.getBoundingClientRect();
@@ -951,7 +977,7 @@ function sparkline(c,thr){
   const W=Math.max(330,Math.min(540,((typeof panel!=='undefined'&&panel&&panel.clientWidth)||360)+4));
   const railW=106,PL=20,PT=13,PB=17,H=196;
   const plotR=W-railW, railX=plotR+26;
-  const tgt=c.tgt||(isMmol()?6.1:110);
+  const tgt=Mtgt(c.tgt)||(isMmol()?6.1:110);
   /* de as wordt bepaald door de curves (+ drempel/target) — niet door afgeleide waarden,
      want die kunnen in extreme (over-insuline) gevallen ver negatief zijn en de as opblazen;
      zulke chips worden geklemd naar de rand i.p.v. de schaal te verpesten */
@@ -1108,11 +1134,12 @@ function buildSteps(c,p){
     const a=minOf('IOB'), b=minOf('UAM')??minOf('COB');
     if(a!=null){ minPred=b!=null?(a+b)/2:a; minApprox=true; }
   }
-  const tgtV=c?(c.tgt||(isMmol()?6.1:110)):null;
+  const tgN=c?Mtgt(c.tgt):null;
+  const tgtV=c?(tgN??(isMmol()?6.1:110)):null;
   const isfV=c?p.isf:null;
   const sched=c?schedBasal(c.t):null;
-  const thr=(c&&(c.thr??p.thr)) ?? (c&&(c.tgt||null)!=null
-    ? (isMmol()? Math.max(3.3,Math.min(6.7,c.tgt-0.5*(c.tgt-2.2))) : Math.max(60,Math.min(120,c.tgt-0.5*(c.tgt-40))))
+  const thr=(c&&(c.thr??p.thr)) ?? (c&&tgN!=null
+    ? (isMmol()? Math.max(3.3,Math.min(6.7,tgN-0.5*(tgN-2.2))) : Math.max(60,Math.min(120,tgN-0.5*(tgN-40))))
     : (isMmol()?4.4:80));
   const rows=[];
   const skipAfter = n => exited && n>exited;
@@ -1318,6 +1345,9 @@ function renderPanel(dd){
         <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span></div>`
     : `<div class="empty" style="padding:2px 0 6px">The oref1 pipeline — click a cycle in the chart to fill in its real values.</div>`;
   const {rows,conc}=buildSteps(c,p);
+  const ov = c ? (dd.overrides||[]).find(o=>c.t>=o[0]&&c.t<o[0]+(o[1]||0)*60) : null;
+  const ovName = ov&&ov[2]?String(ov[2]).trim():'';
+  const ovHtml = ov ? `<div class="ovline"><span style="color:var(--override)">⚑</span> Override active${ovName?' · '+ovName.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}</div>` : '';
   const list=rows.map(r=>{
     const open=openSteps.has(r.id);
     return `<div class="step ${open?'open':''} ${r.skip?'skip':''}">
@@ -1328,7 +1358,7 @@ function renderPanel(dd){
       ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
     </div>`;}).join('');
   const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
-  panel.innerHTML=`<h2>Loop decision</h2>${head}${conc}<div class="steps">${list}</div>${raw}`;
+  panel.innerHTML=`<h2>Loop decision</h2>${head}${ovHtml}${conc}<div class="steps">${list}</div>${raw}`;
   panel.querySelectorAll('details').forEach(d=>{ if(openDetails.has(dKey(d))) d.open=true; });
   const lv=document.getElementById('srlive');
   if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${rows[rows.length-1].val.replace(/<[^>]+>/g,'')}`;
@@ -1408,7 +1438,7 @@ function buildRaw(entries,treatments,dev){
   const pts=x=>Math.floor(Date.parse(x)/1000);
   const r2=v=>Math.round(v*100)/100, r1=v=>Math.round(v*10)/10;
   const sgv=entries.filter(e=>e.type==='sgv'&&e.sgv).map(e=>[pts(e.dateString),e.sgv]).sort((a,b)=>a[0]-b[0]);
-  const tb=[],smb=[],bolus=[],carbs=[],notes=[],site=[];
+  const tb=[],smb=[],bolus=[],carbs=[],notes=[],site=[],over=[];
   for(const t of treatments){
     if(!t.created_at) continue;
     const x=pts(t.created_at), et=t.eventType;
@@ -1418,8 +1448,9 @@ function buildRaw(entries,treatments,dev){
     else if(et==='Carb Correction'||t.carbs){ if(t.carbs) carbs.push([x,r1(t.carbs)]); }
     else if(et==='Note') notes.push([x,t.notes||'']);
     else if(et==='Site Change') site.push(x);
+    else if(et==='Exercise') over.push([x,r1(t.duration||0),t.notes||'']); /* Trio uploads Overrides as Exercise events */
   }
-  for(const l of [tb,smb,bolus,carbs,notes]) l.sort((a,b)=>a[0]-b[0]);
+  for(const l of [tb,smb,bolus,carbs,notes,over]) l.sort((a,b)=>a[0]-b[0]);
   const cmap={};
   for(const r of dev){
     const oa=r.openaps||{}; const en=oa.enacted||oa.suggested||{};
@@ -1433,7 +1464,7 @@ function buildRaw(entries,treatments,dev){
       units:en.units,reason:String(en.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
       rec:(oa.enacted&&oa.enacted.received)?1:0,pred};
   }
-  return {sgv,tb,smb,bolus,carbs,notes,site,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
+  return {sgv,tb,smb,bolus,carbs,notes,site,over,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
 }
 function loadPersisted(d){
   if(!SHARE) return null;
@@ -1482,7 +1513,8 @@ async function fetchDay(d){
     bolus:raw.bolus.filter(e=>e[0]>=a&&e[0]<b),
     carbs:raw.carbs.filter(e=>e[0]>=a&&e[0]<b),
     notes:raw.notes.filter(e=>e[0]>=a&&e[0]<b),
-    siteChange:raw.site.filter(t=>t>=a&&t<b)};
+    siteChange:raw.site.filter(t=>t>=a&&t<b),
+    overrides:(raw.over||[]).filter(o=>o[0]<b&&o[0]+o[1]*60>a)};
   const lastT=Math.max(data.sgv.length?data.sgv[data.sgv.length-1][0]:a, data.cycles.length?data.cycles[data.cycles.length-1].t:a);
   data.segs=basalSegs(a,Math.min(b,lastT+300),raw.tb);
   dayCache[d]={data,fetchedAt:Date.now()};
