@@ -928,6 +928,9 @@ function niceTicks(mn,mx,mmol,plotH,minGap){
   const out=[]; for(let g=Math.ceil(mn/step)*step; g<mx; g+=step) out.push(+g.toFixed(2));
   return out;
 }
+/* een datakwaltiteit-hik in één cyclus mag nooit het hele paneel (en dus de selectie) blokkeren */
+function safeSpark(c,thr){ try{ return sparkline(c,thr); }catch(e){ SPARK=null;
+  return `<div class="pcard" style="color:var(--muted)">forecast chart unavailable for this cycle (${String(e&&e.message||e).replace(/</g,'&lt;')})</div>`; } }
 let SPARK=null;
 function sparkline(c,thr){
   const pr=c.pred||{}; const keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
@@ -938,9 +941,12 @@ function sparkline(c,thr){
   const railW=106,PL=20,PT=13,PB=17,H=196;
   const plotR=W-railW, railX=plotR+26;
   const tgt=c.tgt||(isMmol()?6.1:110);
+  /* de as wordt bepaald door de curves (+ drempel/target) — niet door afgeleide waarden,
+     want die kunnen in extreme (over-insuline) gevallen ver negatief zijn en de as opblazen;
+     zulke chips worden geklemd naar de rand i.p.v. de schaal te verpesten */
   let dmn=Infinity,dmx=-Infinity;
   for(const k of keys) for(const v of pr[k]){ const m=M(v); if(m<dmn)dmn=m; if(m>dmx)dmx=m; }
-  if(fp) for(const dc of fp.decisions){ if(dc.val<dmn)dmn=dc.val; if(dc.val>dmx)dmx=dc.val; }
+  if(fp) for(const dc of fp.decisions){ if(dc.val>=dmn-(isMmol()?1:18)&&dc.val<dmn)dmn=dc.val; if(dc.val<=dmx+(isMmol()?1:18)&&dc.val>dmx)dmx=dc.val; }
   /* drempel én target altijd in beeld voor oriëntatie; verder strak rond de actie */
   let mn=Math.min(dmn,thr),mx=Math.max(dmx,tgt);
   const pad=Math.max((mx-mn)*0.07,isMmol()?0.25:4); mn-=pad; mx+=pad;
@@ -1171,7 +1177,7 @@ function buildSteps(c,p){
   rows.push({id:'forecast',lab:'forecast',
     val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
        :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
-    body:(c?sparkline(c,thr):'')+
+    body:(c?safeSpark(c,thr):'')+
       `<p>Four futures, one per assumption, each stepped from the current BG in 5-minute ticks, 4 hours ahead: <b style="color:var(--txt-iob)">IOB</b> — the insulin already delivered plays out, nothing else happens; <b style="color:var(--txt-zt)">ZT</b> — delivery stops right now (the dashed safety floor); <b style="color:var(--txt-cob)">COB</b> — announced carbs keep absorbing; <b style="color:var(--txt-uam)">UAM</b> — the unexplained rise fades out. Safety is read from the lowest relevant points, dosing from the highest endpoints. The labeled markers — drawn identically here and in the main chart — are the values this cycle’s decision actually used.</p>
       ${c?`<div class="frm">${['IOB','ZT','COB','UAM'].filter(k=>pr[k]&&pr[k].length>1).map(k=>{
         const a=pr[k];
