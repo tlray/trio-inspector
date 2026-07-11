@@ -12,6 +12,9 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
   git-ignored personal-snapshot.html (~3 days of data baked in).
 - `variable-map.html`, `playground.html` — standalone experiments (data-flow map; executable
   annotated source). Not wired into the app.
+- `DESIGN.md` — the design system: the "colour = meaning" rule, the frozen semantic palette
+  (mirrors Trio) vs the neutral interface palette (ours), type/space/theming rules. Read it
+  before any visual change.
 
 ## Build & test
 - Build: `python3 build.py` (or replicate the two replaces inline).
