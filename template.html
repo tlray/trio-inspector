@@ -1,71 +1,76 @@
 <title>Trio Loop-inspector</title>
 <style>
 :root{
-  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --page:#f5f5f7; --surface:#ffffff; --ink:#1d1d1f; --ink2:#424245; --muted:#6e6e73;
+  --grid:#e8e8ed; --axis:#d2d2d7; --border:rgba(0,0,0,.09);
+  --accent:#0066cc; --accentHov:#0071e3; --onAccent:#ffffff;
   --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
   --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
   --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
   --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
-    --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
+    --band:rgba(111,207,151,.13); --sel:#1d1d1f; --hover:rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --page:#000000; --surface:#1c1c1e; --ink:#f5f5f7; --ink2:#a1a1a6; --muted:#8e8e93;
+    --grid:#2a2a2c; --axis:#3a3a3c; --border:rgba(255,255,255,.12);
+    --accent:#2997ff; --accentHov:#3ba0ff; --onAccent:#ffffff;
     --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
     --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
     --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
     --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
     --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
     --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#4a67ff; --cobline:#ff9f0a;
-    --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
+    --band:rgba(111,207,151,.10); --sel:#f5f5f7; --hover:rgba(255,255,255,.07);
   }
 }
 :root[data-theme="light"]{
-  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --page:#f5f5f7; --surface:#ffffff; --ink:#1d1d1f; --ink2:#424245; --muted:#6e6e73;
+  --grid:#e8e8ed; --axis:#d2d2d7; --border:rgba(0,0,0,.09);
+  --accent:#0066cc; --accentHov:#0071e3; --onAccent:#ffffff;
   --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
   --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
   --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
   --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
-  --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
+  --band:rgba(111,207,151,.13); --sel:#1d1d1f; --hover:rgba(0,0,0,.05);
 }
 :root[data-theme="dark"]{
-  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
-  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --page:#000000; --surface:#1c1c1e; --ink:#f5f5f7; --ink2:#a1a1a6; --muted:#8e8e93;
+  --grid:#2a2a2c; --axis:#3a3a3c; --border:rgba(255,255,255,.12);
+  --accent:#2997ff; --accentHov:#3ba0ff; --onAccent:#ffffff;
   --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
   --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
     --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
     --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
     --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
     --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#4a67ff; --cobline:#ff9f0a;
-  --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
+  --band:rgba(111,207,151,.10); --sel:#f5f5f7; --hover:rgba(255,255,255,.07);
 }
 *{box-sizing:border-box}
-body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:0}
+body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:0;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:-.006em}
 .wrap{max-width:1280px;margin:0 auto;padding:12px 16px 50px}
 header.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 15px;margin-bottom:6px}
-h1{display:inline-flex;align-items:center;gap:10px;font-size:18px;font-weight:650;margin:0;letter-spacing:-.015em;line-height:1}
-h1 .mark{width:25px;height:25px;flex:none;display:inline-flex;color:var(--ink)}
+h1{display:inline-flex;align-items:center;gap:10px;font-size:21px;font-weight:600;margin:0;letter-spacing:-.021em;line-height:1}
+h1 .mark{width:26px;height:26px;flex:none;display:inline-flex;color:var(--ink)}
 h1 .mark svg{width:100%;height:100%;display:block}
-h1 .wm i{font-style:normal;font-weight:550;color:var(--ink2);margin-left:.34em}
+h1 .wm i{font-style:normal;font-weight:400;color:var(--ink2);margin-left:.36em}
 #refreshInfo{color:var(--muted);font-size:11.5px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 #loginCard h2{font-size:17px;text-transform:none;letter-spacing:-.01em;color:var(--ink);font-weight:650;margin:0 0 6px}
 #loginCard .lgmark{width:34px;height:34px;flex:none;color:var(--ink);margin-bottom:11px}
 #loginCard .lgmark svg{width:100%;height:100%;display:block}
 .sub{color:var(--ink2);font-size:12.5px;margin:0 0 8px;max-width:110ch}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
-.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
-  padding:6px 13px;font:600 13px system-ui,sans-serif;cursor:pointer}
-.tab[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
-.tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px}
+.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:980px;
+  padding:6px 15px;font:500 13px system-ui,sans-serif;letter-spacing:-.01em;cursor:pointer}
+.tab:hover{color:var(--ink)}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:9px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px 6px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:8px 14px 9px}
 .tile .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
 .tile .v{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
 .tile .v small{font-size:12px;font-weight:500;color:var(--ink2)}
@@ -73,7 +78,7 @@ h1 .wm i{font-style:normal;font-weight:550;color:var(--ink2);margin-left:.34em}
 .tirbar div{height:100%}
 .main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}
 @media (max-width:1080px){.main{grid-template-columns:1fr}}
-.charts{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px 4px;min-width:0}
+.charts{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:12px 14px 6px;min-width:0}
 .chart-title{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 0 0 44px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
 .chart-title .lg{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink2)}
 .dotc{width:9px;height:9px;border-radius:50%;display:inline-block}
@@ -86,7 +91,7 @@ svg{display:block;width:100%}
 .tooltip b{font-weight:650}
 .hint{color:var(--muted);font-size:11.5px;margin:3px 0 0 44px}
 @media (pointer:coarse){.hint{display:none}.tooltip{display:none !important}}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;position:sticky;top:8px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px 16px;position:sticky;top:8px}
 @media (max-width:1080px){.panel{position:static}}
 .panel h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
 .panel .when{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
@@ -124,7 +129,7 @@ svg{display:block;width:100%}
 .limleg{display:flex;flex-wrap:wrap;gap:2px 12px;margin:3px 0 0 44px;font-size:10.5px;color:var(--ink2)}
 .limleg span{display:inline-flex;align-items:center;gap:4px}
 .limleg i{width:8px;height:8px;border-radius:2px;display:inline-block;font-style:normal}
-.explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 16px}
+.explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:6px 18px}
 .explain h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:650}
 details{border-top:1px solid var(--grid);padding:2px 0}
 details:first-of-type{border-top:none}
@@ -159,7 +164,7 @@ details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1
 details.src{margin-top:4px}
 details.src summary{font-size:11px;color:var(--muted);cursor:pointer;padding:2px 0}
 details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
-details.src a{color:var(--iob);font-size:11px;text-decoration:none}
+details.src a{color:var(--accent);font-size:11px;text-decoration:none}
 details.more{margin:7px 0;border:1px solid var(--grid);border-radius:7px;background:var(--page)}
 details.more>summary{font-size:12px;color:var(--ink2);cursor:pointer;padding:6px 10px;font-weight:650;list-style:none}
 details.more>summary::-webkit-details-marker{display:none}
@@ -185,9 +190,10 @@ details.more>.mbody{padding:0 10px 4px}
 .frm .cy{color:var(--txt-iob)}
 details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:7px 0 4px;font-weight:650}
 #loginCard label{display:block;font-size:12.5px;color:var(--ink2);margin:10px 0 4px;font-weight:600}
-#loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+#loginCard input{width:100%;padding:9px 13px;border:1px solid var(--border);border-radius:11px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
+#loginCard input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
 #loginCard .err{color:var(--lo);font-size:12.5px;margin-top:8px;min-height:1em}
-@media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .12s,color .12s}.scar{transition:transform .12s}}
+@media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .18s,color .18s,border-color .18s,transform .1s}.tab:active{transform:scale(.96)}.scar{transition:transform .12s}}
 </style>
 
 <div class="wrap">
@@ -216,7 +222,7 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
   <p style="font-size:12px;color:var(--muted);margin:2px 0 0">Create a token in Nightscout under <b>Admin&nbsp;tools → Subjects</b> with the <i>readable</i> role. Works with Trio and other oref-based (OpenAPS/AAPS) uploads.</p>
   <label for="nsUrl">Nightscout URL</label><input id="nsUrl" type="url" placeholder="https://my-site.example.com">
   <label for="nsToken">Access token</label><input id="nsToken" type="text" placeholder="token with readable permission">
-  <div style="margin-top:12px"><button class="tab" id="nsConnect" style="background:var(--ink);color:var(--page)">Connect</button></div>
+  <div style="margin-top:14px"><button class="tab" id="nsConnect" style="background:var(--accent);color:var(--onAccent);border-color:var(--accent);padding:8px 22px;font-weight:600">Connect</button></div>
   <div class="err" id="nsError"></div>
 </div>
 
