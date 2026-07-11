@@ -5,3 +5,5 @@ trio_data.json
 
 # Local dev/test dependencies (e.g. Playwright for browser tests)
 node_modules/
+package.json
+package-lock.json

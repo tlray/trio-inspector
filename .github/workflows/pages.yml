@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - index.html
+      - build_versions.py
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -29,6 +30,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history so build_versions.py can snapshot past builds
       - name: Assemble site
         run: |
           mkdir -p _site
@@ -37,6 +40,8 @@ jobs:
           for f in variable-map.html playground.html; do
             [ -f "$f" ] && cp "$f" "_site/$f" || true
           done
+      - name: Generate version snapshots + manifest
+        run: python3 build_versions.py _site
       - uses: actions/configure-pages@v5
         with:
           enablement: true

@@ -57,6 +57,17 @@ h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
   padding:6px 13px;font:600 13px system-ui,sans-serif;cursor:pointer}
 .tab[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
 .tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px}
+.verwrap{position:relative}
+.verbtn{font-weight:600}
+.vermenu{position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:290px;max-width:min(380px,92vw);
+  max-height:min(60vh,420px);overflow:auto;background:var(--surface);border:1px solid var(--border);
+  border-radius:9px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:5px}
+.veritem{display:block;text-decoration:none;color:var(--ink);padding:7px 9px;border-radius:6px}
+.veritem:hover{background:var(--hover)}
+.veritem.cur{cursor:default}
+.verdate{display:block;font:600 12.5px system-ui,sans-serif;color:var(--ink)}
+.versub{display:block;font-size:11.5px;color:var(--ink2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vercur{font-weight:700;color:var(--txt-good);font-size:10px;margin-left:7px;text-transform:uppercase;letter-spacing:.04em}
 .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:9px}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px 6px}
 .tile .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
@@ -188,6 +199,10 @@ details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase
   <h1>Trio Loop Inspector</h1>
   <button class="tab" id="signOut" style="display:none">Sign out</button>
   <span id="refreshInfo" style="color:var(--muted);font-size:12px"></span>
+  <div class="verwrap" id="verWrap" style="display:none;margin-left:auto">
+    <button class="tab verbtn" id="verBtn" aria-haspopup="listbox" aria-expanded="false" title="View older versions of this app">🕘 Versions ▾</button>
+    <div class="vermenu" id="verMenu" role="listbox" style="display:none"></div>
+  </div>
 </header>
 <p class="sub">Click any point to see what Trio knew, what it forecast, what it decided — and which safety limits cut in.</p>
 
@@ -1552,6 +1567,35 @@ async function goDeep(t){
 window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); else goLatest(false); });
 (function(){ const h=document.querySelector('header.top h1'); if(h){ h.style.cursor='pointer';
   h.title='Go to the latest decision'; h.addEventListener('click',()=>goLatest(true)); } })();
+
+/* ---------- version selector ----------
+   Reads versions.json (written by build_versions.py at deploy time) and lists past
+   builds. The site root is always the newest build; older entries link to their frozen
+   snapshot. Absent versions.json (local file, personal snapshot, artifact) → stays hidden. */
+(function(){
+  const wrap=document.getElementById('verWrap'), btn=document.getElementById('verBtn'), menu=document.getElementById('verMenu');
+  if(!wrap||!btn||!menu) return;
+  let isOpen=false, loaded=false;
+  const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  function setOpen(o){ isOpen=o; menu.style.display=o?'block':'none'; btn.setAttribute('aria-expanded',o?'true':'false'); }
+  async function load(){
+    let list=null;
+    try{ const r=await fetch('versions.json',{cache:'no-store'}); if(r.ok) list=await r.json(); }catch(e){}
+    if(!Array.isArray(list)||!list.length){ wrap.style.display='none'; return; }
+    menu.innerHTML=list.map((v,i)=>{
+      const cur=i===0;
+      return `<a class="veritem${cur?' cur':''}" role="option" href="${cur?'./':esc(v.file)}"`+
+        `${cur?' aria-current="true"':''}><span class="verdate">${esc(v.date)} UTC`+
+        `${cur?' <span class="vercur">current</span>':''}</span>`+
+        `<span class="versub">${esc(v.subject)}</span></a>`;
+    }).join('');
+    loaded=true; wrap.style.display='';
+  }
+  btn.addEventListener('click',e=>{ e.stopPropagation(); setOpen(!isOpen); });
+  document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&isOpen){ setOpen(false); btn.focus(); } });
+  load();
+})();
 
 /* ---------- init ---------- */
 computeDays(); buildTabs(); setInfo(); renderAll();
