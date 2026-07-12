@@ -176,6 +176,10 @@ header.top .grow{flex:1}
   box-shadow:var(--shadow);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
 .dtip b{font-weight:650}
 @media (pointer:coarse){.dtip{display:none !important}}
+.limleg{display:flex;flex-wrap:wrap;gap:2px 11px;justify-content:center;align-items:center;
+  font-size:10.5px;color:var(--muted);padding:4px 4px 2px}
+.limleg i{display:inline-block;width:8px;height:8px;border-radius:2.5px;margin-right:4px;vertical-align:-1px}
+.limleg b{font-weight:600;color:var(--ink2)}
 .chartempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
 
 /* ---------- snapshot panel ---------- */
@@ -401,6 +405,7 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
           <div class="legend" id="legend"></div>
           <div class="dtip" id="dtip"></div>
         </div>
+        <div class="limleg" id="limleg"></div>
       </section>
       <button id="chartToggle" aria-expanded="false" aria-label="show day chart" title="Day chart">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
@@ -657,6 +662,11 @@ function parseReason(c){
   if(m=g(/Microbolusing ([0-9]+(?:\.[0-9]+)?)U/)) p.smb=+m[1];
   return p;
 }
+/* cached limit keys per cycle — non-enumerable so persisted day JSON stays clean */
+function limKeys(c){
+  if(!c._lk) Object.defineProperty(c,'_lk',{value:parseReason(c).limits.map(l=>l.key)});
+  return c._lk;
+}
 function thrOf(c,p){
   return (c&&(c.thr??(p&&p.thr))) ?? ((c&&(c.tgt||null)!=null)
     ? (isMmol()? Math.max(3.3,Math.min(6.7,c.tgt-0.5*(c.tgt-2.2))) : Math.max(60,Math.min(120,c.tgt-0.5*(c.tgt-40))))
@@ -697,8 +707,20 @@ function renderStats(dd){
    the glucose chart with forecasts, then the IOB/COB strip.
    ============================================================ */
 const PADL=10, PADR=38;
-const BAS_H=44, GAP1=8, MAIN_H=278, GAP2=12, IC_H=88, AX_H=20;
-const SVG_H=BAS_H+GAP1+MAIN_H+GAP2+IC_H+AX_H;
+const BAS_H=36, GAP1=6, MAIN_H=204, GAP2=10, IC_H=60, GAP3=10, LANE_H=9, AX_H=16;
+/* safety-limits strip under the day chart: one lane per kind of guard/cap,
+   fed by parseReason(c).limits keys (see limKeys) */
+const LIMROWS=[
+  {label:'unrestricted dosing', c:'--good', op:.5, test:(c,ks)=>!ks.length&&(c.req||0)>0.01},
+  {label:'hypo guard',        c:'--lo',  keys:['guard']},
+  {label:'forecast < target', c:'--zt',  keys:['zero','rising']},
+  {label:'IOB ceiling',       c:'--hi',  keys:['maxiob']},
+  {label:'SMB limited',       c:'--hi',  keys:['maxbolus','smbjump']},
+  {label:'SMB interval',      c:'--hi',  op:.4, keys:['smbwait']},
+  {label:'basal limited',     c:'--hi',  keys:['maxbasal']},
+];
+const LIM_H=LIMROWS.length*LANE_H;
+const SVG_H=BAS_H+GAP1+MAIN_H+GAP2+IC_H+GAP3+LIM_H+AX_H;
 let X=null;
 const chartWrap=document.getElementById('chartWrap'), dtip=document.getElementById('dtip');
 
@@ -724,7 +746,7 @@ function renderDayChart(dd){
 
   /* ---- x grid + hour labels (labels under the IOB/COB strip, like the app) ---- */
   const hourStep = w<420?6 : w<560?4 : w<760?3 : 2;
-  const gridBot=BAS_H+GAP1+MAIN_H+GAP2+IC_H;
+  const gridBot=BAS_H+GAP1+MAIN_H+GAP2+IC_H+GAP3+LIM_H;
   for(let hr=0;hr<=24;hr+=hourStep){
     const t=dd.a+hr*3600, x=X(Math.min(t,dd.b));
     s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="0" y2="${gridBot}" stroke="var(--grid)" stroke-width=".8" stroke-dasharray="2 4"/>`;
@@ -875,6 +897,33 @@ function renderDayChart(dd){
     s+=`<text x="${plotR+7}" y="${(I0+8)}" fill="var(--iobline)" style="font:600 9px ui-monospace,Menlo,monospace">IOB</text>`;
     s+=`<text x="${plotR+7}" y="${(I0+19)}" fill="var(--cobline)" style="font:600 9px ui-monospace,Menlo,monospace">COB</text>`;
   }
+
+  /* ---- safety limits strip: runs of cycles where a guard/cap was active;
+         lanes top→bottom match the legend below the chart (left→right) ---- */
+  const L0=I1+GAP3, counts=[];
+  if(dd.cycles.length){
+    LIMROWS.forEach((row,i)=>{
+      const yy=L0+i*LANE_H;
+      const runs=[]; let run=null, n=0;
+      dd.cycles.forEach((c,j)=>{
+        const ks=limKeys(c);
+        const active=row.test?row.test(c,ks):row.keys.some(k=>ks.includes(k));
+        if(!active){ run=null; return; }
+        n++;
+        const next=j+1<dd.cycles.length?dd.cycles[j+1].t:Math.min(c.t+300,dd.b);
+        const end=Math.min(next,c.t+600,dd.b);
+        if(run&&c.t-run.b<=1) run.b=end;
+        else{ run={a:c.t,b:end}; runs.push(run); }
+      });
+      s+=`<rect x="${PADL}" y="${(yy+.5).toFixed(1)}" width="${plotR-PADL}" height="${LANE_H-1.5}" fill="var(--grid)" opacity=".3"/>`;
+      for(const r of runs)
+        s+=`<rect x="${X(r.a).toFixed(1)}" y="${(yy+.5).toFixed(1)}" width="${Math.max(1.5,X(r.b)-X(r.a)).toFixed(1)}" height="${LANE_H-1.5}" rx="1.5" fill="var(${row.c})" opacity="${row.op||.85}"/>`;
+      counts.push(n);
+    });
+    s+=`<text x="${plotR+7}" y="${L0+8}" fill="var(--muted)" style="font:600 9px ui-monospace,Menlo,monospace">limits</text>`;
+    if(selCycle)
+      s+=`<line x1="${X(selCycle.t).toFixed(1)}" x2="${X(selCycle.t).toFixed(1)}" y1="${L0}" y2="${L0+LIM_H-1}" stroke="var(--sel)" stroke-width="1.4" opacity=".55"/>`;
+  }
   /* hover guide line */
   s+=`<line id="hoverX" x1="-9" x2="-9" y1="0" y2="${gridBot}" stroke="var(--muted)" stroke-width="1" opacity=".6" pointer-events="none"/>`;
 
@@ -891,6 +940,8 @@ function renderDayChart(dd){
   }
   attachChart(svg,dd,w);
   renderLegend();
+  document.getElementById('limleg').innerHTML = dd.cycles.length ? LIMROWS.map((r,i)=>
+    `<span><i style="background:var(${r.c});opacity:${Math.min(1,(r.op||.85)+.15)}"></i>${r.label}${counts[i]?` <b>${counts[i]}×</b>`:' 0×'}</span>`).join('') : '';
 }
 
 function renderLegend(){
@@ -928,6 +979,11 @@ function attachChart(svg,dd,w){
     html+=`<br><span style="color:${bgCol(c.bg)}">●</span> glucose <b>${fBG(M(c.bg))}</b> ${bgUnit()}`;
     if(seg) html+=`<br><span style="color:var(--insulin)">●</span> basal <b>${f2(seg.rate)}</b> U/h ${seg.temp?'(temp)':'(scheduled)'}`;
     html+=`<br><span style="color:var(--iobline)">●</span> IOB <b>${f2(c.iob)}</b> U · <span style="color:var(--cobline)">●</span> COB <b>${c.cob||0}</b> g`;
+    const ks=limKeys(c);
+    if(ks.length){
+      const rows=LIMROWS.filter(r=>r.keys&&r.keys.some(k=>ks.includes(k)));
+      if(rows.length) html+=`<br>${rows.map(r=>`<span style="color:var(${r.c})">●</span> ${r.label}`).join(' · ')}`;
+    }
     dtip.innerHTML=html; dtip.style.display='block';
     const gb=chartWrap.getBoundingClientRect();
     const sx=cx*(r.width/w);

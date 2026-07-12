@@ -63,13 +63,18 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   `Trio/Sources/Modules/Home/View/Chart/`): a basal strip on TOP with temp-basal bars
   hanging DOWN from the top edge (gradient fill + solid insulin rate line at the bar edge;
   the app rotates its plot 180°), scheduled basal as a blue dashed step line, grey blocks
-  for pump suspensions; then the glucose area (~278px; in-range band, right-side y labels,
+  for pump suspensions; then the glucose area (~204px; in-range band, right-side y labels,
   dashed grid, per-cycle target STEP line from `c.tgt` — overrides/temp targets show up
   automatically as steps —, override periods as thick purple lines at the active target
   level with their name, temp targets green, forecast curves for the selected cycle,
   bolus/SMB ▼ at BG+20 mg/dL with value label ≥0.5 U, carbs ▲ at BG−20, sgv dots colored by
   range, dashed "now" marker, selected-cycle line + time pill); then the IOB/COB strip
-  (IOB scaled ×8 pos / ×9 neg like the app's CobIobChart, area+line) and hour labels.
+  (IOB scaled ×8 pos / ×9 neg like the app's CobIobChart, area+line); then the safety-limits
+  strip (`LIMROWS` lanes: unrestricted dosing / hypo guard / forecast<target / IOB ceiling /
+  SMB limited / SMB interval / basal limited — runs of consecutive cycles whose
+  `parseReason(c).limits` keys match; `limKeys(c)` caches keys NON-enumerably so persisted
+  day JSON stays clean; lane order top→bottom = `#limleg` legend order, an always-visible
+  chips+counts row BELOW the chart; hover tooltip also names active limits) and hour labels.
   Legend appears ONLY on hover (bottom of chart, hover-capable pointers only).
 - Snapshot panel = "what the app showed at that moment": big colored BG + trend arrow
   (computed from the two sgv readings before t) left, ‹ time › nav top-right (steps across
