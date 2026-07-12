@@ -65,14 +65,26 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
 - Data model per day (dayCache/localStorage): {a,b,sgv[[t,mgdl]],cycles[],smb,bolus,carbs,
   notes,siteChange,overrides[[t,durMin,label]],tempTargets[[t,durMin,targetBottom]],segs}.
   `cycles[]` items carry t/bg/iob/cob/thr/ebg/req/rate/dur/tgt/units(SMB U)/rec/reason/
+  creq(carbsReq g)/xd(expectedDelta)/md(minDelta, both mg/dL-per-5m)/
   pred{IOB,ZT,COB,UAM arrays in mg/dL}. Old cached days (pre-redesign) lack
-  overrides/tempTargets — always `(dd.overrides||[])`.
+  overrides/tempTargets — always `(dd.overrides||[])`; pre-carbsReq days lack creq/xd/md.
 - Units: display follows profile units — `M()` (mg/dL→display), `fBG()`, `bgUnit()`,
-  `isMmol()`. Reason-string numbers are ALREADY in profile units; devicestatus fields
-  (bg, ebg, pred) are always mg/dL. NS temp-target treatments are mg/dL by convention.
+  `isMmol()`. Reason-string numbers are in profile units ONLY in the Swift-formatted
+  devicestatus record (see dual upload below); the raw oref twin's reason is always mg/dL —
+  parseReason has a guard (mmol profile + parsed ISF>20 ⇒ convert BG-scale fields).
+  Devicestatus FIELDS (bg, ebg, pred, expectedDelta, minDelta) are always mg/dL;
+  `suggested.threshold` follows the record variant. NS temp-target treatments are mg/dL.
 - Times: browser-local, DST-safe via `localMidnight/nextDay/prevDay`. Never add fixed offsets.
 - `parseReason(c)` extracts values + limit classification from the oref reason string.
-  Numbers may be negative and may have a colon (`minGuardBG: -0.6`) — regexes must allow both.
+  Numbers may be negative, may have a colon (`minGuardBG: -0.6`) AND may have spaces around
+  comparators (`Eventual BG 99 < 110` in the raw variant) — regexes must allow all three.
+  Limit keys: guard/zero/rising (below target but minDelta>expectedDelta ⇒ basal held, NOT
+  wound down)/maxiob (IOB>max_iob ⇒ neutral temp)/smbjump (maxDelta>20% of BG ⇒ SMB off)/
+  maxbolus/smbwait/maxbasal. Also fills p.creq+p.creqMin ("N add'l carbs req w/in Mm") and
+  p.maxIob. carbsReq is ALSO a devicestatus field (`suggested.carbsReq`) — preferred source.
+- Exit model in `buildSteps`: guard exits after step 3, zero/rising after 4, maxiob after 5
+  (matches the real early returns in determine-basal.js). Step 7 is NOT dimmed on an early
+  exit — it shows the temp that the guard/target check decided ("set by the hypo guard").
 - `buildSteps(c,p)` computes derived values (thr via `thrOf`, naive, guard minima, capVal,
   ratio, impliedF, impliedSmbMin), fills `VALS` (live values in glossary chips) and returns
   {rows,conc,thr}.
@@ -81,6 +93,11 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   "no change" cycle Trio re-reports the previous enact, so keying on it silently drops every
   unchanged cycle. Read the enacted block only when its deliverAt matches this cycle (fresh);
   otherwise read `suggested`.
+- DUAL UPLOAD: Trio uploads each cycle TWICE (~1–4 s apart, same deliverAt): a
+  Swift-formatted record (reason/threshold in profile units, `suggested.timestamp` SET,
+  has TDD) and a raw oref record (reason always mg/dL, NO `suggested.timestamp`). buildRaw
+  scores duplicates (formatted=2 + freshEnacted=1) and keeps the higher score; a losing twin
+  can still set `rec` (enacted proof). Never prefer by created_at — order is not stable.
 - Overrides arrive as `eventType:"Exercise"` treatments (name in `notes`, duration min,
   43200 = indefinite) and are uploaded TWICE by Trio (override + run, ~1s apart) — buildRaw
   merges pairs starting <120s apart, preferring the non-"Custom Override" name and the
@@ -97,6 +114,9 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
 
 ## Conventions & pitfalls
 - English UI, Trio/Nightscout terminology, U (not E), dots as decimal separator.
+- `index.html` MUST start with `<meta charset="utf-8">` — the file is full of em dashes,
+  arrows and emoji; served without a charset header (or via file://) everything mojibakes.
+  Test servers must also send `text/html; charset=utf-8`.
 - Python-driven bulk edits on index.html: `assert s.count(old)==n` before replace; a
   replaced block must NOT end with the text used as the end-anchor (causes duplication bugs).
 - No hardcoded therapy settings: threshold comes from cycle data (`c.thr`) → reason → derived

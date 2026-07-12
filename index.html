@@ -1,3 +1,4 @@
+<meta charset="utf-8">
 <title>Trio Loop Inspector</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
@@ -454,7 +455,7 @@ function buildRaw(entries,treatments,dev){
       if(prev[2]==='Custom Override'&&o[2]!=='Custom Override') prev[2]=o[2];
     } else ovm.push(o.slice());
   }
-  const cmap={}, enFreshAt={};
+  const cmap={}, scoreAt={};
   for(const r of dev){
     const oa=r.openaps||{}; const su=oa.suggested, en=oa.enacted;
     const suT=su&&(su.deliverAt||su.timestamp), enT=en&&(en.deliverAt||en.timestamp);
@@ -463,14 +464,21 @@ function buildRaw(entries,treatments,dev){
     /* the enacted block belongs to THIS cycle only when its deliverAt matches; else it is a stale re-report */
     const enFresh=(en&&enT&&pts(enT)===x)?en:null;
     const dec=enFresh||su||en; if(!dec||dec.bg==null) continue;
-    if(cmap[x]&&!(enFresh&&!enFreshAt[x])) continue;
+    const rec=(enFresh&&enFresh.received)?1:0;
+    /* Trio uploads each cycle TWICE: a Swift-formatted record (reason/threshold in profile
+       units, suggested.timestamp set) and a raw oref one (reason always mg/dL, no timestamp).
+       Prefer formatted over raw, then fresh-enacted; a losing twin can still prove enactment. */
+    const score=(su&&su.timestamp?2:0)+(enFresh?1:0);
+    if(cmap[x]&&score<=scoreAt[x]){ if(rec) cmap[x].rec=1; continue; }
+    const prevRec=cmap[x]?cmap[x].rec:0;
     const preds=dec.predBGs||{}; const pred={};
     for(const k of ['IOB','ZT','COB','UAM']) if(preds[k]) pred[k]=preds[k].map(v=>Math.round(v));
     cmap[x]={t:x,bg:dec.bg,iob:r2(dec.IOB||0),cob:dec.COB||0,thr:dec.threshold,ebg:dec.eventualBG,req:dec.insulinReq,
       rate:dec.rate,dur:dec.duration,tgt:dec.current_target,sens:dec.sensitivityRatio,tdd:dec.TDD,
+      creq:dec.carbsReq,xd:dec.expectedDelta,md:dec.minDelta,
       units:dec.units,reason:String(dec.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
-      rec:(enFresh&&enFresh.received)?1:0,pred};
-    enFreshAt[x]=!!enFresh;
+      rec:rec||prevRec,pred};
+    scoreAt[x]=score;
   }
   return {sgv,tb,smb,bolus,carbs,notes,site,ov:ovm,tt,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
 }
@@ -524,13 +532,29 @@ function parseReason(c){
   if(m=g(/IOBpredBG:? ([\d.]+)/)) p.iobPred=+m[1];
   if(m=g(/COBpredBG:? ([\d.]+)/)) p.cobPred=+m[1];
   if(m=g(/UAMpredBG:? ([\d.]+)/)) p.uamPred=+m[1];
+  /* Raw-oref reasons are always mg/dL. If one slips through for a mmol profile (raw twin
+     won the dedup, or an old cached day), convert the BG-scale fields to display units. */
+  if(isMmol() && p.isf!=null && p.isf>20){
+    p.mgdlReason=true;
+    for(const k of ['isf0','isf','dev','bgi','minPred','minGuard','iobPred','cobPred','uamPred'])
+      if(p[k]!=null) p[k]=Math.round(M(p[k])*10)/10;
+  }
+  const nb=v=>p.mgdlReason?Math.round(M(+v)*10)/10:+v; /* reason BG number → display units */
   p.decision = r.includes('; ') ? r.slice(r.indexOf('; ')+2) : r;
   p.limits=[];
   const wacht=g(/Waiting (\d+)m ?(\d*)s? to microbolus/);
-  if(m=g(/minGuardBG (-?[0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/))
-    { p.thr=+m[2];
+  if(m=g(/(\d+) add'l carbs req w\/in (\d+)m/)){ p.creq=+m[1]; p.creqMin=+m[2]; }
+  if(m=g(/minGuardBG (-?[0-9]+(?:\.[0-9]+)?) ?< ?([0-9]+(?:\.[0-9]+)?)/))
+    { p.thr=nb(m[2]);
     p.limits.push({key:'guard',t:'Hypo guard (minGuardBG)',c:'--lo',
-      why:`The worst-case forecast touches ${m[1]} ${bgUnit()}, below the ${m[2]} safety threshold. All SMBs blocked and basal set to zero (current reading ${fBG(M(c.bg))} — the guard fires on current BG below threshold too).`}); }
+      why:`The worst-case forecast touches ${fBG(nb(m[1]))} ${bgUnit()}, below the ${fBG(nb(m[2]))} safety threshold. All SMBs blocked and basal set to zero (current reading ${fBG(M(c.bg))} — the guard fires on current BG below threshold too).`}); }
+  if(m=g(/IOB (-?[0-9]+(?:\.[0-9]+)?) > max_iob ([0-9]+(?:\.[0-9]+)?)/))
+    p.limits.push({key:'maxiob',t:'IOB over maxIOB',c:'--hi',
+      why:`Insulin on board (${f2(+m[1])} U) already exceeds the maxIOB ceiling of ${f2(+m[2])} U — nothing may be added, so the scheduled basal runs as a neutral temp.`});
+  if(m=g(/max_iob ([0-9]+(?:\.[0-9]+)?)/)) p.maxIob=+m[1];
+  if(m=g(/maxDelta ([+-]?[0-9.]+) > (\d+)% of BG ([0-9.]+) - SMB disabled/))
+    p.limits.push({key:'smbjump',t:'SMB blocked (BG jump)',c:'--hi',
+      why:`BG jumped ${fBG(nb(m[1]))} ${bgUnit()} in one reading — more than ${m[2]}% of the current value, which usually means a calibration or sensor artifact — so no SMB is trusted this cycle.`});
   if(m=g(/maxBolus ([0-9]+(?:\.[0-9]+)?)[^0-9]/)){ const req=c.req||0, mb=+m[1];
     if(mb>0) p.limits.push({key:'maxbolus',t:'SMB limited (maxBolus)',c:'--hi',
       why:`Calculated need ${f2(req)} U, but each SMB is capped at ${f2(mb)} U. The remainder follows in later cycles.`});
@@ -542,9 +566,12 @@ function parseReason(c){
   if(m=g(/adj\. req\. rate: ([0-9]+(?:\.[0-9]+)?) to maxSafeBasal: ([0-9]+(?:\.[0-9]+)?)/))
     p.limits.push({key:'maxbasal',t:'Basal limited (maxSafeBasal)',c:'--hi',
       why:`Requested temp basal ${m[1]} U/h, capped at the ${m[2]} U/h ceiling (a multiple of your scheduled basal).`});
-  if((m=g(/Eventual BG ([0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/)) && !p.limits.some(l=>l.key==='guard'))
-    p.limits.push({key:'zero',t:'Forecast below target',c:'--zt',
-      why:`Expected outcome ${m[1]} ${bgUnit()} sits below the ${m[2]} target — insulin already on board is (more than) enough, so basal is reduced or stopped instead of adding more.`});
+  if((m=g(/Eventual BG ([0-9]+(?:\.[0-9]+)?) ?< ?([0-9]+(?:\.[0-9]+)?)/)) && !p.limits.some(l=>l.key==='guard')){
+    const rising=g(/but (?:Min\. )?Delta ([+-]?[0-9.]+) ?> ?(?:Exp\. Delta|expectedDelta) ([+-]?[0-9.]+)/);
+    if(rising) p.limits.push({key:'rising',t:'Below target, but rising',c:'--good',
+      why:`Expected outcome ${fBG(nb(m[1]))} ${bgUnit()} is below the ${fBG(nb(m[2]))} target, but BG is climbing faster than the forecast expects (Δ ${rising[1]} vs ${rising[2]} expected) — so oref holds the normal basal instead of cutting it, and waits for the next cycle.`});
+    else p.limits.push({key:'zero',t:'Forecast below target',c:'--zt',
+      why:`Expected outcome ${fBG(nb(m[1]))} ${bgUnit()} sits below the ${fBG(nb(m[2]))} target — insulin already on board is (more than) enough, so basal is reduced or stopped instead of adding more.`});}
   if(g(/setting \d+m zero temp/)||g(/zero temp/i)) p.zeroTemp=true;
   if(m=g(/Microbolusing ([0-9]+(?:\.[0-9]+)?)U/)) p.smb=+m[1];
   return p;
@@ -965,9 +992,12 @@ const VD={
  ISF:'ISF (insulin sensitivity factor) — how far 1 U drops BG (mmol/L per U here).',
  BGI:'BGI (blood glucose impact) — expected BG change per 5 min from insulin activity alone: −activity × ISF × 5.',
  deviation:'deviation — how much the observed BG change differs from BGI: the part insulin cannot explain (carbs, hormones, stress, sensor drift).',
- naive_eventualBG:'naive_eventualBG — where BG lands if all IOB works with no deviations: bg − IOB × ISF.',
- eventualBG:'eventualBG — naive_eventualBG + projected deviation impact: the forecast endpoint oref doses against.',
- minPredBG:'minPredBG — lowest point of the relevant forecast curves; used (vs eventualBG) so dosing respects the dip before the rise.',
+ minDelta:'minDelta — the smaller of delta and short_avgdelta: the trend oref actually doses on, so one jumpy reading cannot exaggerate a rise. Shown in mg/dL-scale per 5 min internally; converted here.',
+ expectedDelta:'expectedDelta — the per-5-min BG change oref expects if everything is on track: BGI plus the slope that would bring eventualBG to target in 2 h. BG beating it while below target ⇒ hold basal and wait; falling short of it while in range ⇒ (without SMBs) hold neutral basal.',
+ naive_eventualBG:'naive_eventualBG — where BG lands if all IOB works with no deviations: bg − IOB × ISF (with negative IOB the more conservative, lower of adjusted and profile ISF is used).',
+ eventualBG:'eventualBG — naive_eventualBG + projected deviation impact: the forecast endpoint oref doses against. While carbs absorb (or UAM projects a rise) it is raised to the higher of the COB/UAM curve endpoints.',
+ minPredBG:'minPredBG — dosing floor read from the forecast minima (each curve skips its pre-peak dip; the COB/UAM/ZT minima are blended and capped by the average forecast); used vs eventualBG so dosing respects the coming dip.',
+ carbsReq:'carbsReq — grams of fast carbs needed to stay above the threshold when even a full zero temp will not be enough; Trio raises a "carbs required" notification for it.',
  minGuardBG:'minGuardBG — the no-wait minimum of the active forecast curves (COB/UAM blended by remaining carbs, else UAM, else IOB). Unlike minPredBG it does not skip the pre-peak dip. The hypo guard compares it to the threshold.',
  fractionCarbsLeft:'fractionCarbsLeft — share of announced carbs not yet absorbed (mealCOB ÷ carbs entered). Weighs the COB vs UAM guard minima when minGuardBG is blended.',
  threshold:'threshold — safety floor: target − ½×(target − 2.2), raised to your “glucose safety limit” setting if higher, clamped to 3.3–6.7 mmol/L. Current BG or forecast below it = all dosing stops.',
@@ -992,10 +1022,12 @@ const dash='—';
 
 function buildSteps(c,p){
   const lim = k => c&&p.limits.find(l=>l.key===k);
-  const guard=lim('guard'), zero=lim('zero'), capS=lim('maxbolus'), wait=lim('smbwait'), capB=lim('maxbasal');
+  const guard=lim('guard'), zero=lim('zero'), rising=lim('rising'), maxiob=lim('maxiob'),
+        smbjump=lim('smbjump'), capS=lim('maxbolus'), wait=lim('smbwait'), capB=lim('maxbasal');
   const req=c?(c.req??null):null;
-  const idle=c&&!guard&&!zero&&(req==null||req<=0.01);
-  const exited = guard?3 : zero?4 : 0;
+  const idle=c&&!guard&&!zero&&!rising&&!maxiob&&(req==null||req<=0.01);
+  const exited = guard?3 : (zero||rising)?4 : maxiob?5 : 0;
+  const creq=c?(c.creq??p.creq??null):null;
   const smbGiven=c?(p.smb||c.units||0):0;
   const F=fBG, F2=f2, mm=v=>fBG(M(v));
   const pr=c?(c.pred||{}):{};
@@ -1028,6 +1060,9 @@ function buildSteps(c,p){
     TDD:c.tdd!=null?(f1(c.tdd)+' U'):'—',
     BGI:p.bgi!=null?String(p.bgi):'—', deviation:p.dev!=null?((p.dev>0?'+':'')+p.dev):'—',
     delta:'—', short_avgdelta:'—',
+    minDelta:c.md!=null?((c.md>0?'+':'')+fBG(M(c.md))):'—',
+    expectedDelta:c.xd!=null?((c.xd>0?'+':'')+fBG(M(c.xd))):'—',
+    carbsReq:creq!=null?(creq+' g'):'—',
     naive_eventualBG:naive!=null?fBG(naive):'—',
     eventualBG:c.ebg!=null?fBG(M(c.ebg)):'—',
     minPredBG:minPred!=null?((minApprox?'≈':'')+fBG(minPred)):'—',
@@ -1036,7 +1071,7 @@ function buildSteps(c,p){
     ZT:gm.ZT!=null?('↘'+fBG(gm.ZT)):'—',
     UAM:gm.UAM!=null?('↘'+fBG(gm.UAM)):'—',
     insulinReq:req!=null?(F2(req)+' U'):'—',
-    maxIOB:'— (not exported)',
+    maxIOB:p.maxIob!=null?(f2(p.maxIob)+' U'):'— (not exported)',
     maxBolus:capVal!=null?(F2(capVal)+' U'):'—',
     smb_delivery_ratio:ratioNum!=null?('≈'+ratioNum.toFixed(2)):'0.5 (default)',
     SMBInterval:wait?'waiting':'—',
@@ -1048,16 +1083,19 @@ function buildSteps(c,p){
   /* conclusion */
   let conc='';
   if(c){
-    if(guard) conc=`<div class="conc guard">Hypo guard active — all dosing stopped (zero temp)</div>`;
-    else if(zero) conc=`<div class="conc zero"><b>Forecast below target</b> — basal wound down, nothing added</div>`;
+    const carbLine = creq!=null?`<div class="conc guard" style="margin-bottom:6px">🍬 ~${creq} g fast carbs required${p.creqMin?` within ${p.creqMin} m`:''} — cutting insulin alone won't keep BG above the threshold</div>`:'';
+    if(guard) conc=carbLine+`<div class="conc guard">Hypo guard active — all dosing stopped (zero temp)</div>`;
+    else if(rising) conc=carbLine+`<div class="conc" style="color:var(--ink2)">Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
+    else if(zero) conc=carbLine+`<div class="conc zero"><b>Forecast below target</b> — basal wound down, nothing added</div>`;
+    else if(maxiob) conc=carbLine+`<div class="conc" style="color:var(--ink2)">IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
     else if(req!=null&&req>0.01){
       const maxb=Math.max(req,smbGiven,0.01), pct=Math.round(smbGiven/req*100);
-      conc=`<div class="conc">
+      conc=carbLine+`<div class="conc">
         <div class="crow"><span class="clbl">needed</span><span class="cbar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="cval">${F2(req)} U</span><span class="cpct"></span></div>
         <div class="crow"><span class="clbl">given now</span><span class="cbar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} U</span><span class="cpct">${pct}%</span></div>
         ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits in the steps below</div>`:''}</div>`;
     }
-    else conc=`<div class="conc" style="color:var(--ink2)">No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
+    else conc=carbLine+`<div class="conc" style="color:var(--ink2)">No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
   }
 
   /* 1 — inputs */
@@ -1065,8 +1103,11 @@ function buildSteps(c,p){
     val:c?`BG <b>${mm(c.bg)}</b> · IOB ${F2(c.iob)} U · COB ${c.cob||0} g${p.dev!=null?` · Dev ${p.dev>0?'+':''}${p.dev}`:''} · AS ×${p.autosens??'1'}→ISF ${isfV!=null?F(isfV):dash}`
        :'BG, ΔBG, IOB, COB, autosens → effective ISF',
     body:`<p>Every ~5 minutes a new sensor value starts a cycle. oref gathers the BG trend (using the <i>smallest</i> of the recent deltas, so one noisy reading can’t dominate), computes IOB from the full pump history, decays COB, and lets autosens scale ISF, basal and target based on how insulin has actually been working.</p>
-      <div class="frm">effective ISF = profile ISF ÷ autosens ratio${c&&p.isf0!=null?cy(`${F(p.isf0)} ÷ ${p.autosens??1} = ${F(isfV)}`):''}</div>`
-      +vchips(['delta','short_avgdelta','IOB','COB','autosens','ISF','CR','TDD'])+srcBlock('inputs')});
+      <div class="frm">effective ISF = profile ISF ÷ autosens ratio${c&&p.isf0!=null?cy(`${F(p.isf0)} ÷ ${p.autosens??1} = ${F(isfV)}`):''}</div>
+      <details class="more"><summary>Step 0 — the checks before anything runs</summary><div class="mbody">
+      <p>Before this pipeline even starts, oref sanity-checks its inputs: CGM readings that are missing or stale (&gt;12 min old), a flat line of identical readings, error/calibration values, high sensor noise, or a running temp basal that doesn’t match the pump history all end the cycle immediately — any high temp is cancelled (or a long zero temp shortened to 30 min) and nothing below runs. The same happens when profile or IOB data is missing. Such cycles report no BG or forecast, so they can’t be shown as decisions here.</p>
+      </div></details>`
+      +vchips(['delta','short_avgdelta','minDelta','IOB','COB','autosens','ISF','CR','TDD'])+srcBlock('inputs')});
 
   /* 2 — forecast */
   const chips=[];
@@ -1087,7 +1128,7 @@ function buildSteps(c,p){
         const a=pr[k];
         return `<span style="color:var(--txt-${k.toLowerCase()})">${k.padEnd(3)}</span> ${fBG(M(a[0]))} → min ${fBG(M(Math.min(...a)))} → end ${fBG(M(a[a.length-1]))}`;
       }).join('\n')}</div>`:''}
-      <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with 15-min, then 45-min avg delta\neventualBG = naive_eventualBG + deviation${c&&naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>
+      <div class="frm">deviation  = 6 × (minDelta − BGI)   // if negative: retried with min(15-min, 45-min), then 45-min avg delta\neventualBG = naive_eventualBG + deviation${c&&naive!=null&&c.ebg!=null?cy(`naive ${F(naive)} · Dev ${p.dev!=null&&p.dev>0?'+':''}${p.dev??'?'} · refined by curves → ${mm(c.ebg)}`):''}</div>
       <details class="more"><summary>How each curve is built</summary><div class="mbody">
       <p>Every curve is stepped forward in 5-minute ticks. Each tick adds the <b>insulin effect</b> for that future moment — the activity of all insulin already delivered, taken from the pump history and your insulin curve, scaled by the autosens-adjusted ISF — plus one curve-specific extra term. That extra term is the only difference between the four:</p>
       <p style="margin-left:10px"><b style="color:var(--txt-iob)">IOB</b> — no carb term at all: COB never enters this curve, even mid-meal. It does carry the current deviation, fading linearly to zero over the first hour, so the momentum of this moment isn’t dropped instantly. “Where BG lands if nothing new happens.”<br>
@@ -1097,10 +1138,10 @@ function buildSteps(c,p){
       <p>COB is drawn only while announced carbs are on board and absorbing; UAM only when the feature is enabled and there is unexplained impact to project. All curves are cut off at 4 hours.</p>
       </div></details>
       <details class="more"><summary>What the decision takes from the curves</summary><div class="mbody">
-      <p>The safety side is read from the <i>lowest</i> relevant points: each curve’s minimum feeds minGuardBG (the hypo-guard step below shows how those minima are picked and blended), and minPredBG caps how much insulin may be given. minPredBG deliberately ignores each curve’s first ~90 minutes (60 for UAM) — the dip that insulin already underway will cause before it peaks — while minGuardBG starts counting immediately, which is what makes it the hypo tripwire. The dosing side leans the other way: with SMB forecasts enabled, eventualBG is <i>raised</i> to the highest of the formula value above, the COB endpoint and the UAM endpoint — which is why it can sit well above naive&nbsp;+&nbsp;deviation.</p>
+      <p>The safety side is read from the <i>lowest</i> relevant points: each curve’s minimum feeds minGuardBG (the hypo-guard step below shows how those minima are picked and blended), and minPredBG caps how much insulin may be given. minPredBG deliberately ignores each curve’s first ~90 minutes (60 for UAM) — the dip that insulin already underway will cause before it peaks — while minGuardBG starts counting immediately, which is what makes it the hypo tripwire. The dosing side leans the other way: while announced carbs are still absorbing (and, with UAM on, while an unexplained rise is being projected), eventualBG is <i>raised</i> to the highest of the formula value above, the COB endpoint and the UAM endpoint — which is why it can sit well above naive&nbsp;+&nbsp;deviation.</p>
       </div></details>
       <details class="more"><summary>Where the deviation comes from</summary><div class="mbody">
-      <p>Trio keeps three trend measurements, all expressed as change per 5 minutes: <b>delta</b> — versus the reading ~5 minutes ago; <b>short_avgdelta</b> — the average slope against every reading 2.5–17.5 minutes back (the “15-min” delta); <b>long_avgdelta</b> — the same for 17.5–42.5 minutes back (the “45-min” one). The forecast uses <b>minDelta</b>, the smaller of delta and short_avgdelta, so one jumpy reading can’t exaggerate a rise. Subtract BGI — the change the insulin on board should be causing right now — and what remains is unexplained; × 6 projects it 30 minutes ahead as the <b>deviation</b>. A negative result gets a second opinion: recomputed with the 15-min average, and if still negative, taken from the 45-min one. A single low or noisy reading therefore can’t talk the loop out of insulin — a genuine sustained fall still comes through, at the steadier long-window slope.</p>
+      <p>Trio keeps three trend measurements, all expressed as change per 5 minutes: <b>delta</b> — versus the reading ~5 minutes ago; <b>short_avgdelta</b> — the average slope against every reading 2.5–17.5 minutes back (the “15-min” delta); <b>long_avgdelta</b> — the same for 17.5–42.5 minutes back (the “45-min” one). The forecast uses <b>minDelta</b>, the smaller of delta and short_avgdelta, so one jumpy reading can’t exaggerate a rise. Subtract BGI — the change the insulin on board should be causing right now — and what remains is unexplained; × 6 projects it 30 minutes ahead as the <b>deviation</b>. A negative result gets a second opinion: recomputed with the lower of the 15- and 45-minute averages, and if still negative, taken from the 45-minute one. A single low or noisy reading therefore can’t talk the loop out of insulin — a genuine sustained fall still comes through, at the steadier long-window slope.</p>
       </div></details>`
       +vchips(['delta','short_avgdelta','BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
 
@@ -1127,32 +1168,40 @@ function buildSteps(c,p){
     }
   }
   rows.push({id:'guard',lab:'hypo guard',st:guard?'fired':'pass',dot:guard?'--lo':(c?'--good':null),
-    val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; ${F(thr)} → <span class="warn" style="color:var(--txt-lo)">zero temp, SMBs blocked</span>`
+    val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; ${F(thr)} → <span class="warn" style="color:var(--txt-lo)">zero temp, SMBs blocked</span>${creq!=null?` · 🍬 ~${creq} g carbs req`:''}`
               :(p.minGuard!=null?`minGuardBG ${F(p.minGuard)} ≥ ${F(thr)} <span class="ok">✓</span>`:`no dip below threshold <span class="ok">✓</span>`))
        :'BG or minGuardBG &lt; threshold? → zero temp + block SMBs',
     body:(guard?`<p><b>${guard.t}.</b> ${guard.why}</p>`:'')+
-      `<p>The strongest brake, checked first. If the <i>current BG</i> or the worst-case forecast (minGuardBG) is below the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot. One escape hatch: it is skipped when IOB is already strongly negative and BG is rising faster than expected. Nothing after this step runs.</p>`
+      (creq!=null?`<p><b>Carbs required.</b> Even a full zero temp can’t keep the forecast above the threshold — oref asks for ~${creq} g of fast carbs${p.creqMin?` within ${p.creqMin} minutes`:''}; Trio raises a notification for this.</p>`:'')+
+      `<p>The strongest brake, checked first. If the <i>current BG</i> or the worst-case forecast (minGuardBG) is below the threshold, oref refuses every SMB and sets a 30–120 min zero temp sized to the worst-case undershoot. One escape hatch: it is skipped when IOB is already strongly negative and BG is rising faster than expected. Nothing after this step runs. Just before this check, oref also computes carbsReq — the grams of fast carbs needed if even a zero temp won’t prevent the low — and reports it when relevant.</p>`
       +guardDeriv+`
       <div class="frm">if (bg &lt; threshold || minGuardBG &lt; threshold) → setTempBasal(0, 30–120 min); no SMB${c&&p.minGuard!=null?cy(`${F(p.minGuard)} ${guard?`&lt; ${F(thr)} → STOP`:`≥ ${F(thr)} → continue`}`):''}</div>`
-      +vchips(['minGuardBG','fractionCarbsLeft','threshold','ZT'])+srcBlock('guard')});
+      +vchips(['minGuardBG','fractionCarbsLeft','threshold','ZT','carbsReq'])+srcBlock('guard')});
 
   /* 4 — target check */
-  rows.push({id:'target',lab:'vs target',st:zero?'fired':(skipAfter(4)?'skip':(c?'pass':null)),dot:zero?'--zt':(c&&!skipAfter(4)?'--good':null),skip:skipAfter(4),
-    val:skipAfter(4)?'not reached':(c?(zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} → <span class="warn" style="color:var(--txt-zt)">wind basal down</span>`
+  rows.push({id:'target',lab:'vs target',st:(zero||rising)?'fired':(skipAfter(4)?'skip':(c?'pass':null)),dot:zero?'--zt':(rising?'--good':(c&&!skipAfter(4)?'--good':null)),skip:skipAfter(4),
+    val:skipAfter(4)?'not reached':(c?(rising?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} — <span class="ok">rising faster than expected → basal held</span>`
+              :zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} → <span class="warn" style="color:var(--txt-zt)">wind basal down</span>`
               :`eventualBG ${c.ebg!=null?mm(c.ebg):dash} ≥ target ${F(tgtV)} <span class="ok">✓</span>`)
        :'eventualBG &lt; target? → reduce / zero the basal'),
-    body:(zero?`<p><b>${zero.t}.</b> ${zero.why}</p>`:'')+
-      `<p>Landing below target means the insulin already on board is more than enough — so the move is to <i>remove</i> future insulin, not add more. The required negative amount is doubled for extra hypo safety and translated into a low or zero temp. This is why a high BG with lots of IOB still produces a zero temp.</p>
-      <div class="frm">insulinReq = 2 × min(0, (eventualBG − target) ÷ ISF)  →  low/zero temp${zero&&c.ebg!=null&&isfV!=null&&req!=null?cy(`2 × min(0, (${mm(c.ebg)} − ${F(tgtV)}) ÷ ${F(isfV)}) = ${F2(req)} U`):''}</div>`
-      +vchips(['eventualBG','insulinReq','ISF'])+srcBlock('target')});
+    body:(rising?`<p><b>${rising.t}.</b> ${rising.why}</p>`:'')+(zero?`<p><b>${zero.t}.</b> ${zero.why}</p>`:'')+
+      `<p>Landing below target means the insulin already on board is more than enough — so the move is to <i>remove</i> future insulin, not add more. The required negative amount is doubled for extra hypo safety and translated into a low or zero temp. This is why a high BG with lots of IOB still produces a zero temp. One exception: when BG is climbing faster than the expected path (expectedDelta), nothing is cut — the normal basal is held as a neutral temp and the next cycle re-checks. (Barely falling — slower than expected — only shrinks the cut proportionally.)</p>
+      <div class="frm">insulinReq = 2 × min(0, (eventualBG − target) ÷ ISF)  →  low/zero temp${zero&&c.ebg!=null&&isfV!=null&&req!=null?cy(`2 × min(0, (${mm(c.ebg)} − ${F(tgtV)}) ÷ ${F(isfV)}) = ${F2(req)} U`):''}${rising?cy(`minDelta ${VALS.minDelta} > expectedDelta ${VALS.expectedDelta} → hold basal`):''}</div>`
+      +vchips(['eventualBG','minDelta','expectedDelta','insulinReq','ISF'])+srcBlock('target')});
 
   /* 5 — need */
-  rows.push({id:'need',lab:'need',st:skipAfter(5)?'skip':null,skip:skipAfter(5),
-    val:skipAfter(5)?'not reached':(c?(req!=null?(req>0.01
+  let needVal,needSt=skipAfter(5)?'skip':null,needDot=null;
+  if(skipAfter(5)) needVal = (zero&&req!=null&&req<-0.005)?`not reached — the need (${F2(req)} U) was set at the target step`:'not reached';
+  else if(!c) needVal='insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF';
+  else if(maxiob){ needVal=`IOB ${F2(c.iob)} U over maxIOB${p.maxIob!=null?` ${f2(p.maxIob)} U`:''} → <span class="warn" style="color:var(--txt-hi)">nothing added</span>`; needSt='fired'; needDot='--hi'; }
+  else if(req!=null) needVal = req>0.01
           ?`(min(${minPred!=null?(minApprox?'≈':'')+F(minPred):dash}, ${c.ebg!=null?mm(c.ebg):dash}) − ${F(tgtV)}) ÷ ${isfV!=null?F(isfV):dash} = <b>${F2(req)} U</b>`
-          :`insulinReq <b>${F2(req)} U</b> → nothing extra needed`):dash)
-       :'insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF'),
-    body:`<p>The gap between forecast and target, translated into units. Using the <i>lower</i> of minPredBG and eventualBG means an expected dip tempers the correction. The result is clipped so IOB can never exceed maxIOB.${minApprox?' <span style="color:var(--muted)">(minPredBG not in this cycle’s log — value shown is estimated from the curves.)</span>':''}</p>
+          :`insulinReq <b>${F2(req)} U</b> → nothing extra needed`;
+  else needVal=dash;
+  rows.push({id:'need',lab:'need',st:needSt,dot:needDot,skip:skipAfter(5),
+    val:needVal,
+    body:(maxiob?`<p><b>${maxiob.t}.</b> ${maxiob.why}</p>`:'')+
+      `<p>The gap between forecast and target, translated into units. Using the <i>lower</i> of minPredBG and eventualBG means an expected dip tempers the correction. The result is clipped so IOB can never exceed maxIOB — and when IOB is already over that ceiling, oref stops here and just runs the scheduled basal.${minApprox?' <span style="color:var(--muted)">(minPredBG not in this cycle’s log — value shown is estimated from the curves.)</span>':''}</p>
       <div class="frm">insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF\ninsulinReq = min(insulinReq, maxIOB − IOB)${c&&req!=null&&req>0.01&&minPred!=null&&c.ebg!=null&&isfV!=null?cy(`(min(${(minApprox?'≈':'')+F(minPred)}, ${mm(c.ebg)}) − ${F(tgtV)}) ÷ ${F(isfV)} = ${F2(req)} U`):''}</div>`
       +vchips(['insulinReq','minPredBG','maxIOB'])+srcBlock('need')});
 
@@ -1160,27 +1209,36 @@ function buildSteps(c,p){
   let smbVal, smbSt=null, smbDot=null;
   if(skipAfter(6)||idle){ smbVal = idle?'skipped — no need':'not reached'; smbSt='skip'; }
   else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
+  else if(smbjump&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-hi)">blocked — BG jump (calibration?)</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-hi)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(capS){ smbVal=`min(need × ratio, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
   else { smbVal='no SMB this cycle'; }
   rows.push({id:'smb',lab:'SMB',st:smbSt,dot:smbDot,skip:skipAfter(6)||idle,
     val:smbVal,
-    body:((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
+    body:((smbjump&&`<p><b>${smbjump.t}.</b> ${smbjump.why}</p>`)||'')+((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
       `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three safety limits apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs — and SMBs are only considered at all while BG is above the safety threshold (and not right after a &gt;20%-of-BG jump, which suggests a sensor calibration). The remainder waits for the next cycles.</p>
+      <details class="more"><summary>When are SMBs considered at all?</summary><div class="mbody">
+      <p>Besides the limits above, SMBs must be <i>enabled</i> for the cycle — one of the preferences has to apply: always; while COB is present; for 6 h after any carb entry; with a low temp target; or above a configured high-BG level. And they are refused outright: with a high temp target (unless explicitly allowed), within 6 h of Bolus Wizard use, during a scheduled SMB-off window or an override that disables them, when the worst-case forecast (minGuardBG) is below the threshold, right after a &gt;20%-of-BG jump, or while BG itself is under the threshold. Most of these checks are only written to the console log, not the reason text — when one applies, this step simply shows “no SMB this cycle”.</p>
+      </div></details>
       <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)   // ratio setting, default 0.5 — not part of Nightscout exports${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(capS?`cap ${capVal!=null?F2(capVal):'?'} U wins → ${F2(smbGiven)} U${impliedSmbMin!=null?` · implies max(UAM)SMBBasalMinutes ≈ ${impliedSmbMin} m (cap ÷ basal ${f2(sched)})`:''}`:`${F2(req)} × ratio(≈${(smbGiven/req).toFixed(2)}) = ${F2(smbGiven)} U`):''}</div>`
       +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
 
   /* 7 — temp basal */
-  let basVal, basSt=null, basDot=null;
-  if(skipAfter(7)){ basVal='not reached'; basSt='skip'; }
+  let basVal, basSt=null, basDot=null, basNote='';
+  const exitSrc = guard?'hypo guard':(rising?'target check (held neutral)':(maxiob?'maxIOB stop':'target check'));
+  if(skipAfter(7)){
+    if(c&&c.rate!=null&&c.dur>0){ basVal=`temp <b>${F2(c.rate)} U/h</b> for ${Math.round(c.dur)} m — set by the ${guard?'hypo guard':(rising||maxiob?exitSrc:'target check')}`; basDot=guard?'--lo':(zero?'--zt':null); }
+    else basVal=`current temp continues — decided at the ${exitSrc}`;
+    basNote=`<p style="color:var(--muted)">The high-temp math below didn’t run this cycle — the ${exitSrc} above already decided the temp shown here.</p>`;
+  }
   else if(!c){ basVal='temp = basal + 2×insulinReq, capped at maxSafeBasal'; }
   else if(capB){ basVal=`req ${mmB?.[1]??''} U/h → <b>${mmB?.[2]??''} U/h</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--hi'; }
   else if(c.rate!=null&&c.dur>0){ basVal=`temp <b>${F2(c.rate)} U/h</b> for ${Math.round(c.dur)} m${smbGiven&&c.rate===0?' (post-SMB buffer)':''}`; }
   else { basVal='current temp continues'; }
-  rows.push({id:'basal',lab:'temp basal',st:basSt,dot:basDot,skip:skipAfter(7),
+  rows.push({id:'basal',lab:'temp basal',st:basSt,dot:basDot,
     val:basVal,
-    body:((capB&&`<p><b>${capB.t}.</b> ${capB.why}</p>`)||'')+
+    body:basNote+((capB&&`<p><b>${capB.t}.</b> ${capB.why}</p>`)||'')+
       `<p>The revocable channel. Without an SMB the whole need is scheduled as a 30-min high temp (rate = basal + 2×insulinReq). Right after an SMB oref instead parks a compensating zero temp of up to 60 min (a need under 30 min becomes a 30-min low-but-nonzero temp): if the forecast was too optimistic, the withheld basal is the buffer. Either way the rate can never exceed maxSafeBasal — a multiple of your <i>scheduled</i> basal.</p>
       <div class="frm">rate = basal + 2 × insulinReq\nmaxSafeBasal = min(max basal, 3 × max daily basal, 4 × current basal)${c&&sched!=null&&req!=null&&req>0.01?cy(`${F2(sched)} + 2 × ${F2(req)} = ${F2(sched+2*req)} U/h${mmB?` → capped ${mmB[2]}`:(c.rate!=null?` → set ${F2(c.rate)}`:'')}`):''}</div>`
       +vchips(['maxSafeBasal','insulinReq'])+srcBlock('basal')});
