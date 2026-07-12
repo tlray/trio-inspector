@@ -1,0 +1,81 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trioscope — beeldmerk A: horizontaal vs vierkant</title>
+<style>
+  :root{ --bg:#f6f7f9; --card:#ffffff; --ink:#16233a; --sub:#5b6b82; --line:#e3e7ee; --blue:#1e96fc; }
+  @media (prefers-color-scheme:dark){ :root{ --bg:#0d1420; --card:#141d2e; --ink:#e8edf5; --sub:#8fa0b8; --line:#243149; } }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:28px 20px 60px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .lead{color:var(--sub);margin:0 0 28px}
+  .cand{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:0 0 18px}
+  .cand h2{font-size:16px;margin:0 0 2px}
+  .cand p{color:var(--sub);margin:0 0 14px;font-size:13.5px}
+  .swatches{display:flex;gap:12px;flex-wrap:wrap}
+  .sw{border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:16px;flex:1 1 300px;min-width:0}
+  .sw.light{background:#ffffff;color:#16233a;border:1px solid #e3e7ee}
+  .sw.dark{background:#0d1420;color:#e8edf5;border:1px solid #243149}
+  .sw svg{flex:none}
+  .lockup{display:flex;align-items:center;gap:10px;font-weight:700;font-size:23px;letter-spacing:-.02em}
+  .lockup svg{width:30px;height:30px}
+  .tile{width:64px;height:64px;border-radius:15px;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;flex:none}
+  .tile svg{width:44px;height:44px}
+  .tile.big svg{width:56px;height:56px}
+  .tilelbl{color:var(--sub);font-size:13px}
+  .minirow{display:flex;align-items:center;gap:14px}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="a1" viewBox="0 0 64 64">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="7" y="12" width="50" height="40" rx="11" stroke-width="5"/>
+        <path d="M15 37 C20 27 25 25 30 31 S38 43 49 29" stroke-width="5"/>
+      </g>
+    </symbol>
+    <symbol id="a2" viewBox="0 0 64 64">
+      <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="46" height="46" rx="12" stroke-width="5"/>
+        <path d="M16.5 37 C21 27 25.5 25 30 31 S37.5 43 47.5 29" stroke-width="5"/>
+      </g>
+    </symbol>
+    <symbol id="trace" viewBox="0 0 64 64">
+      <path d="M9 39 C16 25 23 22 30 30 S41 47 55 27" fill="none" stroke="currentColor" stroke-width="6.5" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <h1>Beeldmerk A — horizontaal vs vierkant</h1>
+  <p class="lead">Beide zonder het groene stipje, puur monoline in één kleur.</p>
+
+  <div class="cand">
+    <h2>A1 · Horizontaal</h2>
+    <p>Het oorspronkelijke schermpje (16:13) — leest als "grafiek/scherm", geeft de golf meer ruimte.</p>
+    <div class="swatches">
+      <div class="sw light"><svg width="96" height="96"><use href="#a1"/></svg><svg width="48" height="48"><use href="#a1"/></svg><svg width="24" height="24"><use href="#a1"/></svg><svg width="16" height="16"><use href="#a1"/></svg><span class="lockup"><svg><use href="#a1"/></svg>trioscope</span></div>
+      <div class="sw dark"><svg width="96" height="96"><use href="#a1"/></svg><svg width="48" height="48"><use href="#a1"/></svg><svg width="24" height="24"><use href="#a1"/></svg><svg width="16" height="16"><use href="#a1"/></svg><span class="lockup"><svg><use href="#a1"/></svg>trioscope</span></div>
+    </div>
+  </div>
+
+  <div class="cand">
+    <h2>A2 · Vierkant</h2>
+    <p>Zelfde idee als afgerond vierkant — compacter, vult favicon-/icoonruimte beter en oogt als een app-icoon.</p>
+    <div class="swatches">
+      <div class="sw light"><svg width="96" height="96"><use href="#a2"/></svg><svg width="48" height="48"><use href="#a2"/></svg><svg width="24" height="24"><use href="#a2"/></svg><svg width="16" height="16"><use href="#a2"/></svg><span class="lockup"><svg><use href="#a2"/></svg>trioscope</span></div>
+      <div class="sw dark"><svg width="96" height="96"><use href="#a2"/></svg><svg width="48" height="48"><use href="#a2"/></svg><svg width="24" height="24"><use href="#a2"/></svg><svg width="16" height="16"><use href="#a2"/></svg><span class="lockup"><svg><use href="#a2"/></svg>trioscope</span></div>
+    </div>
+  </div>
+
+  <div class="cand">
+    <h2>Als app-icoon / favicon-tegel</h2>
+    <p>Op een gekleurde tegel is het kader eigenlijk dubbelop — daar kan de tegel zelf het "scherm" zijn en volstaat alleen de trace (rechts).</p>
+    <div class="swatches">
+      <div class="sw light"><div class="minirow"><span class="tile"><svg><use href="#a1"/></svg></span><span class="tilelbl">A1 op tegel</span></div></div>
+      <div class="sw light"><div class="minirow"><span class="tile"><svg><use href="#a2"/></svg></span><span class="tilelbl">A2 op tegel</span></div></div>
+      <div class="sw light"><div class="minirow"><span class="tile big"><svg><use href="#trace"/></svg></span><span class="tilelbl">alleen de trace</span></div></div>
+    </div>
+  </div>
+</div>

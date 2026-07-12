@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <!-- iOS app-icoon: full-bleed blauwe tegel + witte glucose-trace. iOS maskeert zelf de hoeken. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3aa4ff"/>
+      <stop offset="1" stop-color="#1385f5"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="180" fill="url(#g)"/>
+  <path d="M40 105 C56 73 73 70 90 93 S123 121 140 79"
+        fill="none" stroke="#ffffff" stroke-width="15"
+        stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

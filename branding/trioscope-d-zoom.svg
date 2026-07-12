@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- D "zoom": focusring om één meting op de trace (zoals de geselecteerde cyclus) -->
+  <path d="M6 41 C13 31 19 29 25 35 S36 43 45 31 S53 24 58 26" stroke="currentColor" stroke-width="4.5"/>
+  <circle cx="45" cy="31" r="9.5" stroke="currentColor" stroke-width="4.5"/>
+  <circle cx="45" cy="31" r="4" fill="#22c55e" stroke="none"/>
+</svg>

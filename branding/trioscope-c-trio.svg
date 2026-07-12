@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <!-- C "trio": drie CGM-stipjes onder de loep -->
+  <circle cx="26" cy="26" r="17.5" stroke="currentColor" stroke-width="5.5"/>
+  <path d="M39.5 39.5 L53 53" stroke="currentColor" stroke-width="7"/>
+  <circle cx="17.5" cy="32.5" r="3.6" fill="currentColor" stroke="none"/>
+  <circle cx="26" cy="25" r="3.6" fill="currentColor" stroke="none"/>
+  <circle cx="34.5" cy="18.5" r="3.6" fill="#22c55e" stroke="none"/>
+</svg>

@@ -16,6 +16,10 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
 
 ## Test
 - Syntax check: extract the `<script>` body and `new Function()` it.
+- Tests freeze the app clock via addInitScript (shifted Date class, real timers) at a moment
+  covered by the fixtures — otherwise every run after local midnight breaks on "today".
+- Flex-column pitfall: `.cols>*` needs `min-width:0;max-width:100%` or a wide `white-space:pre`
+  formula block blows the panel past the mobile viewport.
 - Browser tests: Playwright with `executablePath:'/opt/pw-browsers/chromium'` (symlink to the
   chrome binary). Hermetic setup: serve `index.html` on a fake origin via `context.route`
   (`https://app.test/`), answer `https://fake-ns.test/api/v1/*` from fixtures captured with
@@ -36,16 +40,25 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   COB orange, darkerBlue #1e49ff for the IOB line, override purple `--ov`). `--txt-*`
   variants exist for TEXT (WCAG); chart strokes use the base tokens. SVG is built as HTML
   strings using `var(--x)` fills/strokes, so theme switching needs no re-render.
-- Layout: header (title=go-to-latest, updated-at, ↻ refresh, 🕘 versions, sign out) →
-  ONE topbar row: day nav left (‹ date ▾ ›, click opens the native picker via
-  `showPicker()` with a visible-input fallback, "Today ↦" when off-today, mobile-only
-  chart-toggle icon) + inline day stats right (TIR/insulin have 34px mini bars; labels
-  hidden ≤980px) → `.cols` grid: day chart card + snapshot panel (400px).
-  Mobile (≤980px): snapshot-first; day chart behind the icon toggle; fixed bottom pager
-  with big ‹ time › buttons + a "now" button that doubles as live indicator (green ● on
-  the newest decision, blue ↦ otherwise → goLatest). `touch-action:manipulation` on all
-  interactive elements (kills iOS double-tap zoom + tap delay); inputs 16px on coarse
-  pointers (no focus zoom).
+- Layout: header (title=go-to-latest, updated-at, ⋯ menu = refresh + older versions +
+  sign out) → `.cols` grid: left `.daysec` (topbar row: ‹ date ▾ › day nav — click opens
+  the native picker via `showPicker()` with a visible-input fallback —, "Today ↦" when
+  off-today, inline day stats with 34px mini bars; then the day chart card) + snapshot
+  panel (400px). Mobile (≤980px): `.daysec` is ONE tappable card (nav+stats; tap or
+  chevron expands the chart inside it), stat labels hidden; decision panel below; fixed
+  bottom pager with wide ‹ time › buttons + a "now" button that doubles as live indicator
+  (green ● on the newest decision, blue ↦ otherwise → goLatest); at the newest decision
+  the forward buttons get `.end` (dimmed); the panel's ‹ › next to the time are hidden on
+  mobile; the day ‹ › sit absolutely at the card edges. Swipe gestures: day block ⇄ days,
+  panel ⇄ decisions (addSwipe: dx≥45px, <700ms, |dx|>1.5|dy|; a teaser "ghost card" of the
+  neighbouring day/decision appears beside the block and both follow the finger; on release
+  the cards slide over and the handler fires; teaser returning null = nothing that side =
+  snap back; horizontal moves preventDefault so the page doesn't scroll mid-swipe).
+  Day switches via ‹ ›/picker/swipe go through `gotoDay` and keep the selected decision's
+  time of day. `touch-action:manipulation` everywhere
+  (kills iOS double-tap zoom + tap delay), sticky :hover reset under `@media (hover:none)`,
+  inputs 16px on coarse pointers (no focus zoom). Stepping → past the newest decision of
+  today quietly re-fetches (catch-up).
 - Day chart mirrors the Trio app's MainChartView (see tlray/Trio,
   `Trio/Sources/Modules/Home/View/Chart/`): a basal strip on TOP with temp-basal bars
   hanging DOWN from the top edge (gradient fill + solid insulin rate line at the bar edge;
@@ -60,12 +73,14 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   Legend appears ONLY on hover (bottom of chart, hover-capable pointers only).
 - Snapshot panel = "what the app showed at that moment": big colored BG + trend arrow
   (computed from the two sgv readings before t) left, ‹ time › nav top-right (steps across
-  midnight) with a tiny enacted ✓ / suggested ◌ glyph, IOB/COB/basal/target row, conclusion card
-  (hypo-guard red / below-target purple / needed-vs-given bars / idle), then a SIMPLE
-  forecast chart: ~45 min of real sgv dots, a "now" divider, the four forecast curves
-  capped at +2.5 h (like the app), target+threshold dashed lines, hover readout line under
-  it — deliberately NO markers/points/rail. Below: the 8 pipeline steps (rail with status
-  dots) with the full formula/why/source/glossary-chip bodies, then the raw reason log.
+  midnight), IOB/COB/basal/target row, then a SIMPLE forecast chart: ~45 min of real sgv
+  dots, a "now" divider, the four forecast curves capped at +2.5 h (like the app), actual
+  readings AFTER the decision at 50% opacity (forecast vs reality), target+threshold
+  dashed lines, hover readout line under it — deliberately NO markers/points/rail; the y-domain always spans the full in-range band so the axis stays put between decisions. The
+  conclusion card sits BELOW the chart (so the chart never shifts while stepping) and
+  carries the enacted ✓ / suggested chip top-right (hypo-guard red / below-target purple /
+  needed-vs-given bars / idle). Below: the 8 pipeline steps (rail with status dots) with
+  the full formula/why/source/glossary-chip bodies, then the raw reason log.
 - Data model per day (dayCache/localStorage): {a,b,sgv[[t,mgdl]],cycles[],smb,bolus,carbs,
   notes,siteChange,overrides[[t,durMin,label]],tempTargets[[t,durMin,targetBottom]],segs}.
   `cycles[]` items carry t/bg/iob/cob/thr/ebg/req/rate/dur/tgt/units(SMB U)/rec/reason/

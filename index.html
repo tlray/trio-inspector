@@ -1,6 +1,11 @@
 <meta charset="utf-8">
-<title>Trio Loop Inspector</title>
+<title>Trioscope</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f6f3">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b0c0e">
+<meta name="apple-mobile-web-app-title" content="Trioscope">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%231e96fc%22%2F%3E%3Cpath%20d%3D%22M14%2038%20C20%2026%2026%2024%2032%2033%20S44%2044%2050%2028%22%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%226%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
 <style>
 :root{
   --page:#f6f6f3; --surface:#ffffff; --ink:#101010; --ink2:#54534e; --muted:#8b897f;
@@ -64,7 +69,8 @@ button,summary,input,svg,.srow,.vr{touch-action:manipulation}
 
 /* ---------- header ---------- */
 header.top{display:flex;align-items:center;gap:12px;padding:2px 0 20px}
-h1{font-size:17px;font-weight:650;letter-spacing:-.01em;margin:0;cursor:pointer;white-space:nowrap}
+h1{font-size:17px;font-weight:650;letter-spacing:-.01em;margin:0;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:8px}
+h1 .brandmark{width:21px;height:21px;flex:none;color:var(--iob)}
 header.top .grow{flex:1}
 #updText{color:var(--muted);font-size:12px;white-space:nowrap}
 .iconbtn{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
@@ -86,6 +92,12 @@ header.top .grow{flex:1}
 .verdate{display:block;font:600 12.5px system-ui,sans-serif}
 .versub{display:block;font-size:11.5px;color:var(--ink2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vercur{font-weight:700;color:var(--txt-good);font-size:10px;margin-left:7px;text-transform:uppercase;letter-spacing:.05em}
+.mi{display:flex;align-items:baseline;justify-content:space-between;gap:14px;width:100%;text-align:left;
+  padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink)}
+.mi:hover{background:var(--hover)}
+.misub{color:var(--muted);font-size:11px;font-weight:500;white-space:nowrap}
+.mhr{height:1px;background:var(--grid);margin:5px 4px}
+.mhead{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 10px 2px;font-weight:650}
 
 /* ---------- login ---------- */
 #login{max-width:400px;margin:9vh auto 0}
@@ -103,17 +115,21 @@ header.top .grow{flex:1}
 #login .hint{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55}
 #login .hint+.hint{margin-top:8px}
 
-/* ---------- top bar: day nav + stats on one line ---------- */
-.topbar{display:flex;align-items:center;gap:4px 22px;flex-wrap:wrap;padding:0 0 8px}
+/* ---------- day section: nav + stats (+ chart card) ---------- */
+.daysec{min-width:0}
+.topbar{display:flex;align-items:center;gap:4px 22px;flex-wrap:wrap;padding:0 2px 8px}
 .topbar .grow{flex:1}
 .daynav{display:flex;align-items:center;gap:2px}
-.navb{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+.navb{width:34px;height:34px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center;
   color:var(--ink2);font-size:17px;flex:none}
+.daynav .navb{width:42px}
 .navb:hover{background:var(--hover);color:var(--ink)}
-.navb:active{background:var(--hover)}
-.navb:disabled{opacity:.25;cursor:default;background:none}
+.navb:active{background:var(--hover);transform:scale(.9)}
+.navb:disabled{opacity:.25;cursor:default;background:none;transform:none}
 #chartToggle{display:none;color:var(--ink2)}
-#chartToggle.on{color:var(--txt-iob);background:var(--hover)}
+#chartToggle svg{transition:transform .18s}
+#chartToggle.on{color:var(--txt-iob)}
+#chartToggle.on svg{transform:rotate(180deg)}
 .datebtn{font-size:15px;font-weight:650;letter-spacing:-.01em;padding:6px 10px;border-radius:10px;white-space:nowrap}
 .datebtn:hover{background:var(--hover)}
 .datebtn .car{font-size:9px;color:var(--muted);margin-left:4px}
@@ -121,7 +137,7 @@ header.top .grow{flex:1}
 .dateinp.vis{position:static;width:auto;height:auto;opacity:1;pointer-events:auto;padding:5px 8px;
   border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);
   font:13px ui-monospace,Menlo,monospace}
-.todaybtn{color:var(--txt-iob);font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px}
+.todaybtn{color:var(--txt-iob);font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px;white-space:nowrap}
 .todaybtn:hover{background:var(--hover)}
 #dayStatus{text-align:center;color:var(--muted);font-size:12px;margin:0 0 6px;min-height:0}
 #dayStatus:empty{display:none}
@@ -136,6 +152,7 @@ header.top .grow{flex:1}
 
 /* ---------- layout ---------- */
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:22px;align-items:start}
+.cols>*{min-width:0;max-width:100%}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
 .daycard{padding:14px 14px 8px;min-width:0;position:relative}
 #chartToggle{display:none}
@@ -159,14 +176,15 @@ header.top .grow{flex:1}
 
 /* ---------- snapshot panel ---------- */
 .snap{padding:16px 18px 14px;position:sticky;top:14px}
-.snaphead{display:flex;align-items:flex-start;gap:12px}
+.snaphead{display:flex;align-items:baseline;gap:12px}
 .snaphead .bgside{flex:1;min-width:0}
 .snaptime{text-align:right;flex:none}
-.snaptime .tnav{display:inline-flex;align-items:center;gap:0}
-.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 1px 0 3px}
-.enst{font-size:12px;font-weight:700;align-self:flex-start;margin:1px 2px 0 1px;cursor:help}
-.enst.en{color:var(--txt-good)}
-.enst.sg{color:var(--muted)}
+.snaptime .tnav{display:inline-flex;align-items:baseline;gap:0}
+.snaptime .navb{align-self:center}
+.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 3px}
+.cstat{float:right;font-size:9.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 4px 10px;cursor:help}
+.cstat.en{color:var(--txt-good)}
+.cstat.sg{color:var(--muted)}
 .snapbg{display:flex;align-items:baseline;gap:9px;margin:0;flex-wrap:wrap}
 .snapbg .bg{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
 .snapbg .unit{font-size:12px;color:var(--muted)}
@@ -179,13 +197,25 @@ header.top .grow{flex:1}
 #pager{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:50;display:none;
   align-items:center;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:999px;
   box-shadow:0 8px 28px rgba(0,0,0,.22);padding:4px}
-.pgbtn{width:48px;height:48px;border-radius:50%;font-size:24px;color:var(--ink2);display:flex;align-items:center;justify-content:center}
-.pgbtn:active{background:var(--hover);color:var(--ink)}
+.pgbtn{width:58px;height:48px;border-radius:24px;font-size:24px;color:var(--ink2);display:flex;align-items:center;justify-content:center;
+  transition:transform .08s}
+.pgbtn:active{background:var(--hover);color:var(--ink);transform:scale(.88)}
 .pgt{font:650 17px ui-monospace,SFMono-Regular,Menlo,monospace;min-width:64px;text-align:center;padding:0 2px}
 .pgsep{width:1px;height:26px;background:var(--grid);margin:0 5px}
 #pgNow{font-size:19px;color:var(--txt-iob)}
 #pgNow.live{color:var(--good);font-size:13px;cursor:default}
 #pgNow.live:active{background:none}
+/* at the newest decision there is nothing to the right — show it */
+.navb.end,.pgbtn.end{opacity:.25;cursor:default}
+.navb.end:active,.pgbtn.end:active{background:none;transform:none}
+/* horizontal swipes belong to us; vertical stays with the browser */
+.snap,.daysec{touch-action:pan-y}
+/* the neighbouring card shown while swiping */
+.swipeghost{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);padding:16px 18px;pointer-events:none;overflow:hidden;display:flex;flex-direction:column}
+.swipeghost .gcenter{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ink2)}
+.swipeghost .gdate{font-size:15px;font-weight:650}
+.swipeghost .gsub{font-size:12px;color:var(--muted)}
 
 /* conclusion */
 .conc{border-radius:12px;padding:11px 13px;margin:0 0 14px;background:var(--hover);font-size:13px}
@@ -258,42 +288,75 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 /* ---------- mobile ---------- */
 @media (max-width:980px){
   .app{padding-top:10px;padding-bottom:96px}
-  header.top{padding-bottom:6px}
+  header.top{padding-bottom:8px}
   #updText{display:none}
-  .topbar{justify-content:center;padding-bottom:4px;gap:2px 12px}
+  /* the whole day section becomes ONE tappable card: nav + stats, chart expands inside;
+     ‹ › sit at the card's outer edges */
+  .daysec{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    box-shadow:var(--shadow);padding:8px 12px 0;cursor:pointer}
+  #dayPrev,#dayNext{position:absolute;top:10px;height:36px;width:46px;border-radius:11px;z-index:2;font-size:19px;
+    border:1px solid var(--line);background:var(--page)}
+  #dayPrev{left:7px}
+  #dayNext{right:7px}
+  .topbar{justify-content:center;padding:0;gap:0 12px}
   .topbar .grow{display:none}
-  .daynav{width:100%;justify-content:center}
-  #chartToggle{display:inline-flex}
-  .stats{width:100%;justify-content:center;gap:2px 14px}
-  .stat{gap:5px}
+  .daynav{width:100%;justify-content:center;padding:0 46px}
+  .todaybtn{font-size:11.5px;padding:4px 6px}
+  .datebtn{padding:6px 6px}
+  .stats{width:100%;justify-content:center;gap:2px 12px;padding-top:3px}
+  .stat{gap:4px}
   .stat b{font-size:14px}
-  .stat .lbl{display:none}
-  .cols{display:flex;flex-direction:column;gap:12px}
-  .snap{position:static;order:2;padding:14px 14px 10px}
-  .daycard{display:none;order:1}
+  .stat .lbl{font-size:9px;letter-spacing:.04em}
+  .stat .lbl.x{display:none}     /* units already say it on mobile */
+  .stat .minibar{display:none}   /* short labels instead of bars on mobile */
+  /* full-width grabber strip at the bottom of the card */
+  #chartToggle{display:flex;width:calc(100% + 24px);margin:2px -12px 0;height:24px;
+    align-items:center;justify-content:center;color:var(--muted);border-radius:0 0 15px 15px}
+  #chartToggle:active{background:var(--hover)}
+  .daycard{display:none;border:none;box-shadow:none;border-radius:0;background:none;padding:8px 0 0;cursor:auto}
   .daycard.open{display:block}
+  .cols{display:flex;flex-direction:column;gap:12px}
+  .snap{position:static;padding:14px 14px 10px}
+  .snaptime .navb{display:none}   /* pager + swipe navigate decisions */
   #pager.on{display:flex}
   .snapbg .bg{font-size:36px}
 }
 @media (pointer:coarse){
   #login input,.dateinp.vis{font-size:16px} /* prevents iOS focus zoom */
 }
+/* touch devices: no sticky hover states */
+@media (hover:none){
+  .navb:hover,.iconbtn:hover,.ghost:hover,.datebtn:hover,.todaybtn:hover,.mi:hover,.veritem:hover{background:none;color:var(--ink2)}
+  .datebtn:hover,.veritem:hover,.mi:hover{color:var(--ink)}
+  .todaybtn:hover{color:var(--txt-iob)}
+  .srow:hover{background:none}
+  .srow:hover .slab{color:var(--muted)}
+}
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 
 <div class="app">
 <header class="top">
-  <h1 id="brand" title="Go to the latest decision">Trio Loop Inspector</h1>
+  <h1 id="brand" title="Go to the latest decision"><svg class="brandmark" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="46" height="46" rx="12" stroke-width="5"/><path d="M16.5 37 C21 27 25.5 25 30 31 S37.5 43 47.5 29" stroke-width="5"/></svg><span>Trioscope</span></h1>
   <div class="grow"></div>
   <span id="updText"></span>
-  <button class="iconbtn" id="refreshBtn" title="Refresh" aria-label="Refresh data" style="display:none">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-  </button>
-  <div class="verwrap" id="verWrap" style="display:none">
-    <button class="ghost" id="verBtn" aria-haspopup="listbox" aria-expanded="false" title="Older versions of this app">🕘</button>
-    <div class="vermenu" id="verMenu" role="listbox" style="display:none"></div>
+  <div class="verwrap" id="menuWrap" style="display:none">
+    <button class="iconbtn" id="menuBtn" aria-haspopup="menu" aria-expanded="false" title="Menu" aria-label="menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+    </button>
+    <div class="vermenu" id="appMenu" role="menu" style="display:none">
+      <button class="mi" id="refreshBtn" role="menuitem">
+        <span>↻&nbsp; Refresh now</span><span class="misub" id="updSub"></span>
+      </button>
+      <div id="verSec" style="display:none">
+        <div class="mhr"></div>
+        <div class="mhead">Older versions</div>
+        <div id="verList"></div>
+      </div>
+      <div class="mhr"></div>
+      <button class="mi" id="signOut" role="menuitem">Sign out</button>
+    </div>
   </div>
-  <button class="ghost" id="signOut" style="display:none">Sign out</button>
 </header>
 
 <section id="login" style="display:none">
@@ -313,28 +376,29 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 </section>
 
 <main id="appBody" style="display:none">
-  <div class="topbar">
-    <div class="daynav">
-      <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
-      <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
-      <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
-      <button class="navb" id="dayNext" aria-label="next day">›</button>
-      <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
-      <button class="navb" id="chartToggle" aria-expanded="false" aria-label="day overview chart" title="Day overview">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20V12"/><path d="M11 20V5"/><path d="M18 20v-6"/></svg>
-      </button>
-    </div>
-    <div class="grow"></div>
-    <div class="stats" id="stats"></div>
-  </div>
-  <div id="dayStatus"></div>
-
   <div class="cols">
-    <section class="card daycard" id="dayCard">
-      <div class="chartwrap" id="chartWrap">
-        <div class="legend" id="legend"></div>
-        <div class="dtip" id="dtip"></div>
+    <section class="daysec" id="daySec">
+      <div class="topbar" id="dayHead">
+        <div class="daynav">
+          <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
+          <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
+          <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
+          <button class="navb" id="dayNext" aria-label="next day">›</button>
+          <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
+        </div>
+        <div class="grow"></div>
+        <div class="stats" id="stats"></div>
       </div>
+      <div id="dayStatus"></div>
+      <section class="card daycard" id="dayCard">
+        <div class="chartwrap" id="chartWrap">
+          <div class="legend" id="legend"></div>
+          <div class="dtip" id="dtip"></div>
+        </div>
+      </section>
+      <button id="chartToggle" aria-expanded="false" aria-label="show day chart" title="Day chart">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
     </section>
 
     <aside class="card snap" id="panel" aria-label="loop decision"></aside>
@@ -353,7 +417,7 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 <script>
 'use strict';
 /* ============================================================
-   Trio Loop Inspector — single-file app.
+   Trioscope — single-file app.
    Reads glucose, treatments and oref devicestatus from the
    user's own Nightscout; credentials live in localStorage only.
    ============================================================ */
@@ -612,13 +676,13 @@ function renderStats(dd){
   <span class="stat" title="time in range ${isMmol()?'3.9–10':'70–180'} ${bgUnit()} — low ${Math.round(s.lo*100)}% · high ${Math.round(s.hi*100)}%">
     <b>${Math.round(s.tir*100)}<small>%</small></b>
     <span class="minibar"><div style="width:${s.lo*100}%;background:var(--bglow)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--bghigh)"></div></span>
-    <span class="lbl">in range</span></span>
-  <span class="stat"><b>${fBG(s.mean)}</b><span class="lbl">avg ${bgUnit()}</span></span>
+    <span class="lbl">range</span></span>
+  <span class="stat" title="average glucose (${bgUnit()})"><b>${fBG(s.mean)}</b><span class="lbl">avg</span></span>
   <span class="stat" title="basal ${f1(s.basalU)} · SMB ${f1(s.smbU)} · bolus ${f1(s.bolU)} U">
     <b>${f1(tot)}<small>U</small></b>
     <span class="minibar">${seg(s.basalU,'rgba(30,150,252,.45)')}${seg(s.smbU,'var(--insulin)')}${seg(s.bolU,'var(--iobline)')}</span>
-    <span class="lbl">insulin</span></span>
-  <span class="stat"><b>${Math.round(s.carbsG)}<small>g</small></b><span class="lbl">carbs</span></span>`;
+    <span class="lbl x">insulin</span></span>
+  <span class="stat"><b>${Math.round(s.carbsG)}<small>g</small></b><span class="lbl x">carbs</span></span>`;
 }
 
 /* ============================================================
@@ -911,7 +975,8 @@ function renderForecast(c,dd,thr){
   const x=t=>PL+(t-ta)/(tb-ta)*(W-PL-PR);
   const real=dd.sgv.filter(e=>e[0]>=ta&&e[0]<=c.t);
   const tgt=c.tgt||(isMmol()?6.1:110);
-  let mn=Math.min(thr,...real.map(e=>M(e[1]))), mx=Math.max(tgt,M(c.bg),...real.map(e=>M(e[1])));
+  /* the in-range band is always fully in view, so the y-axis stays put between decisions */
+  let mn=Math.min(thr,M(70),...real.map(e=>M(e[1]))), mx=Math.max(tgt,M(180),M(c.bg),...real.map(e=>M(e[1])));
   const maxI=Math.floor(AHEAD/300);
   for(const k of keys) pr[k].forEach((v,i)=>{ if(i<=maxI){ const m=M(v); if(m<mn)mn=m; if(m>mx)mx=m; } });
   const pad=Math.max((mx-mn)*0.1,isMmol()?0.4:7); mn-=pad; mx+=pad;
@@ -941,8 +1006,11 @@ function renderForecast(c,dd,thr){
     pr[k].forEach((v,i)=>{ if(i>maxI) return; d+=(d?'L':'M')+x(c.t+i*300).toFixed(1)+' '+y(M(v)).toFixed(1)+' '; });
     s+=`<path d="${d}" fill="none" stroke="var(--${k.toLowerCase()})" stroke-width="1.8" opacity=".92"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
   }
-  /* real readings + the decision point */
+  /* real readings + the decision point; readings AFTER the decision are drawn softer,
+     so you can see which forecast curve turned out right */
   for(const e of real) s+=`<circle cx="${x(e[0]).toFixed(1)}" cy="${y(M(e[1])).toFixed(1)}" r="2.1" fill="${bgCol(e[1])}"/>`;
+  for(const e of dd.sgv) if(e[0]>c.t&&e[0]<=tb)
+    s+=`<circle cx="${x(e[0]).toFixed(1)}" cy="${y(M(e[1])).toFixed(1)}" r="2.1" fill="${bgCol(e[1])}" opacity=".5"/>`;
   s+=`<circle cx="${x(c.t).toFixed(1)}" cy="${y(M(c.bg)).toFixed(1)}" r="4.4" fill="none" stroke="var(--sel)" stroke-width="1.6"/>`;
   s+=`<line id="fcX" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7" pointer-events="none"/>`;
   fcEl.innerHTML=`<svg id="fcsvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto" role="img" aria-label="recent glucose and forecast curves">${s}</svg>`;
@@ -1091,22 +1159,23 @@ function buildSteps(c,p){
     enacted:c.rec?'yes':'suggested only',
   } : {};
 
-  /* conclusion */
+  /* conclusion (the enacted/suggested status lives here, top-right) */
   let conc='';
   if(c){
+    const st=`<span class="cstat ${c.rec?'en':'sg'}" title="${c.rec?'confirmed by the pump':'computed but not confirmed by the pump'}">${c.rec?'enacted ✓':'suggested'}</span>`;
     const carbLine = creq!=null?`<div class="conc guard" style="margin-bottom:6px">🍬 ~${creq} g fast carbs required${p.creqMin?` within ${p.creqMin} m`:''} — cutting insulin alone won't keep BG above the threshold</div>`:'';
-    if(guard) conc=carbLine+`<div class="conc guard">Hypo guard active — all dosing stopped (zero temp)</div>`;
-    else if(rising) conc=carbLine+`<div class="conc" style="color:var(--ink2)">Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
-    else if(zero) conc=carbLine+`<div class="conc zero"><b>Forecast below target</b> — basal wound down, nothing added</div>`;
-    else if(maxiob) conc=carbLine+`<div class="conc" style="color:var(--ink2)">IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
+    if(guard) conc=carbLine+`<div class="conc guard">${st}Hypo guard active — all dosing stopped (zero temp)</div>`;
+    else if(rising) conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
+    else if(zero) conc=carbLine+`<div class="conc zero">${st}<b>Forecast below target</b> — basal wound down, nothing added</div>`;
+    else if(maxiob) conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
     else if(req!=null&&req>0.01){
       const maxb=Math.max(req,smbGiven,0.01), pct=Math.round(smbGiven/req*100);
-      conc=carbLine+`<div class="conc">
+      conc=carbLine+`<div class="conc">${st}
         <div class="crow"><span class="clbl">needed</span><span class="cbar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="cval">${F2(req)} U</span><span class="cpct"></span></div>
         <div class="crow"><span class="clbl">given now</span><span class="cbar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} U</span><span class="cpct">${pct}%</span></div>
         ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits in the steps below</div>`:''}</div>`;
     }
-    else conc=carbLine+`<div class="conc" style="color:var(--ink2)">No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
+    else conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
   }
 
   /* 1 — inputs */
@@ -1287,7 +1356,6 @@ function renderPanel(dd){
           <div class="tnav">
             <button class="navb" id="prevC" aria-label="previous decision">‹</button>
             <span class="t">${hhmm(c.t)}</span>
-            <span class="enst ${c.rec?'en':'sg'}" title="${c.rec?'enacted — confirmed by the pump':'suggested only — not confirmed by the pump'}">${c.rec?'✓':'◌'}</span>
             <button class="navb" id="nextC" aria-label="next decision">›</button>
           </div>
         </div>
@@ -1311,15 +1379,16 @@ function renderPanel(dd){
       ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
     </div>`;}).join('');
   const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
-  panel.innerHTML=`${head}${built.conc}${c?`<div id="fc"></div><div id="fcro"></div>`:''}<div class="sect-h">How this decision was made</div><div class="steps">${list}</div>${raw}`;
+  /* forecast chart first, conclusion below it — the chart stays put while stepping */
+  panel.innerHTML=`${head}${c?`<div id="fc"></div><div id="fcro"></div>`:''}${built.conc}<div class="sect-h">How this decision was made</div><div class="steps">${list}</div>${raw}`;
   if(c) renderForecast(c,dd,built.thr);
   panel.querySelectorAll('details').forEach(d=>{ if(openDetails.has(dKey(d))) d.open=true; });
   const lv=document.getElementById('srlive');
   if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${built.rows[built.rows.length-1].val.replace(/<[^>]+>/g,'')}`;
   if(c){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
-    if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
-    if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
+    if(pb) pb.onclick=()=>stepCycle(-1);
+    if(nb) nb.onclick=()=>stepCycle(1);
   }
   /* mobile pager mirrors the selection; the "now" button doubles as a live indicator */
   const pager=document.getElementById('pager');
@@ -1332,6 +1401,12 @@ function renderPanel(dd){
       nb.classList.toggle('live',!!live);
       nb.textContent = live?'●':'↦';
       nb.title = live?'This is the newest decision':'Jump to now — you are looking at an older decision';
+      /* nothing to the right of the newest decision — dim the forward buttons */
+      const pn=document.getElementById('pgNext');
+      pn.classList.toggle('end',!!live);
+      pn.setAttribute('aria-disabled',live?'true':'false');
+      const nc=document.getElementById('nextC');
+      if(nc){ nc.classList.toggle('end',!!live); nc.setAttribute('aria-disabled',live?'true':'false'); }
     }
   }
 }
@@ -1364,18 +1439,37 @@ panel.addEventListener('click',ev=>{
 
 /* ---------- keyboard / step navigation ---------- */
 let stepping=false;
+/* on mobile: if the panel head scrolled out of view, bring it back after a step */
+function stepScrollFix(){
+  if(!matchMedia('(max-width:980px)').matches) return;
+  const r=panel.getBoundingClientRect();
+  if(r.top<-8) window.scrollBy(0,r.top-8);
+}
 async function stepCycle(dir){
   if(stepping) return;
   const dd=dayData(curDay);
   const i=selCycle?dd.cycles.findIndex(x=>x.t===selCycle.t):-1;
   if(i>=0){
     const j=i+dir;
-    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; setDeep(selCycle); renderAll(false); return; }
+    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; setDeep(selCycle); renderAll(false); stepScrollFix(); return; }
   } else if(dd.cycles.length){
-    selCycle=dd.cycles[dd.cycles.length-1]; setDeep(selCycle); renderAll(false); return;
+    selCycle=dd.cycles[dd.cycles.length-1]; setDeep(selCycle); renderAll(false); stepScrollFix(); return;
   }
   const nd=dir>0?nextDay(curDay):prevDay(curDay);
-  if(nd>todayStart()) return;
+  if(nd>todayStart()){
+    /* already at the newest decision of today: quietly check for fresher data */
+    if(dir>0&&LIVE&&!fetching){
+      stepping=true;
+      try{
+        await selectDay(curDay);
+        const dd3=dayData(curDay);
+        if(dd3.cycles.length&&(!selCycle||dd3.cycles[dd3.cycles.length-1].t!==selCycle.t)){
+          selCycle=dd3.cycles[dd3.cycles.length-1]; setDeep(selCycle); renderAll(false); stepScrollFix();
+        }
+      } finally { stepping=false; }
+    }
+    return;
+  }
   stepping=true;
   try{
     selCycle=null;
@@ -1383,7 +1477,7 @@ async function stepCycle(dir){
     const dd2=dayData(curDay);
     if(dd2.cycles.length){
       selCycle = dir>0 ? dd2.cycles[0] : dd2.cycles[dd2.cycles.length-1];
-      setDeep(selCycle); renderAll(false);
+      setDeep(selCycle); renderAll(false); stepScrollFix();
     }
   } finally { stepping=false; }
 }
@@ -1405,7 +1499,9 @@ function renderDaybar(){
   document.getElementById('todayBtn').style.display = curDay===todayStart()?'none':'';
   dayStatusEl.textContent=dayStatusTxt;
   const c=dayCache[curDay];
-  document.getElementById('updText').textContent = c?('updated '+hhmm(c.fetchedAt/1000)):'';
+  const upd=c?('updated '+hhmm(c.fetchedAt/1000)):'';
+  document.getElementById('updText').textContent=upd;
+  const us=document.getElementById('updSub'); if(us) us.textContent=upd;
 }
 async function selectDay(d,force){
   const today=todayStart();
@@ -1431,15 +1527,20 @@ async function selectDay(d,force){
   selCycle = selCycle ? (dd.cycles.find(x=>x.t===selCycle.t)||null) : null;
   renderAll();
 }
-document.getElementById('dayPrev').onclick=()=>{ selCycle=null; setDeep(null); selectDay(prevDay(curDay)); };
-document.getElementById('dayNext').onclick=()=>{ selCycle=null; setDeep(null); selectDay(nextDay(curDay)); };
+document.getElementById('dayPrev').onclick=()=>gotoDay(prevDay(curDay));
+document.getElementById('dayNext').onclick=()=>gotoDay(nextDay(curDay));
 document.getElementById('todayBtn').onclick=()=>{ selCycle=null; goLatest(true); };
 document.getElementById('dateBtn').onclick=()=>{
   try{ dateInp.showPicker(); }               /* modern browsers, top-level frames */
-  catch(e){ dateInp.classList.add('vis'); dateInp.focus(); } /* fallback: show a real date input */
+  catch(e){                                  /* fallback (e.g. embedded frames): show a real date input */
+    dateInp.classList.add('vis');
+    dateInp.focus();
+    try{ dateInp.click(); }catch(e2){}
+  }
 };
+dateInp.addEventListener('blur',()=>setTimeout(()=>dateInp.classList.remove('vis'),250));
 dateInp.addEventListener('change',()=>{ dateInp.classList.remove('vis');
-  const d=isoToDay(dateInp.value); if(d!=null){ selCycle=null; setDeep(null); selectDay(d); } });
+  const d=isoToDay(dateInp.value); if(d!=null) gotoDay(d); });
 refreshBtn.onclick=()=>selectDay(curDay,true);
 
 /* auto-refresh: today only, ~every minute, only while the tab is visible */
@@ -1451,14 +1552,129 @@ function pollTick(){
 setInterval(pollTick,30000);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pollTick(); });
 
-/* mobile: day overview behind a toggle */
+/* mobile: the day block expands to reveal the chart — chevron, or a tap anywhere on the block */
 const chartToggle=document.getElementById('chartToggle'), dayCard=document.getElementById('dayCard');
-chartToggle.onclick=()=>{
+function toggleChart(){
   const on=!dayCard.classList.contains('open');
   dayCard.classList.toggle('open',on); chartToggle.classList.toggle('on',on);
   chartToggle.setAttribute('aria-expanded',on?'true':'false');
   if(on) renderDayChart(dayData(curDay));
-};
+}
+chartToggle.onclick=toggleChart;
+document.getElementById('dayHead').addEventListener('click',e=>{
+  if(!matchMedia('(max-width:980px)').matches) return;
+  if(e.target.closest('button,input,a')) return;
+  toggleChart();
+});
+
+/* swipe: day block ⇄ days, decision panel ⇄ decisions.
+   A real card-swipe: the neighbouring card (teaser) appears beside the block and
+   both follow the finger; release far enough and the new card slides into place. */
+function addSwipe(el,fn,teaser){
+  let x0=null,y0=null,t0=0,axis=null,ghost=null,gdir=0,rect=null,busy=false;
+  const clearGhost=()=>{ if(ghost){ ghost.remove(); ghost=null; } gdir=0; };
+  const reset=()=>{
+    el.style.transition='transform .18s ease'; el.style.transform='';
+    if(ghost){ ghost.style.transition='transform .18s ease'; ghost.style.transform='translateX(0px)'; }
+    setTimeout(clearGhost,200);
+  };
+  function ensureGhost(dir){
+    if(gdir===dir) return;
+    clearGhost();
+    gdir=dir;
+    const html=teaser?teaser(dir):'';
+    if(html==null) return;               /* nothing on that side */
+    rect=el.getBoundingClientRect();
+    ghost=document.createElement('div');
+    ghost.className='swipeghost';
+    ghost.innerHTML=html;
+    ghost.style.left=(dir>0?rect.right+12:rect.left-rect.width-12)+'px';
+    ghost.style.top=Math.max(rect.top,8)+'px';
+    ghost.style.width=rect.width+'px';
+    ghost.style.height=Math.min(rect.height,window.innerHeight-Math.max(rect.top,8)-16)+'px';
+    document.body.appendChild(ghost);
+  }
+  el.addEventListener('touchstart',e=>{ if(busy||e.touches.length!==1){x0=null;return;}
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); axis=null;
+    el.style.transition='none'; },{passive:true});
+  /* non-passive: once the gesture is horizontal we claim it, so the page stops scrolling */
+  el.addEventListener('touchmove',e=>{
+    if(x0==null) return;
+    const dx=e.touches[0].clientX-x0, dy=e.touches[0].clientY-y0;
+    if(axis==null&&(Math.abs(dx)>6||Math.abs(dy)>6)) axis=Math.abs(dx)>Math.abs(dy)?'x':'y';
+    if(axis!=='x') return;
+    e.preventDefault();
+    ensureGhost(dx<0?1:-1);
+    const shift=ghost?dx*0.9:dx*0.25;   /* firm follow with a card beside it, stiff without */
+    el.style.transform=`translateX(${shift.toFixed(1)}px)`;
+    if(ghost) ghost.style.transform=`translateX(${shift.toFixed(1)}px)`;
+  },{passive:false});
+  el.addEventListener('touchend',e=>{
+    if(x0==null) return;
+    const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null;
+    const ok = axis==='x' && ghost && Date.now()-t0<=700 && Math.abs(dx)>=45 && Math.abs(dx)>1.5*Math.abs(dy);
+    if(!ok){ reset(); return; }
+    const dir=dx<0?1:-1;   /* swipe left = forward in time */
+    busy=true;
+    const dist=(rect.width+12)*(dir>0?-1:1);
+    el.style.transition='transform .2s ease'; el.style.transform=`translateX(${dist}px)`;
+    ghost.style.transition='transform .2s ease'; ghost.style.transform=`translateX(${dist}px)`;
+    setTimeout(()=>{
+      Promise.resolve(fn(dir)).catch(()=>{}).finally(()=>{
+        el.style.transition='none'; el.style.transform='';
+        clearGhost(); busy=false;
+      });
+    },210);
+  },{passive:true});
+  el.addEventListener('touchcancel',()=>{ x0=null; reset(); },{passive:true});
+}
+/* teasers: a lightweight preview of what lies on either side */
+function cycleTeaser(dir){
+  const dd=dayData(curDay);
+  const i=selCycle?dd.cycles.findIndex(x=>x.t===selCycle.t):-1;
+  const c=i>=0?dd.cycles[i+dir]:null;
+  if(!c){
+    const nd=dir>0?nextDay(curDay):prevDay(curDay);
+    if(nd>todayStart()) return null;
+    return `<div class="gcenter"><div class="gdate">${dir>0?'next day ›':'‹ previous day'}</div></div>`;
+  }
+  const bgc=c.bg<70?'var(--txt-lo)':c.bg>180?'var(--txt-hi)':'var(--txt-good)';
+  return `<div class="snaphead">
+      <div class="bgside"><div class="snapbg"><span class="bg" style="color:${bgc}">${fBG(M(c.bg))}</span><span class="unit">${bgUnit()}</span></div></div>
+      <div class="snaptime"><span class="t">${hhmm(c.t)}</span></div></div>
+    <div class="snapkv"><span>IOB <b>${f2(c.iob)} U</b></span><span>COB <b>${c.cob||0} g</b></span></div>`;
+}
+function dayTeaser(dir){
+  const d=dir>0?nextDay(curDay):prevDay(curDay);
+  if(d>todayStart()) return null;
+  const cached=dayCache[d]||loadPersisted(d);
+  let sub='';
+  if(cached&&cached.data){ const s=stats(cached.data);
+    if(s) sub=`<div class="gsub">${Math.round(s.tir*100)}% range · ${fBG(s.mean)} avg</div>`; }
+  return `<div class="gcenter"><div class="gdate">${dayLabel(d)}</div>${sub}</div>`;
+}
+/* switching days keeps the time of day of the selected decision */
+/* switching days keeps the time of day of the selected decision */
+async function gotoDay(d){
+  const tod=selCycle?selCycle.t-curDay:null;
+  selCycle=null; setDeep(null);
+  await selectDay(d);
+  if(tod!=null){
+    const dd=dayData(curDay);
+    if(dd.cycles.length){
+      selCycle=nearestCycle(dd,curDay+tod);
+      if(selCycle) setDeep(selCycle);
+      renderAll(false);
+    }
+  }
+}
+addSwipe(document.getElementById('daySec'),dir=>{
+  if(dir>0&&curDay>=todayStart()) return false;
+  return gotoDay(dir>0?nextDay(curDay):prevDay(curDay));
+},dayTeaser);
+addSwipe(panel,dir=>stepCycle(dir),cycleTeaser);
+/* a (passive) touchstart listener makes :active button states work on iOS */
+document.addEventListener('touchstart',()=>{},{passive:true});
 
 /* ---------- master render ---------- */
 function renderAll(full){
@@ -1475,10 +1691,10 @@ window.addEventListener('resize',()=>{clearTimeout(rto); rto=setTimeout(()=>rend
 const loginEl=document.getElementById('login'), appBody=document.getElementById('appBody');
 const signOutBtn=document.getElementById('signOut');
 function showLogin(msg){ appBody.style.display='none'; loginEl.style.display='block';
-  refreshBtn.style.display='none'; signOutBtn.style.display='none';
+  document.getElementById('menuWrap').style.display='none';
   document.getElementById('loginErr').textContent=msg||''; }
 function showApp(){ loginEl.style.display='none'; appBody.style.display='block';
-  refreshBtn.style.display=''; signOutBtn.style.display=''; }
+  document.getElementById('menuWrap').style.display=''; }
 async function connectNS(){
   const errEl=document.getElementById('loginErr');
   let raw=(document.getElementById('nsUrl').value||'').trim();
@@ -1538,28 +1754,28 @@ async function goDeep(t){
 window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); else goLatest(false); });
 document.getElementById('brand').addEventListener('click',()=>{ if(LIVE) goLatest(true); });
 
-/* ---------- version selector (reads versions.json, hidden when absent) ---------- */
+/* ---------- header menu: refresh · older versions (when versions.json exists) · sign out ---------- */
 (function(){
-  const wrap=document.getElementById('verWrap'), btn=document.getElementById('verBtn'), menu=document.getElementById('verMenu');
+  const wrap=document.getElementById('menuWrap'), btn=document.getElementById('menuBtn'), menu=document.getElementById('appMenu');
   let isOpen=false;
   function setOpen(o){ isOpen=o; menu.style.display=o?'block':'none'; btn.setAttribute('aria-expanded',o?'true':'false'); }
-  async function load(){
+  btn.addEventListener('click',e=>{ e.stopPropagation(); setOpen(!isOpen); });
+  document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&isOpen){ setOpen(false); btn.focus(); } });
+  refreshBtn.addEventListener('click',()=>setOpen(false));
+  (async function(){
     let list=null;
     try{ const r=await fetch('versions.json',{cache:'no-store'}); if(r.ok) list=await r.json(); }catch(e){}
-    if(!Array.isArray(list)||!list.length){ wrap.style.display='none'; return; }
-    menu.innerHTML=list.map((v,i)=>{
+    if(!Array.isArray(list)||!list.length) return;
+    document.getElementById('verList').innerHTML=list.map((v,i)=>{
       const cur=i===0;
-      return `<a class="veritem${cur?' cur':''}" role="option" href="${cur?'./':esc(v.file)}"`+
+      return `<a class="veritem${cur?' cur':''}" href="${cur?'./':esc(v.file)}"`+
         `${cur?' aria-current="true"':''}><span class="verdate">${esc(v.date)} UTC`+
         `${cur?' <span class="vercur">current</span>':''}</span>`+
         `<span class="versub">${esc(v.subject)}</span></a>`;
     }).join('');
-    wrap.style.display='';
-  }
-  btn.addEventListener('click',e=>{ e.stopPropagation(); setOpen(!isOpen); });
-  document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&isOpen){ setOpen(false); btn.focus(); } });
-  load();
+    document.getElementById('verSec').style.display='';
+  })();
 })();
 
 /* ---------- init ---------- */
