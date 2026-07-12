@@ -566,6 +566,7 @@ function parseReason(c){
     p.limits.push({key:'smbjump',t:'SMB blocked (BG jump)',c:'--hi',
       why:`BG jumped ${fBG(nb(m[1]))} ${bgUnit()} in one reading — more than ${m[2]}% of the current value, which usually means a calibration or sensor artifact — so no SMB is trusted this cycle.`});
   if(m=g(/maxBolus ([0-9]+(?:\.[0-9]+)?)[^0-9]/)){ const req=c.req||0, mb=+m[1];
+    p.maxBolusVal=mb;
     if(mb>0) p.limits.push({key:'maxbolus',t:'SMB limited (maxBolus)',c:'--hi',
       why:`Calculated need ${f2(req)} U, but each SMB is capped at ${f2(mb)} U. The remainder follows in later cycles.`});
     else if(!wacht) p.limits.push({key:'maxbolus',t:'SMB blocked (maxBolus 0)',c:'--hi',
@@ -1056,13 +1057,13 @@ function buildSteps(c,p){
   const cy=t=>`\n<span class="cy">» ${t}</span>`;
   const naive=c&&isfV!=null?M(c.bg)-c.iob*isfV:null;
   const gm=c?{IOB:minOf('IOB'),COB:minOf('COB'),UAM:minOf('UAM'),ZT:minOf('ZT')}:{};
-  const capVal = capS ? +(capS.why.match(/capped at ([0-9.]+)/)?.[1]??NaN) : null;
+  const capVal = capS ? (p.maxBolusVal??null) : null;
   const mmB=capB?capB.why.match(/basal ([0-9.]+) U\/h, capped at the ([0-9.]+)/):null;
   const ratioNum=(!capS&&smbGiven>0&&req>0.01)?smbGiven/req:null;
   let impliedF=null;
   if(c&&pr.COB&&pr.UAM&&p.minGuard!=null&&gm.COB!=null&&gm.UAM!=null&&Math.abs(gm.COB-gm.UAM)>(isMmol()?0.05:1))
     impliedF=Math.max(0,Math.min(1,(p.minGuard-gm.UAM)/(gm.COB-gm.UAM)));
-  const impliedSmbMin=(capVal!=null&&sched>0)?Math.round(capVal/sched*60):null;
+  const impliedSmbMin=(capVal>0&&sched>0)?Math.round(capVal/sched*60):null;
   VALS = c ? {
     IOB:F2(c.iob)+' U', COB:(c.cob||0)+' g',
     autosens:p.autosens!=null?('×'+p.autosens):'—',
@@ -1221,6 +1222,7 @@ function buildSteps(c,p){
   else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
   else if(smbjump&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-hi)">blocked — BG jump (calibration?)</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-hi)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--hi'; }
+  else if(capS&&capVal===0){ smbVal=`<span class="warn" style="color:var(--txt-hi)">blocked — SMB cap 0 U this cycle</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(capS){ smbVal=`min(need × ratio, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
   else { smbVal='no SMB this cycle'; }
