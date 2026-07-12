@@ -133,7 +133,11 @@ header.top .grow{flex:1}
 .datebtn{font-size:15px;font-weight:650;letter-spacing:-.01em;padding:6px 10px;border-radius:10px;white-space:nowrap}
 .datebtn:hover{background:var(--hover)}
 .datebtn .car{font-size:9px;color:var(--muted);margin-left:4px}
-.dateinp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.datewrap{position:relative;display:inline-flex}
+.dateinp{position:absolute;inset:0;width:100%;height:100%;opacity:0;border:0;padding:0;margin:0;
+  pointer-events:none;font-size:16px}
+/* touch devices: the real date input sits on top of the label — a tap opens the native picker */
+@media (pointer:coarse){ .dateinp:not(.vis){pointer-events:auto} }
 .dateinp.vis{position:static;width:auto;height:auto;opacity:1;pointer-events:auto;padding:5px 8px;
   border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);
   font:13px ui-monospace,Menlo,monospace}
@@ -381,8 +385,10 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
       <div class="topbar" id="dayHead">
         <div class="daynav">
           <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
-          <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
-          <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
+          <span class="datewrap">
+            <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
+            <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
+          </span>
           <button class="navb" id="dayNext" aria-label="next day">›</button>
           <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
         </div>
@@ -1493,7 +1499,7 @@ const dateLbl=document.getElementById('dateLbl'), dateInp=document.getElementByI
 const dayStatusEl=document.getElementById('dayStatus'), refreshBtn=document.getElementById('refreshBtn');
 function renderDaybar(){
   dateLbl.textContent=dayLabel(curDay);
-  dateInp.value=dayISO(curDay);
+  if(document.activeElement!==dateInp) dateInp.value=dayISO(curDay); /* don't fight the open picker */
   dateInp.max=dayISO(todayStart());
   document.getElementById('dayNext').disabled = curDay>=todayStart();
   document.getElementById('todayBtn').style.display = curDay===todayStart()?'none':'';
@@ -1539,8 +1545,13 @@ document.getElementById('dateBtn').onclick=()=>{
   }
 };
 dateInp.addEventListener('blur',()=>setTimeout(()=>dateInp.classList.remove('vis'),250));
-dateInp.addEventListener('change',()=>{ dateInp.classList.remove('vis');
-  const d=isoToDay(dateInp.value); if(d!=null) gotoDay(d); });
+/* debounced: iOS fires change on every wheel tick while picking */
+let dpTimer=null;
+dateInp.addEventListener('change',()=>{
+  clearTimeout(dpTimer);
+  dpTimer=setTimeout(()=>{ dateInp.classList.remove('vis');
+    const d=isoToDay(dateInp.value); if(d!=null&&d!==curDay) gotoDay(d); },350);
+});
 refreshBtn.onclick=()=>selectDay(curDay,true);
 
 /* auto-refresh: today only, ~every minute, only while the tab is visible */
