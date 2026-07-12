@@ -142,7 +142,6 @@ header.top .grow{flex:1}
 #dayStatus{text-align:center;color:var(--muted);font-size:12px;margin:0 0 6px;min-height:0}
 #dayStatus:empty{display:none}
 
-.statsrow{display:flex;align-items:center;gap:8px}
 .stats{display:flex;align-items:center;gap:4px 24px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
 .stat{display:inline-flex;align-items:baseline;gap:7px;white-space:nowrap}
 .stat b{font-size:16px;font-weight:650;color:var(--ink);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
@@ -153,6 +152,7 @@ header.top .grow{flex:1}
 
 /* ---------- layout ---------- */
 .cols{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:22px;align-items:start}
+.cols>*{min-width:0;max-width:100%}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
 .daycard{padding:14px 14px 8px;min-width:0;position:relative}
 #chartToggle{display:none}
@@ -176,10 +176,11 @@ header.top .grow{flex:1}
 
 /* ---------- snapshot panel ---------- */
 .snap{padding:16px 18px 14px;position:sticky;top:14px}
-.snaphead{display:flex;align-items:flex-start;gap:12px}
+.snaphead{display:flex;align-items:baseline;gap:12px}
 .snaphead .bgside{flex:1;min-width:0}
 .snaptime{text-align:right;flex:none}
-.snaptime .tnav{display:inline-flex;align-items:center;gap:0}
+.snaptime .tnav{display:inline-flex;align-items:baseline;gap:0}
+.snaptime .navb{align-self:center}
 .snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 3px}
 .cstat{float:right;font-size:9.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 4px 10px;cursor:help}
 .cstat.en{color:var(--txt-good)}
@@ -209,6 +210,12 @@ header.top .grow{flex:1}
 .navb.end:active,.pgbtn.end:active{background:none;transform:none}
 /* horizontal swipes belong to us; vertical stays with the browser */
 .snap,.daysec{touch-action:pan-y}
+/* the neighbouring card shown while swiping */
+.swipeghost{position:fixed;z-index:80;background:var(--surface);border:1px solid var(--line);border-radius:16px;
+  box-shadow:var(--shadow);padding:16px 18px;pointer-events:none;overflow:hidden;display:flex;flex-direction:column}
+.swipeghost .gcenter{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--ink2)}
+.swipeghost .gdate{font-size:15px;font-weight:650}
+.swipeghost .gsub{font-size:12px;color:var(--muted)}
 
 /* conclusion */
 .conc{border-radius:12px;padding:11px 13px;margin:0 0 14px;background:var(--hover);font-size:13px}
@@ -286,7 +293,7 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   /* the whole day section becomes ONE tappable card: nav + stats, chart expands inside;
      ‹ › sit at the card's outer edges */
   .daysec{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:16px;
-    box-shadow:var(--shadow);padding:8px 12px 10px;cursor:pointer}
+    box-shadow:var(--shadow);padding:8px 12px 0;cursor:pointer}
   #dayPrev,#dayNext{position:absolute;top:10px;height:36px;width:46px;border-radius:11px;z-index:2;font-size:19px;
     border:1px solid var(--line);background:var(--page)}
   #dayPrev{left:7px}
@@ -296,14 +303,16 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   .daynav{width:100%;justify-content:center;padding:0 46px}
   .todaybtn{font-size:11.5px;padding:4px 6px}
   .datebtn{padding:6px 6px}
-  .statsrow{width:100%;justify-content:center;gap:8px;padding-top:4px}
-  #chartToggle{display:inline-flex;width:38px;height:26px;border-radius:9px;border:1px solid var(--line);background:var(--page)}
-  .stats{justify-content:center;gap:2px 10px}
+  .stats{width:100%;justify-content:center;gap:2px 12px;padding-top:3px}
   .stat{gap:4px}
   .stat b{font-size:14px}
   .stat .lbl{font-size:9px;letter-spacing:.04em}
   .stat .lbl.x{display:none}     /* units already say it on mobile */
   .stat .minibar{display:none}   /* short labels instead of bars on mobile */
+  /* full-width grabber strip at the bottom of the card */
+  #chartToggle{display:flex;width:calc(100% + 24px);margin:2px -12px 0;height:24px;
+    align-items:center;justify-content:center;color:var(--muted);border-radius:0 0 15px 15px}
+  #chartToggle:active{background:var(--hover)}
   .daycard{display:none;border:none;box-shadow:none;border-radius:0;background:none;padding:8px 0 0;cursor:auto}
   .daycard.open{display:block}
   .cols{display:flex;flex-direction:column;gap:12px}
@@ -378,12 +387,7 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
           <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
         </div>
         <div class="grow"></div>
-        <div class="statsrow">
-          <div class="stats" id="stats"></div>
-          <button class="navb chev" id="chartToggle" aria-expanded="false" aria-label="show day chart" title="Day chart">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-        </div>
+        <div class="stats" id="stats"></div>
       </div>
       <div id="dayStatus"></div>
       <section class="card daycard" id="dayCard">
@@ -392,6 +396,9 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
           <div class="dtip" id="dtip"></div>
         </div>
       </section>
+      <button id="chartToggle" aria-expanded="false" aria-label="show day chart" title="Day chart">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
     </section>
 
     <aside class="card snap" id="panel" aria-label="loop decision"></aside>
@@ -968,7 +975,8 @@ function renderForecast(c,dd,thr){
   const x=t=>PL+(t-ta)/(tb-ta)*(W-PL-PR);
   const real=dd.sgv.filter(e=>e[0]>=ta&&e[0]<=c.t);
   const tgt=c.tgt||(isMmol()?6.1:110);
-  let mn=Math.min(thr,...real.map(e=>M(e[1]))), mx=Math.max(tgt,M(c.bg),...real.map(e=>M(e[1])));
+  /* the in-range band is always fully in view, so the y-axis stays put between decisions */
+  let mn=Math.min(thr,M(70),...real.map(e=>M(e[1]))), mx=Math.max(tgt,M(180),M(c.bg),...real.map(e=>M(e[1])));
   const maxI=Math.floor(AHEAD/300);
   for(const k of keys) pr[k].forEach((v,i)=>{ if(i<=maxI){ const m=M(v); if(m<mn)mn=m; if(m>mx)mx=m; } });
   const pad=Math.max((mx-mn)*0.1,isMmol()?0.4:7); mn-=pad; mx+=pad;
@@ -1524,8 +1532,13 @@ document.getElementById('dayNext').onclick=()=>gotoDay(nextDay(curDay));
 document.getElementById('todayBtn').onclick=()=>{ selCycle=null; goLatest(true); };
 document.getElementById('dateBtn').onclick=()=>{
   try{ dateInp.showPicker(); }               /* modern browsers, top-level frames */
-  catch(e){ dateInp.classList.add('vis'); dateInp.focus(); } /* fallback: show a real date input */
+  catch(e){                                  /* fallback (e.g. embedded frames): show a real date input */
+    dateInp.classList.add('vis');
+    dateInp.focus();
+    try{ dateInp.click(); }catch(e2){}
+  }
 };
+dateInp.addEventListener('blur',()=>setTimeout(()=>dateInp.classList.remove('vis'),250));
 dateInp.addEventListener('change',()=>{ dateInp.classList.remove('vis');
   const d=isoToDay(dateInp.value); if(d!=null) gotoDay(d); });
 refreshBtn.onclick=()=>selectDay(curDay,true);
@@ -1555,11 +1568,33 @@ document.getElementById('dayHead').addEventListener('click',e=>{
 });
 
 /* swipe: day block ⇄ days, decision panel ⇄ decisions.
-   The block follows the finger (damped) and the new content slides in. */
-function addSwipe(el,fn){
-  let x0=null,y0=null,t0=0,axis=null;
-  const reset=()=>{ el.style.transition='transform .18s ease, opacity .18s ease'; el.style.transform=''; el.style.opacity=''; };
-  el.addEventListener('touchstart',e=>{ if(e.touches.length!==1){x0=null;return;}
+   A real card-swipe: the neighbouring card (teaser) appears beside the block and
+   both follow the finger; release far enough and the new card slides into place. */
+function addSwipe(el,fn,teaser){
+  let x0=null,y0=null,t0=0,axis=null,ghost=null,gdir=0,rect=null,busy=false;
+  const clearGhost=()=>{ if(ghost){ ghost.remove(); ghost=null; } gdir=0; };
+  const reset=()=>{
+    el.style.transition='transform .18s ease'; el.style.transform='';
+    if(ghost){ ghost.style.transition='transform .18s ease'; ghost.style.transform='translateX(0px)'; }
+    setTimeout(clearGhost,200);
+  };
+  function ensureGhost(dir){
+    if(gdir===dir) return;
+    clearGhost();
+    gdir=dir;
+    const html=teaser?teaser(dir):'';
+    if(html==null) return;               /* nothing on that side */
+    rect=el.getBoundingClientRect();
+    ghost=document.createElement('div');
+    ghost.className='swipeghost';
+    ghost.innerHTML=html;
+    ghost.style.left=(dir>0?rect.right+12:rect.left-rect.width-12)+'px';
+    ghost.style.top=Math.max(rect.top,8)+'px';
+    ghost.style.width=rect.width+'px';
+    ghost.style.height=Math.min(rect.height,window.innerHeight-Math.max(rect.top,8)-16)+'px';
+    document.body.appendChild(ghost);
+  }
+  el.addEventListener('touchstart',e=>{ if(busy||e.touches.length!==1){x0=null;return;}
     x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); axis=null;
     el.style.transition='none'; },{passive:true});
   /* non-passive: once the gesture is horizontal we claim it, so the page stops scrolling */
@@ -1567,22 +1602,58 @@ function addSwipe(el,fn){
     if(x0==null) return;
     const dx=e.touches[0].clientX-x0, dy=e.touches[0].clientY-y0;
     if(axis==null&&(Math.abs(dx)>6||Math.abs(dy)>6)) axis=Math.abs(dx)>Math.abs(dy)?'x':'y';
-    if(axis==='x'){ e.preventDefault(); el.style.transform=`translateX(${(dx*0.45).toFixed(1)}px)`; }
+    if(axis!=='x') return;
+    e.preventDefault();
+    ensureGhost(dx<0?1:-1);
+    const shift=ghost?dx*0.9:dx*0.25;   /* firm follow with a card beside it, stiff without */
+    el.style.transform=`translateX(${shift.toFixed(1)}px)`;
+    if(ghost) ghost.style.transform=`translateX(${shift.toFixed(1)}px)`;
   },{passive:false});
   el.addEventListener('touchend',e=>{
     if(x0==null) return;
     const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null;
-    const ok = axis==='x' && Date.now()-t0<=700 && Math.abs(dx)>=45 && Math.abs(dx)>1.5*Math.abs(dy);
+    const ok = axis==='x' && ghost && Date.now()-t0<=700 && Math.abs(dx)>=45 && Math.abs(dx)>1.5*Math.abs(dy);
     if(!ok){ reset(); return; }
     const dir=dx<0?1:-1;   /* swipe left = forward in time */
-    const res=fn(dir);
-    if(res===false){ reset(); return; }
-    el.style.transition='none';
-    el.style.transform=`translateX(${-dir*44}px)`; el.style.opacity='.45';
-    Promise.resolve(res).finally(()=>{ requestAnimationFrame(()=>requestAnimationFrame(reset)); });
+    busy=true;
+    const dist=(rect.width+12)*(dir>0?-1:1);
+    el.style.transition='transform .2s ease'; el.style.transform=`translateX(${dist}px)`;
+    ghost.style.transition='transform .2s ease'; ghost.style.transform=`translateX(${dist}px)`;
+    setTimeout(()=>{
+      Promise.resolve(fn(dir)).catch(()=>{}).finally(()=>{
+        el.style.transition='none'; el.style.transform='';
+        clearGhost(); busy=false;
+      });
+    },210);
   },{passive:true});
   el.addEventListener('touchcancel',()=>{ x0=null; reset(); },{passive:true});
 }
+/* teasers: a lightweight preview of what lies on either side */
+function cycleTeaser(dir){
+  const dd=dayData(curDay);
+  const i=selCycle?dd.cycles.findIndex(x=>x.t===selCycle.t):-1;
+  const c=i>=0?dd.cycles[i+dir]:null;
+  if(!c){
+    const nd=dir>0?nextDay(curDay):prevDay(curDay);
+    if(nd>todayStart()) return null;
+    return `<div class="gcenter"><div class="gdate">${dir>0?'next day ›':'‹ previous day'}</div></div>`;
+  }
+  const bgc=c.bg<70?'var(--txt-lo)':c.bg>180?'var(--txt-hi)':'var(--txt-good)';
+  return `<div class="snaphead">
+      <div class="bgside"><div class="snapbg"><span class="bg" style="color:${bgc}">${fBG(M(c.bg))}</span><span class="unit">${bgUnit()}</span></div></div>
+      <div class="snaptime"><span class="t">${hhmm(c.t)}</span></div></div>
+    <div class="snapkv"><span>IOB <b>${f2(c.iob)} U</b></span><span>COB <b>${c.cob||0} g</b></span></div>`;
+}
+function dayTeaser(dir){
+  const d=dir>0?nextDay(curDay):prevDay(curDay);
+  if(d>todayStart()) return null;
+  const cached=dayCache[d]||loadPersisted(d);
+  let sub='';
+  if(cached&&cached.data){ const s=stats(cached.data);
+    if(s) sub=`<div class="gsub">${Math.round(s.tir*100)}% range · ${fBG(s.mean)} avg</div>`; }
+  return `<div class="gcenter"><div class="gdate">${dayLabel(d)}</div>${sub}</div>`;
+}
+/* switching days keeps the time of day of the selected decision */
 /* switching days keeps the time of day of the selected decision */
 async function gotoDay(d){
   const tod=selCycle?selCycle.t-curDay:null;
@@ -1600,8 +1671,8 @@ async function gotoDay(d){
 addSwipe(document.getElementById('daySec'),dir=>{
   if(dir>0&&curDay>=todayStart()) return false;
   return gotoDay(dir>0?nextDay(curDay):prevDay(curDay));
-});
-addSwipe(panel,dir=>stepCycle(dir));
+},dayTeaser);
+addSwipe(panel,dir=>stepCycle(dir),cycleTeaser);
 /* a (passive) touchstart listener makes :active button states work on iOS */
 document.addEventListener('touchstart',()=>{},{passive:true});
 
