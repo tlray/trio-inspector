@@ -86,6 +86,12 @@ header.top .grow{flex:1}
 .verdate{display:block;font:600 12.5px system-ui,sans-serif}
 .versub{display:block;font-size:11.5px;color:var(--ink2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .vercur{font-weight:700;color:var(--txt-good);font-size:10px;margin-left:7px;text-transform:uppercase;letter-spacing:.05em}
+.mi{display:flex;align-items:baseline;justify-content:space-between;gap:14px;width:100%;text-align:left;
+  padding:9px 10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ink)}
+.mi:hover{background:var(--hover)}
+.misub{color:var(--muted);font-size:11px;font-weight:500;white-space:nowrap}
+.mhr{height:1px;background:var(--grid);margin:5px 4px}
+.mhead{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:4px 10px 2px;font-weight:650}
 
 /* ---------- login ---------- */
 #login{max-width:400px;margin:9vh auto 0}
@@ -103,17 +109,21 @@ header.top .grow{flex:1}
 #login .hint{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55}
 #login .hint+.hint{margin-top:8px}
 
-/* ---------- top bar: day nav + stats on one line ---------- */
-.topbar{display:flex;align-items:center;gap:4px 22px;flex-wrap:wrap;padding:0 0 8px}
+/* ---------- day section: nav + stats (+ chart card) ---------- */
+.daysec{min-width:0}
+.topbar{display:flex;align-items:center;gap:4px 22px;flex-wrap:wrap;padding:0 2px 8px}
 .topbar .grow{flex:1}
 .daynav{display:flex;align-items:center;gap:2px}
-.navb{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+.navb{width:34px;height:34px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center;
   color:var(--ink2);font-size:17px;flex:none}
+.daynav .navb{width:42px}
 .navb:hover{background:var(--hover);color:var(--ink)}
-.navb:active{background:var(--hover)}
-.navb:disabled{opacity:.25;cursor:default;background:none}
+.navb:active{background:var(--hover);transform:scale(.9)}
+.navb:disabled{opacity:.25;cursor:default;background:none;transform:none}
 #chartToggle{display:none;color:var(--ink2)}
-#chartToggle.on{color:var(--txt-iob);background:var(--hover)}
+#chartToggle svg{transition:transform .18s}
+#chartToggle.on{color:var(--txt-iob)}
+#chartToggle.on svg{transform:rotate(180deg)}
 .datebtn{font-size:15px;font-weight:650;letter-spacing:-.01em;padding:6px 10px;border-radius:10px;white-space:nowrap}
 .datebtn:hover{background:var(--hover)}
 .datebtn .car{font-size:9px;color:var(--muted);margin-left:4px}
@@ -163,10 +173,10 @@ header.top .grow{flex:1}
 .snaphead .bgside{flex:1;min-width:0}
 .snaptime{text-align:right;flex:none}
 .snaptime .tnav{display:inline-flex;align-items:center;gap:0}
-.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 1px 0 3px}
-.enst{font-size:12px;font-weight:700;align-self:flex-start;margin:1px 2px 0 1px;cursor:help}
-.enst.en{color:var(--txt-good)}
-.enst.sg{color:var(--muted)}
+.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 3px}
+.cstat{float:right;font-size:9.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 4px 10px;cursor:help}
+.cstat.en{color:var(--txt-good)}
+.cstat.sg{color:var(--muted)}
 .snapbg{display:flex;align-items:baseline;gap:9px;margin:0;flex-wrap:wrap}
 .snapbg .bg{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
 .snapbg .unit{font-size:12px;color:var(--muted)}
@@ -179,8 +189,9 @@ header.top .grow{flex:1}
 #pager{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:50;display:none;
   align-items:center;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:999px;
   box-shadow:0 8px 28px rgba(0,0,0,.22);padding:4px}
-.pgbtn{width:48px;height:48px;border-radius:50%;font-size:24px;color:var(--ink2);display:flex;align-items:center;justify-content:center}
-.pgbtn:active{background:var(--hover);color:var(--ink)}
+.pgbtn{width:58px;height:48px;border-radius:24px;font-size:24px;color:var(--ink2);display:flex;align-items:center;justify-content:center;
+  transition:transform .08s}
+.pgbtn:active{background:var(--hover);color:var(--ink);transform:scale(.88)}
 .pgt{font:650 17px ui-monospace,SFMono-Regular,Menlo,monospace;min-width:64px;text-align:center;padding:0 2px}
 .pgsep{width:1px;height:26px;background:var(--grid);margin:0 5px}
 #pgNow{font-size:19px;color:var(--txt-iob)}
@@ -258,25 +269,37 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 /* ---------- mobile ---------- */
 @media (max-width:980px){
   .app{padding-top:10px;padding-bottom:96px}
-  header.top{padding-bottom:6px}
+  header.top{padding-bottom:8px}
   #updText{display:none}
-  .topbar{justify-content:center;padding-bottom:4px;gap:2px 12px}
+  /* the whole day section becomes ONE tappable card: nav + stats, chart expands inside */
+  .daysec{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);
+    padding:6px 8px 8px;cursor:pointer}
+  .topbar{justify-content:center;padding:0;gap:0 12px}
   .topbar .grow{display:none}
   .daynav{width:100%;justify-content:center}
   #chartToggle{display:inline-flex}
-  .stats{width:100%;justify-content:center;gap:2px 14px}
+  .stats{width:100%;justify-content:center;gap:2px 14px;padding-top:2px}
   .stat{gap:5px}
   .stat b{font-size:14px}
   .stat .lbl{display:none}
-  .cols{display:flex;flex-direction:column;gap:12px}
-  .snap{position:static;order:2;padding:14px 14px 10px}
-  .daycard{display:none;order:1}
+  .daycard{display:none;border:none;box-shadow:none;border-radius:0;background:none;padding:8px 2px 0;cursor:auto}
   .daycard.open{display:block}
+  .cols{display:flex;flex-direction:column;gap:12px}
+  .snap{position:static;padding:14px 14px 10px}
+  .snaptime .navb{display:none}   /* pager + swipe navigate decisions */
   #pager.on{display:flex}
   .snapbg .bg{font-size:36px}
 }
 @media (pointer:coarse){
   #login input,.dateinp.vis{font-size:16px} /* prevents iOS focus zoom */
+}
+/* touch devices: no sticky hover states */
+@media (hover:none){
+  .navb:hover,.iconbtn:hover,.ghost:hover,.datebtn:hover,.todaybtn:hover,.mi:hover,.veritem:hover{background:none;color:var(--ink2)}
+  .datebtn:hover,.veritem:hover,.mi:hover{color:var(--ink)}
+  .todaybtn:hover{color:var(--txt-iob)}
+  .srow:hover{background:none}
+  .srow:hover .slab{color:var(--muted)}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
@@ -286,14 +309,23 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   <h1 id="brand" title="Go to the latest decision">Trio Loop Inspector</h1>
   <div class="grow"></div>
   <span id="updText"></span>
-  <button class="iconbtn" id="refreshBtn" title="Refresh" aria-label="Refresh data" style="display:none">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-  </button>
-  <div class="verwrap" id="verWrap" style="display:none">
-    <button class="ghost" id="verBtn" aria-haspopup="listbox" aria-expanded="false" title="Older versions of this app">🕘</button>
-    <div class="vermenu" id="verMenu" role="listbox" style="display:none"></div>
+  <div class="verwrap" id="menuWrap" style="display:none">
+    <button class="iconbtn" id="menuBtn" aria-haspopup="menu" aria-expanded="false" title="Menu" aria-label="menu">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>
+    </button>
+    <div class="vermenu" id="appMenu" role="menu" style="display:none">
+      <button class="mi" id="refreshBtn" role="menuitem">
+        <span>↻&nbsp; Refresh now</span><span class="misub" id="updSub"></span>
+      </button>
+      <div id="verSec" style="display:none">
+        <div class="mhr"></div>
+        <div class="mhead">Older versions</div>
+        <div id="verList"></div>
+      </div>
+      <div class="mhr"></div>
+      <button class="mi" id="signOut" role="menuitem">Sign out</button>
+    </div>
   </div>
-  <button class="ghost" id="signOut" style="display:none">Sign out</button>
 </header>
 
 <section id="login" style="display:none">
@@ -313,28 +345,29 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 </section>
 
 <main id="appBody" style="display:none">
-  <div class="topbar">
-    <div class="daynav">
-      <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
-      <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
-      <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
-      <button class="navb" id="dayNext" aria-label="next day">›</button>
-      <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
-      <button class="navb" id="chartToggle" aria-expanded="false" aria-label="day overview chart" title="Day overview">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20V12"/><path d="M11 20V5"/><path d="M18 20v-6"/></svg>
-      </button>
-    </div>
-    <div class="grow"></div>
-    <div class="stats" id="stats"></div>
-  </div>
-  <div id="dayStatus"></div>
-
   <div class="cols">
-    <section class="card daycard" id="dayCard">
-      <div class="chartwrap" id="chartWrap">
-        <div class="legend" id="legend"></div>
-        <div class="dtip" id="dtip"></div>
+    <section class="daysec" id="daySec">
+      <div class="topbar" id="dayHead">
+        <div class="daynav">
+          <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
+          <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
+          <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
+          <button class="navb" id="dayNext" aria-label="next day">›</button>
+          <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
+          <button class="navb chev" id="chartToggle" aria-expanded="false" aria-label="show day chart" title="Day chart">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
+        </div>
+        <div class="grow"></div>
+        <div class="stats" id="stats"></div>
       </div>
+      <div id="dayStatus"></div>
+      <section class="card daycard" id="dayCard">
+        <div class="chartwrap" id="chartWrap">
+          <div class="legend" id="legend"></div>
+          <div class="dtip" id="dtip"></div>
+        </div>
+      </section>
     </section>
 
     <aside class="card snap" id="panel" aria-label="loop decision"></aside>
@@ -941,8 +974,11 @@ function renderForecast(c,dd,thr){
     pr[k].forEach((v,i)=>{ if(i>maxI) return; d+=(d?'L':'M')+x(c.t+i*300).toFixed(1)+' '+y(M(v)).toFixed(1)+' '; });
     s+=`<path d="${d}" fill="none" stroke="var(--${k.toLowerCase()})" stroke-width="1.8" opacity=".92"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
   }
-  /* real readings + the decision point */
+  /* real readings + the decision point; readings AFTER the decision are drawn softer,
+     so you can see which forecast curve turned out right */
   for(const e of real) s+=`<circle cx="${x(e[0]).toFixed(1)}" cy="${y(M(e[1])).toFixed(1)}" r="2.1" fill="${bgCol(e[1])}"/>`;
+  for(const e of dd.sgv) if(e[0]>c.t&&e[0]<=tb)
+    s+=`<circle cx="${x(e[0]).toFixed(1)}" cy="${y(M(e[1])).toFixed(1)}" r="2.1" fill="${bgCol(e[1])}" opacity=".5"/>`;
   s+=`<circle cx="${x(c.t).toFixed(1)}" cy="${y(M(c.bg)).toFixed(1)}" r="4.4" fill="none" stroke="var(--sel)" stroke-width="1.6"/>`;
   s+=`<line id="fcX" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7" pointer-events="none"/>`;
   fcEl.innerHTML=`<svg id="fcsvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto" role="img" aria-label="recent glucose and forecast curves">${s}</svg>`;
@@ -1091,22 +1127,23 @@ function buildSteps(c,p){
     enacted:c.rec?'yes':'suggested only',
   } : {};
 
-  /* conclusion */
+  /* conclusion (the enacted/suggested status lives here, top-right) */
   let conc='';
   if(c){
+    const st=`<span class="cstat ${c.rec?'en':'sg'}" title="${c.rec?'confirmed by the pump':'computed but not confirmed by the pump'}">${c.rec?'enacted ✓':'suggested'}</span>`;
     const carbLine = creq!=null?`<div class="conc guard" style="margin-bottom:6px">🍬 ~${creq} g fast carbs required${p.creqMin?` within ${p.creqMin} m`:''} — cutting insulin alone won't keep BG above the threshold</div>`:'';
-    if(guard) conc=carbLine+`<div class="conc guard">Hypo guard active — all dosing stopped (zero temp)</div>`;
-    else if(rising) conc=carbLine+`<div class="conc" style="color:var(--ink2)">Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
-    else if(zero) conc=carbLine+`<div class="conc zero"><b>Forecast below target</b> — basal wound down, nothing added</div>`;
-    else if(maxiob) conc=carbLine+`<div class="conc" style="color:var(--ink2)">IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
+    if(guard) conc=carbLine+`<div class="conc guard">${st}Hypo guard active — all dosing stopped (zero temp)</div>`;
+    else if(rising) conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
+    else if(zero) conc=carbLine+`<div class="conc zero">${st}<b>Forecast below target</b> — basal wound down, nothing added</div>`;
+    else if(maxiob) conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
     else if(req!=null&&req>0.01){
       const maxb=Math.max(req,smbGiven,0.01), pct=Math.round(smbGiven/req*100);
-      conc=carbLine+`<div class="conc">
+      conc=carbLine+`<div class="conc">${st}
         <div class="crow"><span class="clbl">needed</span><span class="cbar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="cval">${F2(req)} U</span><span class="cpct"></span></div>
         <div class="crow"><span class="clbl">given now</span><span class="cbar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} U</span><span class="cpct">${pct}%</span></div>
         ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits in the steps below</div>`:''}</div>`;
     }
-    else conc=carbLine+`<div class="conc" style="color:var(--ink2)">No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
+    else conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
   }
 
   /* 1 — inputs */
@@ -1287,7 +1324,6 @@ function renderPanel(dd){
           <div class="tnav">
             <button class="navb" id="prevC" aria-label="previous decision">‹</button>
             <span class="t">${hhmm(c.t)}</span>
-            <span class="enst ${c.rec?'en':'sg'}" title="${c.rec?'enacted — confirmed by the pump':'suggested only — not confirmed by the pump'}">${c.rec?'✓':'◌'}</span>
             <button class="navb" id="nextC" aria-label="next decision">›</button>
           </div>
         </div>
@@ -1311,15 +1347,16 @@ function renderPanel(dd){
       ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
     </div>`;}).join('');
   const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
-  panel.innerHTML=`${head}${built.conc}${c?`<div id="fc"></div><div id="fcro"></div>`:''}<div class="sect-h">How this decision was made</div><div class="steps">${list}</div>${raw}`;
+  /* forecast chart first, conclusion below it — the chart stays put while stepping */
+  panel.innerHTML=`${head}${c?`<div id="fc"></div><div id="fcro"></div>`:''}${built.conc}<div class="sect-h">How this decision was made</div><div class="steps">${list}</div>${raw}`;
   if(c) renderForecast(c,dd,built.thr);
   panel.querySelectorAll('details').forEach(d=>{ if(openDetails.has(dKey(d))) d.open=true; });
   const lv=document.getElementById('srlive');
   if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${built.rows[built.rows.length-1].val.replace(/<[^>]+>/g,'')}`;
   if(c){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
-    if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
-    if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
+    if(pb) pb.onclick=()=>stepCycle(-1);
+    if(nb) nb.onclick=()=>stepCycle(1);
   }
   /* mobile pager mirrors the selection; the "now" button doubles as a live indicator */
   const pager=document.getElementById('pager');
@@ -1375,7 +1412,20 @@ async function stepCycle(dir){
     selCycle=dd.cycles[dd.cycles.length-1]; setDeep(selCycle); renderAll(false); return;
   }
   const nd=dir>0?nextDay(curDay):prevDay(curDay);
-  if(nd>todayStart()) return;
+  if(nd>todayStart()){
+    /* already at the newest decision of today: quietly check for fresher data */
+    if(dir>0&&LIVE&&!fetching){
+      stepping=true;
+      try{
+        await selectDay(curDay);
+        const dd3=dayData(curDay);
+        if(dd3.cycles.length&&(!selCycle||dd3.cycles[dd3.cycles.length-1].t!==selCycle.t)){
+          selCycle=dd3.cycles[dd3.cycles.length-1]; setDeep(selCycle); renderAll(false);
+        }
+      } finally { stepping=false; }
+    }
+    return;
+  }
   stepping=true;
   try{
     selCycle=null;
@@ -1405,7 +1455,9 @@ function renderDaybar(){
   document.getElementById('todayBtn').style.display = curDay===todayStart()?'none':'';
   dayStatusEl.textContent=dayStatusTxt;
   const c=dayCache[curDay];
-  document.getElementById('updText').textContent = c?('updated '+hhmm(c.fetchedAt/1000)):'';
+  const upd=c?('updated '+hhmm(c.fetchedAt/1000)):'';
+  document.getElementById('updText').textContent=upd;
+  const us=document.getElementById('updSub'); if(us) us.textContent=upd;
 }
 async function selectDay(d,force){
   const today=todayStart();
@@ -1451,14 +1503,41 @@ function pollTick(){
 setInterval(pollTick,30000);
 document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pollTick(); });
 
-/* mobile: day overview behind a toggle */
+/* mobile: the day block expands to reveal the chart — chevron, or a tap anywhere on the block */
 const chartToggle=document.getElementById('chartToggle'), dayCard=document.getElementById('dayCard');
-chartToggle.onclick=()=>{
+function toggleChart(){
   const on=!dayCard.classList.contains('open');
   dayCard.classList.toggle('open',on); chartToggle.classList.toggle('on',on);
   chartToggle.setAttribute('aria-expanded',on?'true':'false');
   if(on) renderDayChart(dayData(curDay));
-};
+}
+chartToggle.onclick=toggleChart;
+document.getElementById('dayHead').addEventListener('click',e=>{
+  if(!matchMedia('(max-width:980px)').matches) return;
+  if(e.target.closest('button,input,a')) return;
+  toggleChart();
+});
+
+/* swipe: day block ⇄ days, decision panel ⇄ decisions */
+function addSwipe(el,fn){
+  let x0=null,y0=null,t0=0;
+  el.addEventListener('touchstart',e=>{ if(e.touches.length!==1){x0=null;return;}
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now(); },{passive:true});
+  el.addEventListener('touchend',e=>{
+    if(x0==null) return;
+    const t=e.changedTouches[0], dx=t.clientX-x0, dy=t.clientY-y0; x0=null;
+    if(Date.now()-t0>600) return;
+    if(Math.abs(dx)<55||Math.abs(dx)<1.8*Math.abs(dy)) return;
+    fn(dx<0?1:-1);   /* swipe left = forward in time */
+  },{passive:true});
+}
+addSwipe(document.getElementById('daySec'),dir=>{
+  if(dir>0&&curDay>=todayStart()) return;
+  selCycle=null; setDeep(null); selectDay(dir>0?nextDay(curDay):prevDay(curDay));
+});
+addSwipe(panel,dir=>stepCycle(dir));
+/* a (passive) touchstart listener makes :active button states work on iOS */
+document.addEventListener('touchstart',()=>{},{passive:true});
 
 /* ---------- master render ---------- */
 function renderAll(full){
@@ -1475,10 +1554,10 @@ window.addEventListener('resize',()=>{clearTimeout(rto); rto=setTimeout(()=>rend
 const loginEl=document.getElementById('login'), appBody=document.getElementById('appBody');
 const signOutBtn=document.getElementById('signOut');
 function showLogin(msg){ appBody.style.display='none'; loginEl.style.display='block';
-  refreshBtn.style.display='none'; signOutBtn.style.display='none';
+  document.getElementById('menuWrap').style.display='none';
   document.getElementById('loginErr').textContent=msg||''; }
 function showApp(){ loginEl.style.display='none'; appBody.style.display='block';
-  refreshBtn.style.display=''; signOutBtn.style.display=''; }
+  document.getElementById('menuWrap').style.display=''; }
 async function connectNS(){
   const errEl=document.getElementById('loginErr');
   let raw=(document.getElementById('nsUrl').value||'').trim();
@@ -1538,28 +1617,28 @@ async function goDeep(t){
 window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); else goLatest(false); });
 document.getElementById('brand').addEventListener('click',()=>{ if(LIVE) goLatest(true); });
 
-/* ---------- version selector (reads versions.json, hidden when absent) ---------- */
+/* ---------- header menu: refresh · older versions (when versions.json exists) · sign out ---------- */
 (function(){
-  const wrap=document.getElementById('verWrap'), btn=document.getElementById('verBtn'), menu=document.getElementById('verMenu');
+  const wrap=document.getElementById('menuWrap'), btn=document.getElementById('menuBtn'), menu=document.getElementById('appMenu');
   let isOpen=false;
   function setOpen(o){ isOpen=o; menu.style.display=o?'block':'none'; btn.setAttribute('aria-expanded',o?'true':'false'); }
-  async function load(){
+  btn.addEventListener('click',e=>{ e.stopPropagation(); setOpen(!isOpen); });
+  document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&isOpen){ setOpen(false); btn.focus(); } });
+  refreshBtn.addEventListener('click',()=>setOpen(false));
+  (async function(){
     let list=null;
     try{ const r=await fetch('versions.json',{cache:'no-store'}); if(r.ok) list=await r.json(); }catch(e){}
-    if(!Array.isArray(list)||!list.length){ wrap.style.display='none'; return; }
-    menu.innerHTML=list.map((v,i)=>{
+    if(!Array.isArray(list)||!list.length) return;
+    document.getElementById('verList').innerHTML=list.map((v,i)=>{
       const cur=i===0;
-      return `<a class="veritem${cur?' cur':''}" role="option" href="${cur?'./':esc(v.file)}"`+
+      return `<a class="veritem${cur?' cur':''}" href="${cur?'./':esc(v.file)}"`+
         `${cur?' aria-current="true"':''}><span class="verdate">${esc(v.date)} UTC`+
         `${cur?' <span class="vercur">current</span>':''}</span>`+
         `<span class="versub">${esc(v.subject)}</span></a>`;
     }).join('');
-    wrap.style.display='';
-  }
-  btn.addEventListener('click',e=>{ e.stopPropagation(); setOpen(!isOpen); });
-  document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&isOpen){ setOpen(false); btn.focus(); } });
-  load();
+    document.getElementById('verSec').style.display='';
+  })();
 })();
 
 /* ---------- init ---------- */
