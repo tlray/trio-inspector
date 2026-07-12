@@ -247,24 +247,24 @@ header.top .grow{flex:1}
 /* steps */
 .sect-h{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-weight:650}
 .steps{margin-top:6px}
-.step{position:relative}
-.step::before{content:'';position:absolute;left:8.5px;top:0;bottom:0;width:1.5px;background:var(--grid)}
-.step:first-of-type::before{top:14px}
-.step:last-of-type::before{bottom:auto;height:14px}
-.srow{display:grid;grid-template-columns:18px 92px 1fr;gap:9px;align-items:start;padding:8px 6px 8px 0;width:100%;
-  text-align:left;border-radius:10px;position:relative}
+/* stacked rows (label above, value full-width) with a colored status accent bar left */
+.step{position:relative;border-left:3px solid var(--sa,var(--axis))}
+.step+.step{border-top:1px solid var(--line)}
+.srow{display:block;width:100%;text-align:left;padding:9px 6px 10px 10px}
 .srow:hover{background:var(--hover)}
-.sdot{width:8px;height:8px;border-radius:50%;background:var(--axis);margin:6px 0 0 5px;justify-self:start;
-  box-shadow:0 0 0 3px var(--surface)}
-.slab{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap;line-height:1.7;font-weight:600}
+.shead{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.slab{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap;line-height:1.5;font-weight:600;flex:1}
 .slab .scar{color:var(--muted);font-size:8px;display:inline-block;vertical-align:1px;margin-left:2px;transition:transform .12s}
 .step.open .scar{transform:rotate(90deg)}
 .srow:hover .slab{color:var(--ink)}
+.schip{font:600 9px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 6px;border-radius:5px;white-space:nowrap;flex:none;color:var(--muted);
+  background:color-mix(in srgb,currentColor 15%,transparent)}
 .sval{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.55;word-break:break-word}
 .sval .ok{color:var(--txt-good);font-weight:700}
 .sval .warn{font-weight:700}
 .step.skip{opacity:.42}
-.sbody{padding:2px 6px 14px 27px;font-size:12.5px;color:var(--ink2);line-height:1.55}
+.sbody{padding:2px 6px 14px 10px;font-size:12.5px;color:var(--ink2);line-height:1.55}
 .sbody p{margin:2px 0 8px}
 .frm{font:11.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);
   border-radius:9px;padding:8px 11px;margin:7px 0;overflow-x:auto;color:var(--ink);white-space:pre}
@@ -1310,6 +1310,7 @@ function buildSteps(c,p){
     }
   }
   rows.push({id:'guard',lab:'hypo guard',st:guard?'fired':'pass',dot:guard?'--lo':(c?'--good':null),
+    chip:guard?{t:'hypo',c:'--txt-lo'}:(c?{t:'pass',c:'--txt-good'}:null),
     val:c?(guard?`minGuardBG <b>${F(p.minGuard)}</b> &lt; ${F(thr)} → <span class="warn" style="color:var(--txt-lo)">zero temp, SMBs blocked</span>${creq!=null?` · 🍬 ~${creq} g carbs req`:''}`
               :(p.minGuard!=null?`minGuardBG ${F(p.minGuard)} ≥ ${F(thr)} <span class="ok">✓</span>`:`no dip below threshold <span class="ok">✓</span>`))
        :'BG or minGuardBG &lt; threshold? → zero temp + block SMBs',
@@ -1322,8 +1323,9 @@ function buildSteps(c,p){
 
   /* 4 — target check */
   rows.push({id:'target',lab:'vs target',st:(zero||rising)?'fired':(skipAfter(4)?'skip':(c?'pass':null)),dot:zero?'--zt':(rising?'--good':(c&&!skipAfter(4)?'--good':null)),skip:skipAfter(4),
+    chip:skipAfter(4)?null:(zero?{t:'decision',c:'--txt-zt'}:(rising?{t:'held',c:'--txt-good'}:(c?{t:'pass',c:'--txt-good'}:null))),
     val:skipAfter(4)?'not reached':(c?(rising?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} — <span class="ok">rising faster than expected → basal held</span>`
-              :zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} → <span class="warn" style="color:var(--txt-zt)">wind basal down</span>`
+              :zero?`eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b> &lt; target ${F(tgtV)} → <span class="warn" style="color:var(--txt-zt)">reduce basal</span>`
               :`eventualBG ${c.ebg!=null?mm(c.ebg):dash} ≥ target ${F(tgtV)} <span class="ok">✓</span>`)
        :'eventualBG &lt; target? → reduce / zero the basal'),
     body:(rising?`<p><b>${rising.t}.</b> ${rising.why}</p>`:'')+(zero?`<p><b>${zero.t}.</b> ${zero.why}</p>`:'')+
@@ -1341,6 +1343,7 @@ function buildSteps(c,p){
           :`insulinReq <b>${F2(req)} U</b> → nothing extra needed`;
   else needVal=dash;
   rows.push({id:'need',lab:'need',st:needSt,dot:needDot,skip:skipAfter(5),
+    chip:maxiob?{t:'maxIOB',c:'--txt-hi'}:null,
     val:needVal,
     body:(maxiob?`<p><b>${maxiob.t}.</b> ${maxiob.why}</p>`:'')+
       `<p>The gap between forecast and target, translated into units. Using the <i>lower</i> of minPredBG and eventualBG means an expected dip tempers the correction. The result is clipped so IOB can never exceed maxIOB — and when IOB is already over that ceiling, oref stops here and just runs the scheduled basal.${minApprox?' <span style="color:var(--muted)">(minPredBG not in this cycle’s log — value shown is estimated from the curves.)</span>':''}</p>
@@ -1358,6 +1361,7 @@ function buildSteps(c,p){
   else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
   else { smbVal='no SMB this cycle'; }
   rows.push({id:'smb',lab:'SMB',st:smbSt,dot:smbDot,skip:skipAfter(6)||idle,
+    chip:smbSt==='fired'?(capS&&capVal>0?{t:'maxBolus',c:'--txt-hi'}:{t:'blocked',c:'--txt-hi'}):(smbGiven>0?{t:'SMB',c:'--txt-good'}:null),
     val:smbVal,
     body:((smbjump&&`<p><b>${smbjump.t}.</b> ${smbjump.why}</p>`)||'')+((capS&&`<p><b>${capS.t}.</b> ${capS.why}</p>`)||'')+((wait&&`<p><b>${wait.t}.</b> ${wait.why}</p>`)||'')+
       `<p>An SMB (super micro bolus) front-loads part of the need — faster than basal, but irreversible, so three safety limits apply: only a <b>fraction</b> per cycle (smb_delivery_ratio, default ½), an absolute <b>cap</b> worth a few minutes of basal (maxBolus), and a minimum <b>interval</b> between SMBs — and SMBs are only considered at all while BG is above the safety threshold (and not right after a &gt;20%-of-BG jump, which suggests a sensor calibration). The remainder waits for the next cycles.</p>
@@ -1380,6 +1384,7 @@ function buildSteps(c,p){
   else if(c.rate!=null&&c.dur>0){ basVal=`temp <b>${F2(c.rate)} U/h</b> for ${Math.round(c.dur)} m${smbGiven&&c.rate===0?' (post-SMB buffer)':''}`; }
   else { basVal='current temp continues'; }
   rows.push({id:'basal',lab:'temp basal',st:basSt,dot:basDot,
+    chip:capB?{t:'maxBasal',c:'--txt-hi'}:((c&&c.rate!=null&&c.dur>0)?{t:'action',c:basDot==='--lo'?'--txt-lo':'--txt-zt'}:null),
     val:basVal,
     body:basNote+((capB&&`<p><b>${capB.t}.</b> ${capB.why}</p>`)||'')+
       `<p>The revocable channel. Without an SMB the whole need is scheduled as a 30-min high temp (rate = basal + 2×insulinReq). Right after an SMB oref instead parks a compensating zero temp of up to 60 min (a need under 30 min becomes a 30-min low-but-nonzero temp): if the forecast was too optimistic, the withheld basal is the buffer. Either way the rate can never exceed maxSafeBasal — a multiple of your <i>scheduled</i> basal.</p>
@@ -1387,8 +1392,9 @@ function buildSteps(c,p){
       +vchips(['maxSafeBasal','insulinReq'])+srcBlock('basal')});
 
   /* 8 — result */
-  rows.push({id:'result',lab:'→ deliver',
-    val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${(c.rate!=null&&c.dur>0)?`<b>${F2(c.rate)} U/h</b> · ${Math.round(c.dur)} m`:'(unchanged)'} · ${c.rec?'<span class="ok">enacted</span>':'suggested only'}`
+  rows.push({id:'result',lab:'→ deliver',dot:(c&&c.rec)?'--good':null,
+    chip:c?{t:c.rec?'enacted':'suggested',c:c.rec?'--txt-good':'--muted'}:null,
+    val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${(c.rate!=null&&c.dur>0)?`<b>${F2(c.rate)} U/h</b> · ${Math.round(c.dur)} m`:'(unchanged)'}`
        :'deliver, then start over in ~5 minutes',
     body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
       +vchips(['enacted'])});
@@ -1433,10 +1439,10 @@ function renderPanel(dd){
   const built=buildSteps(c,p);
   const list=built.rows.map(r=>{
     const open=openSteps.has(r.id);
-    return `<div class="step ${open?'open':''} ${r.skip?'skip':''}">
+    const chip=r.chip?`<span class="schip" style="color:var(${r.chip.c})">${r.chip.t}</span>`:'';
+    return `<div class="step ${open?'open':''} ${r.skip?'skip':''}"${r.dot?` style="--sa:var(${r.dot})"`:''}>
       <button class="srow" data-step="${r.id}" aria-expanded="${open?'true':'false'}">
-        <span class="sdot"${r.dot?` style="background:var(${r.dot})"`:''}></span>
-        <span class="slab">${r.lab} <span class="scar">▶</span></span>
+        <span class="shead"><span class="slab">${r.lab} <span class="scar">▶</span></span>${chip}</span>
         <span class="sval">${r.val}</span></button>
       ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
     </div>`;}).join('');
