@@ -54,8 +54,10 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--page);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
-  -webkit-font-smoothing:antialiased}
+  -webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+/* no double-tap zoom (and no 300ms tap delay) on anything interactive */
+button,summary,input,svg,.srow,.vr{touch-action:manipulation}
 .app{max-width:1320px;margin:0 auto;padding:18px clamp(14px,3vw,32px) 70px}
 :focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px;border-radius:6px}
 
@@ -107,7 +109,10 @@ header.top .grow{flex:1}
 .navb{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   color:var(--ink2);font-size:17px;flex:none}
 .navb:hover{background:var(--hover);color:var(--ink)}
+.navb:active{background:var(--hover)}
 .navb:disabled{opacity:.25;cursor:default;background:none}
+#chartToggle{display:none;color:var(--ink2)}
+#chartToggle.on{color:var(--txt-iob);background:var(--hover)}
 .datebtn{font-size:15px;font-weight:650;letter-spacing:-.01em;padding:6px 10px;border-radius:10px;white-space:nowrap}
 .datebtn:hover{background:var(--hover)}
 .datebtn .car{font-size:9px;color:var(--muted);margin-left:4px}
@@ -157,11 +162,10 @@ header.top .grow{flex:1}
 .snaphead .bgside{flex:1;min-width:0}
 .snaptime{text-align:right;flex:none}
 .snaptime .tnav{display:inline-flex;align-items:center;gap:0}
-.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 3px}
-.snaptime .d{font-size:11px;color:var(--muted);margin-top:2px;display:flex;justify-content:flex-end;align-items:center;gap:7px}
-.pill{font-size:10px;font-weight:650;letter-spacing:.04em;padding:2px 8px;border-radius:20px;white-space:nowrap}
-.pill.en{color:var(--txt-good);background:rgba(111,207,151,.14)}
-.pill.sg{color:var(--ink2);background:var(--hover)}
+.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 1px 0 3px}
+.enst{font-size:12px;font-weight:700;align-self:flex-start;margin:1px 2px 0 1px;cursor:help}
+.enst.en{color:var(--txt-good)}
+.enst.sg{color:var(--muted)}
 .snapbg{display:flex;align-items:baseline;gap:9px;margin:0;flex-wrap:wrap}
 .snapbg .bg{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
 .snapbg .unit{font-size:12px;color:var(--muted)}
@@ -170,15 +174,17 @@ header.top .grow{flex:1}
 .snapkv b{color:var(--ink);font-weight:650}
 .snapempty{color:var(--muted);font-size:13px;padding:16px 0}
 
-/* mobile pager: thumb-reachable prev/next, fixed at the bottom */
+/* mobile pager: thumb-reachable prev/next + a "now" button, fixed at the bottom */
 #pager{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:50;display:none;
-  align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  align-items:center;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:999px;
   box-shadow:0 8px 28px rgba(0,0,0,.22);padding:4px}
 .pgbtn{width:48px;height:48px;border-radius:50%;font-size:24px;color:var(--ink2);display:flex;align-items:center;justify-content:center}
 .pgbtn:active{background:var(--hover);color:var(--ink)}
-.pgmid{min-width:88px;text-align:center;display:flex;flex-direction:column;line-height:1.15;padding:0 4px}
-.pgt{font:650 16px ui-monospace,SFMono-Regular,Menlo,monospace}
-.pgd{font-size:10px;color:var(--muted)}
+.pgt{font:650 17px ui-monospace,SFMono-Regular,Menlo,monospace;min-width:64px;text-align:center;padding:0 2px}
+.pgsep{width:1px;height:26px;background:var(--grid);margin:0 5px}
+#pgNow{font-size:19px;color:var(--txt-iob)}
+#pgNow.live{color:var(--good);font-size:13px;cursor:default}
+#pgNow.live:active{background:none}
 
 /* conclusion */
 .conc{border-radius:12px;padding:11px 13px;margin:0 0 14px;background:var(--hover);font-size:13px}
@@ -250,25 +256,26 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 
 /* ---------- mobile ---------- */
 @media (max-width:980px){
-  .app{padding-top:12px;padding-bottom:100px}
-  header.top{padding-bottom:10px}
+  .app{padding-top:10px;padding-bottom:96px}
+  header.top{padding-bottom:6px}
   #updText{display:none}
-  .topbar{justify-content:center}
+  .topbar{justify-content:center;padding-bottom:4px;gap:2px 12px}
   .topbar .grow{display:none}
   .daynav{width:100%;justify-content:center}
-  .stats{width:100%;justify-content:center;gap:4px 16px}
-  .cols{display:flex;flex-direction:column;gap:14px}
-  .snap{position:static;order:3;padding:16px 14px 12px}
-  .daycard{display:none;order:2}
+  #chartToggle{display:inline-flex}
+  .stats{width:100%;justify-content:center;gap:2px 14px}
+  .stat{gap:5px}
+  .stat b{font-size:14px}
+  .stat .lbl{display:none}
+  .cols{display:flex;flex-direction:column;gap:12px}
+  .snap{position:static;order:2;padding:14px 14px 10px}
+  .daycard{display:none;order:1}
   .daycard.open{display:block}
-  #chartToggle{display:flex;order:1;width:100%;align-items:center;justify-content:center;gap:8px;
-    padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
-    color:var(--ink2);font-size:13px;font-weight:600;box-shadow:var(--shadow)}
-  #chartToggle:hover{color:var(--ink)}
-  #chartToggle .car{font-size:10px;transition:transform .15s;display:inline-block}
-  #chartToggle.on .car{transform:rotate(180deg)}
   #pager.on{display:flex}
   .snapbg .bg{font-size:36px}
+}
+@media (pointer:coarse){
+  #login input,.dateinp.vis{font-size:16px} /* prevents iOS focus zoom */
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
@@ -312,6 +319,9 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
       <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
       <button class="navb" id="dayNext" aria-label="next day">›</button>
       <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
+      <button class="navb" id="chartToggle" aria-expanded="false" aria-label="day overview chart" title="Day overview">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 20V12"/><path d="M11 20V5"/><path d="M18 20v-6"/></svg>
+      </button>
     </div>
     <div class="grow"></div>
     <div class="stats" id="stats"></div>
@@ -319,8 +329,6 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   <div id="dayStatus"></div>
 
   <div class="cols">
-    <button id="chartToggle" aria-expanded="false">Day overview <span class="car">▼</span></button>
-
     <section class="card daycard" id="dayCard">
       <div class="chartwrap" id="chartWrap">
         <div class="legend" id="legend"></div>
@@ -333,8 +341,10 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   <span id="srlive" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></span>
   <div id="pager">
     <button class="pgbtn" id="pgPrev" aria-label="previous decision">‹</button>
-    <div class="pgmid"><span class="pgt" id="pgTime">—</span><span class="pgd" id="pgDate"></span></div>
+    <span class="pgt" id="pgTime">—</span>
     <button class="pgbtn" id="pgNext" aria-label="next decision">›</button>
+    <span class="pgsep"></span>
+    <button class="pgbtn" id="pgNow" aria-label="jump to the newest decision" title="Jump to now">↦</button>
   </div>
 </main>
 </div>
@@ -1217,9 +1227,9 @@ function renderPanel(dd){
           <div class="tnav">
             <button class="navb" id="prevC" aria-label="previous decision">‹</button>
             <span class="t">${hhmm(c.t)}</span>
+            <span class="enst ${c.rec?'en':'sg'}" title="${c.rec?'enacted — confirmed by the pump':'suggested only — not confirmed by the pump'}">${c.rec?'✓':'◌'}</span>
             <button class="navb" id="nextC" aria-label="next decision">›</button>
           </div>
-          <div class="d">${dayLabel(localMidnight(c.t))} <span class="pill ${c.rec?'en':'sg'}">${c.rec?'enacted ✓':'suggested'}</span></div>
         </div>
       </div>
       <div class="snapkv">
@@ -1251,16 +1261,23 @@ function renderPanel(dd){
     if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
     if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
   }
-  /* mobile pager mirrors the selection */
+  /* mobile pager mirrors the selection; the "now" button doubles as a live indicator */
   const pager=document.getElementById('pager');
   if(pager){
     pager.classList.toggle('on',!!c);
-    if(c){ document.getElementById('pgTime').textContent=hhmm(c.t);
-      document.getElementById('pgDate').textContent=dayLabel(localMidnight(c.t)); }
+    if(c){
+      document.getElementById('pgTime').textContent=hhmm(c.t);
+      const live = curDay===todayStart() && dd.cycles.length && dd.cycles[dd.cycles.length-1].t===c.t;
+      const nb=document.getElementById('pgNow');
+      nb.classList.toggle('live',!!live);
+      nb.textContent = live?'●':'↦';
+      nb.title = live?'This is the newest decision':'Jump to now — you are looking at an older decision';
+    }
   }
 }
 document.getElementById('pgPrev').onclick=()=>stepCycle(-1);
 document.getElementById('pgNext').onclick=()=>stepCycle(1);
+document.getElementById('pgNow').onclick=()=>goLatest(true);
 panel.addEventListener('toggle',ev=>{
   const d=ev.target; if(!d||d.tagName!=='DETAILS') return;
   const k=dKey(d); if(d.open) openDetails.add(k); else openDetails.delete(k);

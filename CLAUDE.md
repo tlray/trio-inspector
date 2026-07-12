@@ -37,11 +37,15 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   variants exist for TEXT (WCAG); chart strokes use the base tokens. SVG is built as HTML
   strings using `var(--x)` fills/strokes, so theme switching needs no re-render.
 - Layout: header (title=go-to-latest, updated-at, ↻ refresh, 🕘 versions, sign out) →
-  centered day bar (‹ date ›, date label overlays a hidden `<input type=date>`, "Today ↦"
-  when off-today) → stats row (TIR+bar, average, insulin total + basal/SMB/bolus split bar,
-  carbs — no boxes, negative space) → `.cols` grid: day chart card + snapshot panel (400px).
-  Mobile (≤980px): snapshot-first; the day chart card hides behind a full-width
-  "Day overview" toggle button.
+  ONE topbar row: day nav left (‹ date ▾ ›, click opens the native picker via
+  `showPicker()` with a visible-input fallback, "Today ↦" when off-today, mobile-only
+  chart-toggle icon) + inline day stats right (TIR/insulin have 34px mini bars; labels
+  hidden ≤980px) → `.cols` grid: day chart card + snapshot panel (400px).
+  Mobile (≤980px): snapshot-first; day chart behind the icon toggle; fixed bottom pager
+  with big ‹ time › buttons + a "now" button that doubles as live indicator (green ● on
+  the newest decision, blue ↦ otherwise → goLatest). `touch-action:manipulation` on all
+  interactive elements (kills iOS double-tap zoom + tap delay); inputs 16px on coarse
+  pointers (no focus zoom).
 - Day chart mirrors the Trio app's MainChartView (see tlray/Trio,
   `Trio/Sources/Modules/Home/View/Chart/`): a basal strip on TOP with temp-basal bars
   hanging DOWN from the top edge (gradient fill + solid insulin rate line at the bar edge;
@@ -54,9 +58,9 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   range, dashed "now" marker, selected-cycle line + time pill); then the IOB/COB strip
   (IOB scaled ×8 pos / ×9 neg like the app's CobIobChart, area+line) and hour labels.
   Legend appears ONLY on hover (bottom of chart, hover-capable pointers only).
-- Snapshot panel = "what the app showed at that moment": ‹ time › nav (steps across
-  midnight), copy-link 🔗, enacted/suggested pill, big colored BG + trend arrow (computed
-  from the two sgv readings before t), IOB/COB/basal/target row, conclusion card
+- Snapshot panel = "what the app showed at that moment": big colored BG + trend arrow
+  (computed from the two sgv readings before t) left, ‹ time › nav top-right (steps across
+  midnight) with a tiny enacted ✓ / suggested ◌ glyph, IOB/COB/basal/target row, conclusion card
   (hypo-guard red / below-target purple / needed-vs-given bars / idle), then a SIMPLE
   forecast chart: ~45 min of real sgv dots, a "now" divider, the four forecast curves
   capped at +2.5 h (like the app), target+threshold dashed lines, hover readout line under
