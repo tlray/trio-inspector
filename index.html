@@ -1,300 +1,357 @@
-<title>Trio Loop-inspector</title>
+<title>Trio Loop Inspector</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root{
-  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --page:#f6f6f3; --surface:#ffffff; --ink:#101010; --ink2:#54534e; --muted:#8b897f;
+  --grid:#e7e6df; --axis:#c9c8bd; --line:rgba(16,16,16,.08);
   --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
-  --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
-  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --insulin:#1e96fc; --carb:#e08600; --ov:#a44fd0;
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f;
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
-  --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
+  --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-ov:#8434ad;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
-    --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
+  --band:rgba(111,207,151,.12); --sel:#101010; --hover:rgba(9,9,9,.045);
+  --shadow:0 1px 2px rgba(20,20,10,.04), 0 8px 28px -12px rgba(20,20,10,.10);
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-    --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
-    --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
-    --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
-    --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
-    --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
-    --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#4a67ff; --cobline:#ff9f0a;
-    --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
+    --page:#0b0c0e; --surface:#16171a; --ink:#f5f5f3; --ink2:#c0bfb8; --muted:#83817a;
+    --grid:#26272b; --axis:#3a3b40; --line:rgba(255,255,255,.09);
+    --iob:#1e96fc; --zt:#8d80f0; --cob:#ff9500; --uam:#d12bf7;
+    --insulin:#1e96fc; --carb:#ff9500; --ov:#bf5af2;
+    --lo:#eb5757; --hi:#ffc145; --good:#6fcf97;
+    --txt-iob:#4dabff; --txt-zt:#9c90f2; --txt-cob:#ffa424; --txt-uam:#e05cf5;
+    --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#ff6b6b; --txt-ov:#cd7ef2;
+    --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#5b74ff; --cobline:#ff9f0a;
+    --band:rgba(111,207,151,.08); --sel:#f5f5f3; --hover:rgba(255,255,255,.06);
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.5);
   }
 }
 :root[data-theme="light"]{
-  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6e6c66;
-  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --page:#f6f6f3; --surface:#ffffff; --ink:#101010; --ink2:#54534e; --muted:#8b897f;
+  --grid:#e7e6df; --axis:#c9c8bd; --line:rgba(16,16,16,.08);
   --iob:#1e96fc; --zt:#7161ef; --cob:#e08600; --uam:#d12bf7;
-  --insulin:#1e96fc; --carb:#e08600; --basalfill:rgba(30,150,252,.35);
-  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f; --serious:#ec835a; --smbwait:#c98500;
+  --insulin:#1e96fc; --carb:#e08600; --ov:#a44fd0;
+  --lo:#eb5757; --hi:#dd9a00; --good:#3daf6f;
   --txt-iob:#0968c3; --txt-zt:#5b4bd6; --txt-cob:#9d5d00; --txt-uam:#a516c9;
-  --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-serious:#bc4f27; --txt-smbwait:#8a5c00;
+  --txt-good:#1e7d47; --txt-hi:#996a00; --txt-lo:#d32f2f; --txt-ov:#8434ad;
   --bgin:#34c759; --bghigh:#ff9500; --bglow:#ff3b30; --iobline:#1e49ff; --cobline:#ff9500;
-  --band:rgba(111,207,151,.13); --sel:#0b0b0b; --hover:rgba(9,9,9,.045);
+  --band:rgba(111,207,151,.12); --sel:#101010; --hover:rgba(9,9,9,.045);
+  --shadow:0 1px 2px rgba(20,20,10,.04), 0 8px 28px -12px rgba(20,20,10,.10);
 }
 :root[data-theme="dark"]{
-  --page:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
-  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-  --iob:#1e96fc; --zt:#7161ef; --cob:#ff9500; --uam:#d12bf7;
-  --insulin:#1e96fc; --carb:#ff9500; --basalfill:rgba(30,150,252,.5);
-    --lo:#eb5757; --hi:#ffc145; --good:#6fcf97; --serious:#ec835a; --smbwait:#d99a1f;
-    --txt-iob:#1e96fc; --txt-zt:#8d80f0; --txt-cob:#ff9500; --txt-uam:#e05cf5;
-    --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#eb5757; --txt-serious:#ec835a; --txt-smbwait:#d99a1f;
-    --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#4a67ff; --cobline:#ff9f0a;
-  --band:rgba(111,207,151,.10); --sel:#ffffff; --hover:rgba(255,255,255,.06);
+  --page:#0b0c0e; --surface:#16171a; --ink:#f5f5f3; --ink2:#c0bfb8; --muted:#83817a;
+  --grid:#26272b; --axis:#3a3b40; --line:rgba(255,255,255,.09);
+  --iob:#1e96fc; --zt:#8d80f0; --cob:#ff9500; --uam:#d12bf7;
+  --insulin:#1e96fc; --carb:#ff9500; --ov:#bf5af2;
+  --lo:#eb5757; --hi:#ffc145; --good:#6fcf97;
+  --txt-iob:#4dabff; --txt-zt:#9c90f2; --txt-cob:#ffa424; --txt-uam:#e05cf5;
+  --txt-good:#6fcf97; --txt-hi:#ffc145; --txt-lo:#ff6b6b; --txt-ov:#cd7ef2;
+  --bgin:#30d158; --bghigh:#ff9f0a; --bglow:#ff453a; --iobline:#5b74ff; --cobline:#ff9f0a;
+  --band:rgba(111,207,151,.08); --sel:#f5f5f3; --hover:rgba(255,255,255,.06);
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 10px 30px -12px rgba(0,0,0,.5);
 }
 *{box-sizing:border-box}
-body{background:var(--page);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;padding:0}
-.wrap{max-width:1280px;margin:0 auto;padding:12px 16px 50px}
-header.top{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;margin-bottom:6px}
-h1{font-size:19px;font-weight:650;margin:0;letter-spacing:-.01em}
-.sub{color:var(--ink2);font-size:12.5px;margin:0 0 8px;max-width:110ch}
-.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 8px}
-.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink2);border-radius:7px;
-  padding:6px 13px;font:600 13px system-ui,sans-serif;cursor:pointer}
-.tab[aria-pressed="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
-.tab:focus-visible,button:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px}
+html,body{margin:0;padding:0}
+body{background:var(--page);color:var(--ink);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;
+  -webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+.app{max-width:1320px;margin:0 auto;padding:18px clamp(14px,3vw,32px) 70px}
+:focus-visible{outline:2px solid var(--txt-iob);outline-offset:2px;border-radius:6px}
+
+/* ---------- header ---------- */
+header.top{display:flex;align-items:center;gap:12px;padding:2px 0 20px}
+h1{font-size:17px;font-weight:650;letter-spacing:-.01em;margin:0;cursor:pointer;white-space:nowrap}
+header.top .grow{flex:1}
+#updText{color:var(--muted);font-size:12px;white-space:nowrap}
+.iconbtn{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  color:var(--ink2);font-size:15px;line-height:1;flex:none}
+.iconbtn:hover{background:var(--hover);color:var(--ink)}
+.iconbtn:disabled{opacity:.4;cursor:default;background:none}
+#refreshBtn.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ghost{color:var(--ink2);font-size:13px;padding:6px 12px;border-radius:8px;white-space:nowrap}
+.ghost:hover{background:var(--hover);color:var(--ink)}
+
+/* versions dropdown */
 .verwrap{position:relative}
-.verbtn{font-weight:600}
-.vermenu{position:absolute;right:0;top:calc(100% + 6px);z-index:60;min-width:290px;max-width:min(380px,92vw);
-  max-height:min(60vh,420px);overflow:auto;background:var(--surface);border:1px solid var(--border);
-  border-radius:9px;box-shadow:0 10px 34px rgba(0,0,0,.18);padding:5px}
-.veritem{display:block;text-decoration:none;color:var(--ink);padding:7px 9px;border-radius:6px}
+.vermenu{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:280px;max-width:min(380px,92vw);
+  max-height:min(60vh,420px);overflow:auto;background:var(--surface);border:1px solid var(--line);
+  border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.veritem{display:block;text-decoration:none;color:var(--ink);padding:8px 10px;border-radius:8px}
 .veritem:hover{background:var(--hover)}
-.veritem.cur{cursor:default}
-.verdate{display:block;font:600 12.5px system-ui,sans-serif;color:var(--ink)}
+.verdate{display:block;font:600 12.5px system-ui,sans-serif}
 .versub{display:block;font-size:11.5px;color:var(--ink2);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.vercur{font-weight:700;color:var(--txt-good);font-size:10px;margin-left:7px;text-transform:uppercase;letter-spacing:.04em}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:7px;margin-bottom:9px}
-.tile{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:6px 11px 6px}
-.tile .k{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
-.tile .v{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
-.tile .v small{font-size:12px;font-weight:500;color:var(--ink2)}
-.tirbar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:6px;background:var(--grid)}
-.tirbar div{height:100%}
-.main{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:14px;align-items:start}
-@media (max-width:1080px){.main{grid-template-columns:1fr}}
-.charts{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 10px 4px;min-width:0}
-.chart-title{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 0 0 44px;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-.chart-title .lg{display:inline-flex;align-items:center;gap:5px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink2)}
-.dotc{width:9px;height:9px;border-radius:50%;display:inline-block}
-.linec{width:14px;height:0;border-top:2.5px solid;display:inline-block;border-radius:2px}
-.chartbox{position:relative}
-svg{display:block;width:100%}
-.tooltip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--border);
-  border-radius:7px;padding:7px 10px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
-  box-shadow:0 3px 14px rgba(0,0,0,.14);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
-.tooltip b{font-weight:650}
-.hint{color:var(--muted);font-size:11.5px;margin:3px 0 0 44px}
-@media (pointer:coarse){.hint{display:none}.tooltip{display:none !important}}
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;position:sticky;top:8px}
-@media (max-width:1080px){.panel{position:static}}
-.panel h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px;font-weight:650}
-.panel .when{display:flex;align-items:center;gap:10px;margin:2px 0 10px}
-.panel .when .t{font:650 19px/1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.01em}
-.navgrp{display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden}
-.navgrp .navbtn:first-child{border-right:1px solid var(--border)}
-.navbtn{border:none;background:transparent;color:var(--ink2);width:26px;height:24px;cursor:pointer;font-size:12px;line-height:1}
-.navbtn:hover{color:var(--ink);background:var(--hover)}
-.badge-enact{font-size:10.5px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--ink2);margin-left:auto;background:var(--page)}
-.sect{border-top:1px solid var(--grid);padding-top:7px;margin-top:7px}
-.sect h3{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:0 0 7px;font-weight:650}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px 14px}
-.kv{display:flex;justify-content:space-between;gap:8px;font-size:13px}
-.kv .k{color:var(--ink2)}
-.kv .v{font-weight:600;font-variant-numeric:tabular-nums;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px}
-.flow{display:flex;flex-direction:column;gap:7px}
-.flowrow{display:flex;align-items:center;gap:8px;font-size:13px}
-.flowrow .lbl{color:var(--ink2);width:78px;flex:none}
-.bar{height:10px;border-radius:3px;position:relative;flex:1;background:transparent}
-.bar .req{position:absolute;left:0;top:0;bottom:0;border:1.5px dashed var(--muted);border-radius:3px}
-.bar .giv{position:absolute;left:0;top:0;bottom:0;background:var(--insulin);border-radius:3px}
-.bar-note{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
-.badges{display:flex;flex-direction:column;gap:7px}
-.lim{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;line-height:1.45}
-.lim .chip{flex:none;margin-top:2px;width:10px;height:10px;border-radius:3px}
-.lim b{font-weight:650}
-.lim .why{color:var(--ink2)}
-.none-lim{color:var(--ink2);font-size:12.5px;display:flex;gap:8px;align-items:center}
-.reason{font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink2);background:var(--page);
-  border:1px solid var(--grid);border-radius:7px;padding:7px 10px;overflow-y:auto;max-height:118px;white-space:pre-wrap;word-break:break-word}
-.predleg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
-.predleg span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
-.empty{color:var(--muted);font-size:13px;padding:8px 0 4px}
-.limstrip{margin-top:4px}
-.limleg{display:flex;flex-wrap:wrap;gap:2px 12px;margin:3px 0 0 44px;font-size:10.5px;color:var(--ink2)}
-.limleg span{display:inline-flex;align-items:center;gap:4px}
-.limleg i{width:8px;height:8px;border-radius:2px;display:inline-block;font-style:normal}
-.explain{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 16px}
-.explain h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px;font-weight:650}
-details{border-top:1px solid var(--grid);padding:2px 0}
-details:first-of-type{border-top:none}
-summary{cursor:pointer;font-weight:600;font-size:13.5px;padding:9px 0;list-style-position:inside}
-details p{margin:0 0 12px;color:var(--ink2);font-size:13px;max-width:72ch}
-details code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;background:var(--page);border:1px solid var(--grid);border-radius:4px;padding:0 4px}
-.swatch{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:baseline;margin-right:3px}
-.steps{display:flex;flex-direction:column;margin-top:2px}
-.step{border-top:1px solid var(--grid)}
-.step.open>.srow{background:var(--hover)}
-.step:first-child{border-top:none}
-.srow{display:grid;grid-template-columns:9px 96px 1fr;gap:8px;align-items:start;padding:6px 8px 6px 6px;cursor:pointer;background:none;border:none;width:100%;text-align:left;color:inherit;font:inherit;border-radius:6px}
+.vercur{font-weight:700;color:var(--txt-good);font-size:10px;margin-left:7px;text-transform:uppercase;letter-spacing:.05em}
+
+/* ---------- login ---------- */
+#login{max-width:400px;margin:9vh auto 0}
+#login h2{font-size:21px;font-weight:650;letter-spacing:-.01em;margin:0 0 6px}
+#login .note{color:var(--ink2);font-size:13px;margin:0 0 26px}
+#login label{display:block;font-size:12px;font-weight:600;color:var(--ink2);margin:16px 0 6px;
+  text-transform:uppercase;letter-spacing:.05em}
+#login input{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);
+  color:var(--ink);font:13.5px ui-monospace,Menlo,monospace}
+#login input:focus{outline:2px solid var(--txt-iob);outline-offset:-1px}
+#connectBtn{margin-top:22px;width:100%;padding:11px;border-radius:10px;background:var(--ink);color:var(--page);
+  font-weight:650;font-size:14px}
+#connectBtn:hover{opacity:.88}
+#loginErr{color:var(--txt-lo);font-size:12.5px;margin-top:12px;min-height:1.2em}
+#login .hint{color:var(--muted);font-size:12px;margin-top:26px;line-height:1.55}
+
+/* ---------- day bar & stats ---------- */
+.daywrap{position:relative;display:flex;justify-content:center;align-items:center}
+.daybar{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 0 4px}
+.navb{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  color:var(--ink2);font-size:17px;flex:none}
+.navb:hover{background:var(--hover);color:var(--ink)}
+.navb:disabled{opacity:.25;cursor:default;background:none}
+.datebtn{position:relative;font-size:15.5px;font-weight:650;letter-spacing:-.01em;padding:7px 14px;border-radius:10px;min-width:168px;text-align:center}
+.datebtn:hover{background:var(--hover)}
+.datebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none}
+.todaybtn{color:var(--txt-iob);font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px;position:absolute;right:0}
+.todaybtn:hover{background:var(--hover)}
+#dayStatus{text-align:center;color:var(--muted);font-size:12px;min-height:18px;margin:0 0 8px}
+
+.stats{display:flex;justify-content:center;gap:clamp(22px,4.5vw,64px);flex-wrap:wrap;padding:6px 0 26px;text-align:left}
+.stat .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.stat .v{font-size:22px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat .v small{font-size:12.5px;font-weight:500;color:var(--ink2);margin-left:2px}
+.stat .sub{font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
+.minibar{display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:7px;background:var(--grid);min-width:110px}
+.minibar div{height:100%}
+
+/* ---------- layout ---------- */
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:22px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.daycard{padding:14px 14px 8px;min-width:0;position:relative}
+#chartToggle{display:none}
+
+/* chart */
+.chartwrap{position:relative}
+.chartwrap svg{display:block;width:100%;height:auto}
+.legend{position:absolute;bottom:0;left:6px;right:6px;display:flex;gap:3px 12px;flex-wrap:wrap;align-items:center;justify-content:center;
+  font-size:10.5px;color:var(--ink2);opacity:0;transition:opacity .18s;pointer-events:none;
+  background:var(--surface);border-radius:8px;padding:3px 8px;z-index:4}
+@media (hover:hover) and (pointer:fine){ .chartwrap:hover .legend{opacity:.96} }
+.legend .li{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.legend .sw{width:12px;height:0;border-top:2.5px solid;display:inline-block;border-radius:2px}
+.legend .bx{width:9px;height:9px;border-radius:2.5px;display:inline-block}
+.dtip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);
+  border-radius:10px;padding:8px 11px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
+  box-shadow:var(--shadow);white-space:nowrap;z-index:5;display:none;font-variant-numeric:tabular-nums}
+.dtip b{font-weight:650}
+@media (pointer:coarse){.dtip{display:none !important}}
+.chartempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
+
+/* ---------- snapshot panel ---------- */
+.snap{padding:18px 18px 14px;position:sticky;top:14px}
+.snapnav{display:flex;align-items:center;gap:2px}
+.snaptime{text-align:center;min-width:86px}
+.snaptime .t{font:650 24px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em}
+.snaptime .d{font-size:11px;color:var(--muted);margin-top:1px}
+.snapnav .grow{flex:1}
+.pill{font-size:10.5px;font-weight:650;letter-spacing:.04em;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.pill.en{color:var(--txt-good);background:rgba(111,207,151,.14)}
+.pill.sg{color:var(--ink2);background:var(--hover)}
+.snapbg{display:flex;align-items:baseline;gap:10px;margin:16px 0 4px;flex-wrap:wrap}
+.snapbg .bg{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.snapbg .unit{font-size:12px;color:var(--muted)}
+.snapbg .trend{font-size:16px;font-weight:600;color:var(--ink2)}
+.snapkv{color:var(--ink2);font-size:12.5px;margin:6px 0 14px;display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.snapkv b{color:var(--ink);font-weight:650}
+.snapempty{color:var(--muted);font-size:13px;padding:16px 0}
+
+/* conclusion */
+.conc{border-radius:12px;padding:11px 13px;margin:0 0 14px;background:var(--hover);font-size:13px}
+.conc.guard{background:rgba(235,87,87,.10);color:var(--txt-lo);font-weight:600}
+.conc.zero{background:rgba(113,97,239,.10)}
+.conc.zero b{color:var(--txt-zt)}
+.crow{display:grid;grid-template-columns:70px 1fr 58px 34px;gap:8px;align-items:center}
+.crow+.crow{margin-top:6px}
+.clbl{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.cbar{height:9px;border-radius:4px;position:relative}
+.cbar .req{position:absolute;left:0;top:0;bottom:0;border:1.5px dashed var(--muted);border-radius:4px}
+.cbar .giv{position:absolute;left:0;top:0;bottom:0;background:var(--insulin);border-radius:4px}
+.cval{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.cpct{font-size:10.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.concnote{font-size:11.5px;color:var(--muted);margin-top:7px}
+
+/* forecast chart */
+#fc{margin:0 -6px}
+#fcro{font:11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:17px;color:var(--ink2);margin:2px 6px 6px;font-variant-numeric:tabular-nums}
+
+/* steps */
+.sect-h{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px;font-weight:650}
+.steps{margin-top:6px}
+.step{position:relative}
+.step::before{content:'';position:absolute;left:8.5px;top:0;bottom:0;width:1.5px;background:var(--grid)}
+.step:first-of-type::before{top:14px}
+.step:last-of-type::before{bottom:auto;height:14px}
+.srow{display:grid;grid-template-columns:18px 92px 1fr;gap:9px;align-items:start;padding:8px 6px 8px 0;width:100%;
+  text-align:left;border-radius:10px;position:relative}
 .srow:hover{background:var(--hover)}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--axis);margin:6px 0 0 5px;justify-self:start;
+  box-shadow:0 0 0 3px var(--surface)}
+.slab{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap;line-height:1.7;font-weight:600}
+.slab .scar{color:var(--muted);font-size:8px;display:inline-block;vertical-align:1px;margin-left:2px;transition:transform .12s}
+.step.open .scar{transform:rotate(90deg)}
 .srow:hover .slab{color:var(--ink)}
-.sdot{width:7px;height:7px;border-radius:50%;background:var(--axis);margin-top:5px;justify-self:center}
-.slab{font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap;line-height:1.6}
-.sval{flex:1;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.5;word-break:break-word}
+.sval{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.55;word-break:break-word}
 .sval .ok{color:var(--txt-good);font-weight:700}
 .sval .warn{font-weight:700}
-.scar{color:var(--muted);font-size:8px;display:inline-block;vertical-align:1px;margin-left:1px}
-.step.open .scar{transform:rotate(90deg)}
-.step.skip{opacity:.4}
-.sbody{padding:2px 8px 12px 23px;font-size:12.5px;color:var(--ink2);line-height:1.5}
-.sbody p{margin:2px 0 6px}
-.frm{font:11.5px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:6px 0;overflow-x:auto;color:var(--ink);white-space:pre}
+.step.skip{opacity:.42}
+.sbody{padding:2px 6px 14px 27px;font-size:12.5px;color:var(--ink2);line-height:1.55}
+.sbody p{margin:2px 0 8px}
+.frm{font:11.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);
+  border-radius:9px;padding:8px 11px;margin:7px 0;overflow-x:auto;color:var(--ink);white-space:pre}
+.frm .cy{color:var(--txt-iob)}
 .vr{background:none;border:none;border-bottom:1px dotted var(--muted);padding:0;font:inherit;color:inherit;cursor:pointer}
-.vrow{display:flex;flex-wrap:wrap;gap:4px 10px;margin:5px 0 2px;font-size:11.5px}
+.vrow{display:flex;flex-wrap:wrap;gap:4px 11px;margin:7px 0 2px;font-size:11.5px}
 .vrow .vr{color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
 .vr .vv{color:var(--ink);font-weight:600;margin-left:4px;border-bottom:none}
-.vardef{font-size:12px;color:var(--ink2);background:var(--page);border-left:3px solid var(--iob);padding:5px 9px;margin:6px 0;border-radius:0 6px 6px 0}
+.vardef{font-size:12px;color:var(--ink2);background:var(--page);border-left:3px solid var(--iob);padding:6px 10px;margin:7px 0;border-radius:0 8px 8px 0}
 .vardef b{font-family:ui-monospace,Menlo,monospace}
-details.src{margin-top:4px}
+details.src{margin-top:5px}
 details.src summary{font-size:11px;color:var(--muted);cursor:pointer;padding:2px 0}
-details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);border-radius:6px;padding:7px 9px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
-details.src a{color:var(--iob);font-size:11px;text-decoration:none}
-details.more{margin:7px 0;border:1px solid var(--grid);border-radius:7px;background:var(--page)}
-details.more>summary{font-size:12px;color:var(--ink2);cursor:pointer;padding:6px 10px;font-weight:650;list-style:none}
+details.src pre{font:10.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--page);border:1px solid var(--grid);
+  border-radius:8px;padding:8px 10px;margin:5px 0;overflow:auto;max-height:190px;color:var(--ink2)}
+details.src a{color:var(--txt-iob);font-size:11px;text-decoration:none}
+details.more{margin:8px 0;border:1px solid var(--grid);border-radius:9px;background:var(--page)}
+details.more>summary{font-size:12px;color:var(--ink2);cursor:pointer;padding:7px 11px;font-weight:650;list-style:none}
 details.more>summary::-webkit-details-marker{display:none}
 details.more>summary::before{content:'▸ ';color:var(--muted)}
 details.more[open]>summary::before{content:'▾ '}
-details.more>.mbody{padding:0 10px 4px}
-.sparkwrap{margin:2px -7px 2px -20px}
-.pcard{margin:6px 7px 0 20px;border:1px solid var(--grid);border-left:3px solid var(--grid);border-radius:7px;background:var(--page);padding:6px 9px;font-size:11.5px;line-height:1.45;color:var(--ink2);min-height:46px}
-#sparkro{margin-left:20px}
-.pcard .pchead{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:2px}
-.pcard .pchead b{font-size:12px}
-.pcard .pchead span{color:var(--muted);font:10px ui-monospace,SFMono-Regular,Menlo,monospace}
-#sparksvg [data-pt]{cursor:pointer;fill:transparent;stroke:none}
-.conc{margin:0 0 10px;padding:8px 10px;border:1px solid var(--grid);border-radius:8px;background:var(--page)}
-.crow{display:grid;grid-template-columns:74px 1fr 56px 32px;gap:7px;align-items:center}
-.crow .clbl{white-space:nowrap;font-size:10px}
-.crow+.crow{margin-top:5px}
-.clbl{font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
-.cval{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-.cpct{font-size:10.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
-.concnote{font-size:11px;color:var(--muted);margin-top:6px}
-.spark{display:block;margin:4px 0 2px}
-.frm .cy{color:var(--txt-iob)}
-details.raw summary{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:7px 0 4px;font-weight:650}
-#loginCard label{display:block;font-size:12.5px;color:var(--ink2);margin:10px 0 4px;font-weight:600}
-#loginCard input{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:7px;background:var(--page);color:var(--ink);font:13px ui-monospace,Menlo,monospace}
-#loginCard .err{color:var(--lo);font-size:12.5px;margin-top:8px;min-height:1em}
-@media (prefers-reduced-motion: no-preference){.tab,.navbtn{transition:background .12s,color .12s}.scar{transition:transform .12s}}
+details.more>.mbody{padding:0 11px 5px}
+details.raw{margin-top:10px}
+details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);cursor:pointer;padding:7px 0 5px;font-weight:650}
+.reason{font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink2);background:var(--page);
+  border:1px solid var(--grid);border-radius:9px;padding:8px 11px;overflow-y:auto;max-height:130px;white-space:pre-wrap;word-break:break-word}
+.predleg{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
+.predleg span{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink2)}
+
+/* ---------- mobile ---------- */
+@media (max-width:980px){
+  .app{padding-top:12px}
+  header.top{padding-bottom:12px}
+  #updText{display:none}
+  .cols{display:flex;flex-direction:column;gap:14px}
+  .snap{position:static;order:3;padding:16px 14px 12px}
+  .daycard{display:none;order:2}
+  .daycard.open{display:block}
+  #chartToggle{display:flex;order:1;width:100%;align-items:center;justify-content:center;gap:8px;
+    padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink2);font-size:13px;font-weight:600;box-shadow:var(--shadow)}
+  #chartToggle:hover{color:var(--ink)}
+  #chartToggle .car{font-size:10px;transition:transform .15s;display:inline-block}
+  #chartToggle.on .car{transform:rotate(180deg)}
+  .stats{gap:18px 30px;padding-bottom:18px}
+  .stat .v{font-size:19px}
+  .snapbg .bg{font-size:36px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
 </style>
 
-<div class="wrap">
+<div class="app">
 <header class="top">
-  <h1>Trio Loop Inspector</h1>
-  <button class="tab" id="signOut" style="display:none">Sign out</button>
-  <span id="refreshInfo" style="color:var(--muted);font-size:12px"></span>
-  <div class="verwrap" id="verWrap" style="display:none;margin-left:auto">
-    <button class="tab verbtn" id="verBtn" aria-haspopup="listbox" aria-expanded="false" title="View older versions of this app">🕘 Versions ▾</button>
+  <h1 id="brand" title="Go to the latest decision">Trio Loop Inspector</h1>
+  <div class="grow"></div>
+  <span id="updText"></span>
+  <button class="iconbtn" id="refreshBtn" title="Refresh" aria-label="Refresh data" style="display:none">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+  </button>
+  <div class="verwrap" id="verWrap" style="display:none">
+    <button class="ghost" id="verBtn" aria-haspopup="listbox" aria-expanded="false" title="Older versions of this app">🕘</button>
     <div class="vermenu" id="verMenu" role="listbox" style="display:none"></div>
   </div>
+  <button class="ghost" id="signOut" style="display:none">Sign out</button>
 </header>
-<p class="sub">Click any point to see what Trio knew, what it forecast, what it decided — and which safety limits cut in.</p>
 
-<div class="panel" id="loginCard" style="display:none;max-width:440px;margin:26px auto;position:static">
+<section id="login" style="display:none">
   <h2>Connect to Nightscout</h2>
-  <p style="font-size:13px;color:var(--ink2);margin:4px 0 2px">Your URL and token are stored only in this browser and are used to read glucose, treatments and loop data directly from your own Nightscout site.</p>
-  <p style="font-size:12px;color:var(--muted);margin:2px 0 0">Create a token in Nightscout under <b>Admin&nbsp;tools → Subjects</b> with the <i>readable</i> role. Works with Trio and other oref-based (OpenAPS/AAPS) uploads.</p>
-  <label for="nsUrl">Nightscout URL</label><input id="nsUrl" type="url" placeholder="https://my-site.example.com">
-  <label for="nsToken">Access token</label><input id="nsToken" type="text" placeholder="token with readable permission">
-  <div style="margin-top:12px"><button class="tab" id="nsConnect" style="background:var(--ink);color:var(--page)">Connect</button></div>
-  <div class="err" id="nsError"></div>
-</div>
+  <p class="note">See why Trio dosed the way it did — every loop cycle, explained.</p>
+  <label for="nsUrl">Nightscout URL</label>
+  <input id="nsUrl" type="url" placeholder="https://my-site.example.com" autocomplete="url">
+  <label for="nsToken">Access token</label>
+  <input id="nsToken" type="text" placeholder="token with readable permission">
+  <button id="connectBtn">Connect</button>
+  <div id="loginErr"></div>
+  <p class="hint">Your URL and token stay in this browser only — they are used to read glucose, treatments and
+  loop data directly from your own Nightscout site. Create a token under <b>Admin tools → Subjects</b> with the
+  <i>readable</i> role. Works with Trio and other oref-based (OpenAPS / AAPS) uploaders.</p>
+</section>
 
-<div id="appbody">
-
-<div class="tabs" id="tabs" role="toolbar" aria-label="day navigation"></div>
-<div class="tiles" id="tiles"></div>
-
-<div class="main">
-  <div class="charts">
-    <div class="chart-title">Glucose &amp; delivery
-      <span class="lg"><span class="dotc" style="background:var(--basalfill);border-radius:2px"></span>temp basal (downward)</span>
-      <span class="lg"><span class="linec" style="border-color:var(--muted);border-top-style:dashed"></span>schedule</span>
-      <span class="lg" style="color:var(--insulin)">&#9660;<span style="color:var(--ink2)">bolus/SMB above the line</span></span>
-      <span class="lg" style="color:var(--carb)">&#9650;<span style="color:var(--ink2)">carbs below</span></span>
-      <span class="lg" id="predlegend" style="display:none">forecast:
-        <span class="linec" style="border-color:var(--iob)"></span>IOB
-        <span class="linec" style="border-color:var(--zt)"></span>ZT
-        <span class="linec" style="border-color:var(--cob)"></span>COB
-        <span class="linec" style="border-color:var(--uam)"></span>UAM</span></div>
-    <div class="chartbox" id="boxG"><div class="tooltip" id="tip"></div></div>
-    <div class="chart-title">IOB &amp; COB
-      <span class="lg"><span class="linec" style="border-color:var(--iobline)"></span>IOB (U)</span>
-      <span class="lg"><span class="linec" style="border-color:var(--cobline)"></span>COB (g)</span></div>
-    <div class="chartbox" id="boxI"></div>
-    <div class="chart-title">Safety limits</div>
-    <div class="chartbox limstrip" id="boxL"></div>
-    <div id="limlegend" class="limleg"></div>
-    <p class="hint">&#8592; &#8594; steps through loop cycles — and across midnight into the next/previous day</p>
+<main id="appBody" style="display:none">
+  <div class="daywrap">
+    <div class="daybar">
+      <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
+      <button class="datebtn" id="dateBtn"><span id="dateLbl"></span><input type="date" id="dateInp" aria-label="pick a date"></button>
+      <button class="navb" id="dayNext" aria-label="next day">›</button>
+    </div>
+    <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
   </div>
+  <div id="dayStatus"></div>
+  <div class="stats" id="stats"></div>
 
-  <aside class="panel" id="panel">
-    <h2>Loop decision</h2>
-    <div class="empty">Click a moment in the chart to dissect that loop cycle.</div>
-  </aside>
+  <div class="cols">
+    <button id="chartToggle" aria-expanded="false">Day overview <span class="car">▼</span></button>
+
+    <section class="card daycard" id="dayCard">
+      <div class="chartwrap" id="chartWrap">
+        <div class="legend" id="legend"></div>
+        <div class="dtip" id="dtip"></div>
+      </div>
+    </section>
+
+    <aside class="card snap" id="panel" aria-label="loop decision"></aside>
+  </div>
   <span id="srlive" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></span>
-</div>
-
-</div>
-</div>
-
+</main>
 </div>
 
 <script>
-let DATA = {"generatedAt":"","tzOffsetHours":2,"profile":{"basal":[],"target":null,"isf":null,"cr":[],"dia":10,"units":"mmol"},"sgv":[],"tempBasal":[],"smb":[],"bolus":[],"carbs":[],"notes":[],"siteChange":[],"cycles":[]};
-let LIVE = /*__LIVE__*/null;
-const SHARE = /*__SHARE__*/true;
+'use strict';
+/* ============================================================
+   Trio Loop Inspector — single-file app.
+   Reads glucose, treatments and oref devicestatus from the
+   user's own Nightscout; credentials live in localStorage only.
+   ============================================================ */
 
-/* ---------- helpers ---------- */
-/* tijden: browser-lokaal (Nightscout levert UTC); DST-veilig via Date-APIs */
+/* ---------- time & unit helpers (browser-local, DST-safe) ---------- */
 function localMidnight(t){ const d=new Date(t*1000); d.setHours(0,0,0,0); return d.getTime()/1000; }
 function nextDay(d){ const x=new Date(d*1000); x.setDate(x.getDate()+1); x.setHours(0,0,0,0); return x.getTime()/1000; }
 function prevDay(d){ const x=new Date(d*1000); x.setDate(x.getDate()-1); x.setHours(0,0,0,0); return x.getTime()/1000; }
-const isMmol=()=>String((DATA.profile&&DATA.profile.units)||'mmol').toLowerCase().indexOf('mmol')===0;
+function todayStart(){ return localMidnight(Date.now()/1000); }
+const isMmol=()=>String((PROFILE&&PROFILE.units)||'mmol').toLowerCase().indexOf('mmol')===0;
 const M = v => isMmol()? v/18.016 : v;
-const fBG = v => isMmol()? f1(v) : String(Math.round(v));
-const bgUnit = ()=> isMmol()? 'mmol/L':'mg/dL';
 const f1 = v => (Math.round(v*10)/10).toFixed(1);
 const f2 = v => (Math.round(v*100)/100).toFixed(2);
+const fBG = v => isMmol()? f1(v) : String(Math.round(v));
+const bgUnit = ()=> isMmol()? 'mmol/L':'mg/dL';
 const hhmm = t => { const d=new Date(t*1000); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
-const DAYNAMES=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-function dayLabel(d){ const x=new Date((d+43200)*1000); return DAYNAMES[x.getDay()]+' '+x.getDate()+' '+MON[x.getMonth()]; }
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const DAYN=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function dayLabel(d){ const x=new Date((d+43200)*1000);
+  return (d===todayStart()?'Today':DAYN[x.getDay()])+' '+x.getDate()+' '+MONN[x.getMonth()]; }
+function dayISO(d){ const x=new Date((d+43200)*1000); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
+function isoToDay(v){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3]).getTime()/1000; }
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-/* day list (CEST midnights) */
-let days=[], curDay=null, selCycle=null, hoverT=null;
-function computeDays(){
-  days=[];
-  if(!DATA.sgv.length){ if(curDay==null) curDay=todayStart(); return; }
-  const t0all = DATA.sgv[0][0], t1all = DATA.sgv[DATA.sgv.length-1][0];
-  for(let d=localMidnight(t0all); d<=t1all; d=nextDay(d)){
-    const b=nextDay(d);
-    if(DATA.sgv.filter(e=>e[0]>=d&&e[0]<b).length>=24) days.push(d);
-  }
-  if(!days.includes(curDay)) curDay = days.length?days[days.length-1]:todayStart();
-}
+/* ---------- state ---------- */
+const LS_AUTH='trioInspector.auth', LS_DAY='trioInspector.day.', LS_PROF='trioInspector.profile';
+let LIVE=null;             /* {url,token} */
+try{ LIVE=JSON.parse(localStorage.getItem(LS_AUTH)||'null'); }catch(e){}
+let PROFILE=null;          /* {basal:[[sec,rate]],target,isf,cr,dia,units} */
+try{ PROFILE=JSON.parse(localStorage.getItem(LS_PROF)||'null'); }catch(e){}
+const dayCache={};         /* dayStart -> {data,fetchedAt} */
+let curDay=todayStart(), selCycle=null, fetching=false, dayStatusTxt='';
 
-/* scheduled basal */
-function schedBasal(t){ const bp=DATA.profile.basal; if(!bp.length) return 0; const dd=new Date(t*1000); const s=dd.getHours()*3600+dd.getMinutes()*60+dd.getSeconds(); let r=bp[0][1];
-  for(const b of bp) if(b[0]<=s) r=b[1]; return r; }
+/* ---------- profile-derived ---------- */
+function schedBasal(t){ const bp=(PROFILE&&PROFILE.basal)||[]; if(!bp.length) return 0;
+  const dd=new Date(t*1000); const s=dd.getHours()*3600+dd.getMinutes()*60+dd.getSeconds();
+  let r=bp[0][1]; for(const b of bp) if(b[0]<=s) r=b[1]; return r; }
 
-/* actual basal segments for [a,b] */
+/* actual basal segments for [a,b] from temp-basal events */
 function basalSegs(a,b,tb){
   const evs = tb.filter(e=>e[0]<b && e[0]+e[2]*60>a-1);
   const segs=[]; let cur=a;
@@ -310,13 +367,125 @@ function basalSegs(a,b,tb){
   return segs;
 }
 
-/* ---------- reason parsing / limit classification ---------- */
+/* ---------- Nightscout fetch & per-day cache ---------- */
+function loadPersisted(d){
+  try{ const v=JSON.parse(localStorage.getItem(LS_DAY+d)||'null'); if(v){ dayCache[d]=v; return v; } }catch(e){}
+  return null;
+}
+function pruneStore(extra){
+  try{
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY));
+    const items=keys.map(k=>({k,at:(JSON.parse(localStorage.getItem(k)||'{}').fetchedAt)||0})).sort((a,b)=>b.at-a.at);
+    for(const it of items.slice(extra?4:6)) localStorage.removeItem(it.k);
+  }catch(e){}
+}
+function persistDay(d){
+  try{ localStorage.setItem(LS_DAY+d, JSON.stringify(dayCache[d])); pruneStore(); }
+  catch(e){ pruneStore(true); try{ localStorage.setItem(LS_DAY+d, JSON.stringify(dayCache[d])); }catch(e2){} }
+}
+function emptyDay(d){ const a=d,b=nextDay(d);
+  return {a,b,sgv:[],cycles:[],smb:[],bolus:[],carbs:[],notes:[],siteChange:[],overrides:[],tempTargets:[],segs:[]}; }
+function dayData(d){
+  if(dayCache[d]) return dayCache[d].data;
+  const p=loadPersisted(d); if(p) return p.data;
+  return emptyDay(d);
+}
+
+/* Build the compact day dataset from raw Nightscout rows.
+   Loop-cycle identity: key on suggested.deliverAt — the enacted deliverAt only advances
+   when a NEW temp/SMB is sent, so keying on it would silently drop "no change" cycles. */
+function buildRaw(entries,treatments,dev){
+  const pts=x=>Math.floor(Date.parse(x)/1000);
+  const r2=v=>Math.round(v*100)/100, r1=v=>Math.round(v*10)/10;
+  const sgv=entries.filter(e=>e.type==='sgv'&&e.sgv).map(e=>[pts(e.dateString),e.sgv]).sort((a,b)=>a[0]-b[0]);
+  const tb=[],smb=[],bolus=[],carbs=[],notes=[],site=[],ov=[],tt=[];
+  for(const t of treatments){
+    if(!t.created_at) continue;
+    const x=pts(t.created_at), et=t.eventType;
+    if(et==='Temp Basal'){ const r=t.rate!=null?t.rate:t.absolute; if(r!=null) tb.push([x,r2(r),r1(t.duration||0)]); }
+    else if(et==='SMB'){ if(t.insulin) smb.push([x,r2(t.insulin)]); }
+    else if(et==='Bolus'||et==='Correction Bolus'||et==='Meal Bolus'||et==='External Insulin'){
+      if(t.insulin) bolus.push([x,r2(t.insulin)]); if(t.carbs) carbs.push([x,r1(t.carbs)]); }
+    else if(et==='Exercise'){ ov.push([x,r1(t.duration||0),String(t.notes||'Override')]); }
+    else if(et==='Temporary Target'){ const lo=t.targetBottom!=null?+t.targetBottom:null;
+      tt.push([x,r1(t.duration||0),lo]); }
+    else if(et==='Carb Correction'||t.carbs){ if(t.carbs) carbs.push([x,r1(t.carbs)]); }
+    else if(et==='Note') notes.push([x,t.notes||'']);
+    else if(et==='Site Change') site.push(x);
+  }
+  for(const l of [tb,smb,bolus,carbs,notes,ov,tt]) l.sort((a,b)=>a[0]-b[0]);
+  /* Trio uploads each override twice (the override + its run, ~1s apart) — merge those,
+     preferring the named entry over the generic "Custom Override" and the longer duration */
+  const ovm=[];
+  for(const o of ov){
+    const prev=ovm[ovm.length-1];
+    if(prev && o[0]-prev[0]<120){
+      prev[1]=Math.max(prev[1],o[1]);
+      if(prev[2]==='Custom Override'&&o[2]!=='Custom Override') prev[2]=o[2];
+    } else ovm.push(o.slice());
+  }
+  const cmap={}, enFreshAt={};
+  for(const r of dev){
+    const oa=r.openaps||{}; const su=oa.suggested, en=oa.enacted;
+    const suT=su&&(su.deliverAt||su.timestamp), enT=en&&(en.deliverAt||en.timestamp);
+    const cycT=suT||enT; if(!cycT) continue;
+    const x=pts(cycT);
+    /* the enacted block belongs to THIS cycle only when its deliverAt matches; else it is a stale re-report */
+    const enFresh=(en&&enT&&pts(enT)===x)?en:null;
+    const dec=enFresh||su||en; if(!dec||dec.bg==null) continue;
+    if(cmap[x]&&!(enFresh&&!enFreshAt[x])) continue;
+    const preds=dec.predBGs||{}; const pred={};
+    for(const k of ['IOB','ZT','COB','UAM']) if(preds[k]) pred[k]=preds[k].map(v=>Math.round(v));
+    cmap[x]={t:x,bg:dec.bg,iob:r2(dec.IOB||0),cob:dec.COB||0,thr:dec.threshold,ebg:dec.eventualBG,req:dec.insulinReq,
+      rate:dec.rate,dur:dec.duration,tgt:dec.current_target,sens:dec.sensitivityRatio,tdd:dec.TDD,
+      units:dec.units,reason:String(dec.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
+      rec:(enFresh&&enFresh.received)?1:0,pred};
+    enFreshAt[x]=!!enFresh;
+  }
+  return {sgv,tb,smb,bolus,carbs,notes,site,ov:ovm,tt,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
+}
+
+async function fetchDay(d){
+  const from=new Date((d-3*3600)*1000).toISOString();
+  const to=new Date((nextDay(d)+3600)*1000).toISOString();
+  const base=String(LIVE.url||'').replace(/\/+$/,'');
+  const q=(p,extra)=>fetch(`${base}/api/v1/${p}?${extra}&token=${encodeURIComponent(LIVE.token)}`,
+      {signal:(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)?AbortSignal.timeout(25000):undefined})
+    .then(r=>{ if(!r.ok) throw new Error(p+' HTTP '+r.status); return r.json(); })
+    .then(j=>{ if(!Array.isArray(j)) throw new Error(p+': unexpected response'); return j; });
+  const [entries,treatments,dev,profileArr]=await Promise.all([
+    q('entries.json',`find[dateString][$gte]=${from}&find[dateString][$lte]=${to}&count=2000`),
+    q('treatments.json',`find[created_at][$gte]=${from}&find[created_at][$lte]=${to}&count=2500`),
+    q('devicestatus.json',`find[created_at][$gte]=${from}&find[created_at][$lte]=${to}&count=1500`),
+    q('profile.json','count=1')]);
+  try{
+    const p0=profileArr[0], store=p0.store[p0.defaultProfile||'default'];
+    PROFILE={basal:store.basal.map(x=>[x.timeAsSeconds,x.value]),target:store.target_low[0].value,
+      isf:store.sens[0].value,cr:store.carbratio.map(x=>[x.timeAsSeconds,x.value]),dia:store.dia,
+      units:store.units||p0.units||'mmol'};
+    try{ localStorage.setItem(LS_PROF,JSON.stringify(PROFILE)); }catch(e){}
+  }catch(e){}
+  const raw=buildRaw(entries,treatments,dev);
+  const a=d,b=nextDay(d);
+  const inWin=e=>e[0]>=a&&e[0]<b;
+  const data={a,b,
+    sgv:raw.sgv.filter(inWin), cycles:raw.cycles.filter(c=>c.t>=a&&c.t<b),
+    smb:raw.smb.filter(inWin), bolus:raw.bolus.filter(inWin), carbs:raw.carbs.filter(inWin),
+    notes:raw.notes.filter(inWin), siteChange:raw.site.filter(t=>t>=a&&t<b),
+    overrides:raw.ov.filter(e=>e[0]<b && e[0]+e[1]*60>a),
+    tempTargets:raw.tt.filter(e=>e[0]<b && e[0]+e[1]*60>a)};
+  const lastT=Math.max(data.sgv.length?data.sgv[data.sgv.length-1][0]:a, data.cycles.length?data.cycles[data.cycles.length-1].t:a);
+  data.segs=basalSegs(a,Math.min(b,lastT+300),raw.tb);
+  dayCache[d]={data,fetchedAt:Date.now()};
+  persistDay(d);
+}
+
+/* ---------- reason parsing & limit classification ---------- */
 function parseReason(c){
   const r=c.reason, g=(re)=>{const m=r.match(re);return m?m:null;};
-  const p={};
-  let m;
+  const p={}; let m;
   if(m=g(/Autosens ratio: ([\d.]+)/)) p.autosens=+m[1];
-  if(m=g(/ISF: ([\d.]+)\u2192([\d.]+)/)) {p.isf0=+m[1]; p.isf=+m[2];}
+  if(m=g(/ISF: ([\d.]+)→([\d.]+)/)) {p.isf0=+m[1]; p.isf=+m[2];}
   if(m=g(/CR: ([\d.]+)/)) p.cr=+m[1];
   if(m=g(/Dev: (-?[\d.]+)/)) p.dev=+m[1];
   if(m=g(/BGI: (-?[\d.]+)/)) p.bgi=+m[1];
@@ -338,10 +507,10 @@ function parseReason(c){
     else if(!wacht) p.limits.push({key:'maxbolus',t:'SMB blocked (maxBolus 0)',c:'--hi',
       why:`oref set a hard SMB cap of 0 U this cycle${req>0.01?` despite a ${f2(req)} U need`:''} — the whole correction goes via temp basal instead.`});}
   if(wacht){ const req=c.req||0;
-    p.limits.push({key:'smbwait',t:'SMB interval',c:'--smbwait',
+    p.limits.push({key:'smbwait',t:'SMB interval',c:'--hi',
       why:`An SMB was just delivered; Trio waits another ${wacht[1]}m${wacht[2]?wacht[2]+'s':''} before microbolusing again${req>0.01?` — the ${f2(req)} U need is on hold`:''}.`});}
   if(m=g(/adj\. req\. rate: ([0-9]+(?:\.[0-9]+)?) to maxSafeBasal: ([0-9]+(?:\.[0-9]+)?)/))
-    p.limits.push({key:'maxbasal',t:'Basal limited (maxSafeBasal)',c:'--serious',
+    p.limits.push({key:'maxbasal',t:'Basal limited (maxSafeBasal)',c:'--hi',
       why:`Requested temp basal ${m[1]} U/h, capped at the ${m[2]} U/h ceiling (a multiple of your scheduled basal).`});
   if((m=g(/Eventual BG ([0-9]+(?:\.[0-9]+)?)<([0-9]+(?:\.[0-9]+)?)/)) && !p.limits.some(l=>l.key==='guard'))
     p.limits.push({key:'zero',t:'Forecast below target',c:'--zt',
@@ -350,96 +519,13 @@ function parseReason(c){
   if(m=g(/Microbolusing ([0-9]+(?:\.[0-9]+)?)U/)) p.smb=+m[1];
   return p;
 }
-function limitKeys(c){ return parseReason(c).limits.map(l=>l.key); }
-
-/* ---------- layout ---------- */
-const ML=44, MR=14;
-const boxG=document.getElementById('boxG'),
-      boxI=document.getElementById('boxI'), boxL=document.getElementById('boxL'),
-      tip=document.getElementById('tip'), panel=document.getElementById('panel');
-
-const dayCache={};   /* dagstart -> {data, fetchedAt} */
-function dayData(d){
-  if(dayCache[d]) return dayCache[d].data;
-  if(SHARE){ const p=loadPersisted(d); if(p) return p.data; }
-  const a=d,b=nextDay(d);
-  const ds={
-    a,b,
-    sgv:DATA.sgv.filter(e=>e[0]>=a&&e[0]<b),
-    cycles:DATA.cycles.filter(c=>c.t>=a&&c.t<b),
-    smb:DATA.smb.filter(e=>e[0]>=a&&e[0]<b),
-    bolus:DATA.bolus.filter(e=>e[0]>=a&&e[0]<b),
-    carbs:DATA.carbs.filter(e=>e[0]>=a&&e[0]<b),
-    notes:DATA.notes.filter(e=>e[0]>=a&&e[0]<b),
-    siteChange:DATA.siteChange.filter(t=>t>=a&&t<b),
-  };
-  const lastT=Math.max(ds.sgv.length?ds.sgv[ds.sgv.length-1][0]:a, ds.cycles.length?ds.cycles[ds.cycles.length-1].t:a);
-  ds.segs=basalSegs(a,Math.min(b,lastT+300),DATA.tempBasal);
-  return ds;
+function thrOf(c,p){
+  return (c&&(c.thr??(p&&p.thr))) ?? ((c&&(c.tgt||null)!=null)
+    ? (isMmol()? Math.max(3.3,Math.min(6.7,c.tgt-0.5*(c.tgt-2.2))) : Math.max(60,Math.min(120,c.tgt-0.5*(c.tgt-40))))
+    : (isMmol()?4.4:80));
 }
-function dayISO(d){ const x=new Date((d+43200)*1000); return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0'); }
-function isoToDay(v){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v); if(!m) return null; return new Date(+m[1],+m[2]-1,+m[3]).getTime()/1000; }
-function todayStart(){ return localMidnight(Date.now()/1000); }
 
-/* tabs */
-const tabsEl=document.getElementById('tabs');
-let dayStatusTxt='';
-function buildTabs(){
-  tabsEl.innerHTML='';
-  const mk=(html,fn,title)=>{ const b=document.createElement('button'); b.className='tab';
-    b.innerHTML=html; b.onclick=fn; if(title) b.title=title; tabsEl.appendChild(b); return b; };
-  mk('&#8249;',()=>selectDay(prevDay(curDay)),'previous day').setAttribute('aria-label','previous day');
-  const inp=document.createElement('input');
-  inp.type='date'; inp.className='tab'; inp.style.cssText='padding:4px 8px;color:inherit;background:var(--surface)';
-  inp.value=dayISO(curDay);
-  if(LIVE){ inp.max=dayISO(todayStart()); }
-  else if(days.length){ inp.min=dayISO(days[0]); inp.max=dayISO(days[days.length-1]); }
-  inp.onchange=()=>{ const d=isoToDay(inp.value); if(d!=null) selectDay(d); };
-  tabsEl.appendChild(inp);
-  mk('&#8250;',()=>selectDay(nextDay(curDay)),'next day').setAttribute('aria-label','next day');
-  const cached=Object.keys(dayCache).map(Number);
-  const avail=[...new Set([...days,...cached,...(LIVE?[todayStart()]:[])])].sort((x,y)=>x-y).slice(-4);
-  for(const d of avail){
-    const b=mk(d===todayStart()?'Today':dayLabel(d),()=>selectDay(d)); b.dataset.day=d;
-  }
-  if(LIVE){
-    mk('&#10227;',()=>selectDay(curDay,true),'refresh this day');
-    const st=document.createElement('span');
-    st.style.cssText='color:var(--muted);font-size:11.5px;align-self:center';
-    st.textContent=dayStatusTxt; tabsEl.appendChild(st);
-  }
-}
-async function selectDay(d,force){
-  const today=todayStart();
-  if(LIVE && d>today) d=today;
-  if(!LIVE){
-    const probe=dayData(d);
-    if(!probe.sgv.length){ buildTabs(); return; }
-    curDay=d;
-  } else {
-    curDay=d;
-    if(!dayCache[d]) loadPersisted(d);
-    const c=dayCache[d];
-    const stale = c && (d===today ? (Date.now()-c.fetchedAt>120000)
-      : (c.fetchedAt < nextDay(d)*1000+600000)); /* cached before the day had ended */
-    if(force || !c || stale){
-      dayStatusTxt='loading\u2026'; buildTabs();
-      try{
-        await fetchDay(d);
-        const got=dayData(d);
-        dayStatusTxt = (got.sgv.length&&!got.cycles.length)
-          ? 'no oref loop data on this day — this tool reads Trio/OpenAPS devicestatus'
-          : 'updated '+new Date().toTimeString().slice(0,5);
-      }catch(e){
-        dayStatusTxt='fetch failed \u2014 showing cached data ('+e.message+')';
-        if(!dayData(curDay).sgv.length && days.length) curDay=days[days.length-1];
-      }
-    }
-  }
-  const dd=dayData(curDay);
-  selCycle = selCycle ? (dd.cycles.find(x=>x.t===selCycle.t)||null) : null;
-  buildTabs(); renderAll(); setInfo();
-}
+/* ---------- day stats ---------- */
 function stats(dd){
   const v=dd.sgv.map(e=>e[1]); if(!v.length) return null;
   const lo=v.filter(x=>x<70).length, hi=v.filter(x=>x>180).length, n=v.length;
@@ -447,314 +533,372 @@ function stats(dd){
   const smbU=dd.smb.reduce((s,e)=>s+e[1],0), bolU=dd.bolus.reduce((s,e)=>s+e[1],0);
   const carbsG=dd.carbs.reduce((s,e)=>s+e[1],0);
   let basalU=0; for(const s of dd.segs) basalU += s.rate*(s.b-s.a)/3600;
-  const limN = dd.cycles.filter(c=>limitKeys(c).length).length;
-  return {tir:(n-lo-hi)/n, lo:lo/n, hi:hi/n, mean:M(mean), smbU, bolU, carbsG, basalU, nC:dd.cycles.length, limN};
+  return {tir:(n-lo-hi)/n, lo:lo/n, hi:hi/n, mean:M(mean), smbU, bolU, carbsG, basalU};
 }
-function renderTiles(dd){
-  const s=stats(dd), el=document.getElementById('tiles');
-  if(!s){el.innerHTML='';return;}
+function renderStats(dd){
+  const s=stats(dd), el=document.getElementById('stats');
+  if(!s){ el.innerHTML=''; return; }
+  const tot=s.basalU+s.smbU+s.bolU;
+  const seg=(u,c,t)=>tot>0?`<div style="width:${u/tot*100}%;background:${c}" title="${t}"></div>`:'';
   el.innerHTML=`
-  <div class="tile"><div class="k">Time in Range (${isMmol()?'3.9\u201310':'70\u2013180'})</div><div class="v">${Math.round(s.tir*100)}<small> %</small></div>
-    <div class="tirbar"><div style="width:${s.lo*100}%;background:var(--lo)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--hi)"></div></div></div>
-  <div class="tile"><div class="k">Average</div><div class="v">${fBG(s.mean)}<small> ${bgUnit()}</small></div></div>
-  <div class="tile"><div class="k">Insulin (SMB + bolus)</div><div class="v">${f1(s.smbU)} + ${f1(s.bolU)}<small> U</small></div></div>
-  <div class="tile"><div class="k">Basal delivered</div><div class="v">${f1(s.basalU)}<small> U</small></div></div>
-  <div class="tile"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small> g</small></div></div>
-  <div class="tile"><div class="k">Loop cycles</div><div class="v">${s.nC}<small> · ${s.limN} hit a safety limit</small></div></div>`;
+  <div class="stat"><div class="k">In range</div><div class="v">${Math.round(s.tir*100)}<small>%</small></div>
+    <div class="minibar"><div style="width:${s.lo*100}%;background:var(--bglow)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--bghigh)"></div></div></div>
+  <div class="stat"><div class="k">Average</div><div class="v">${fBG(s.mean)}<small>${bgUnit()}</small></div></div>
+  <div class="stat"><div class="k">Insulin</div><div class="v">${f1(tot)}<small>U</small></div>
+    <div class="minibar">${seg(s.basalU,'rgba(30,150,252,.45)','basal')}${seg(s.smbU,'var(--insulin)','SMB')}${seg(s.bolU,'var(--iobline)','bolus')}</div>
+    <div class="sub">basal ${f1(s.basalU)} · SMB ${f1(s.smbU)} · bolus ${f1(s.bolU)}</div></div>
+  <div class="stat"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small>g</small></div></div>`;
 }
 
-/* ---------- charts ---------- *//* ---------- charts ---------- */
-function svgEl(w,h){ const s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-  s.setAttribute('width',w); s.setAttribute('height',h); s.setAttribute('viewBox',`0 0 ${w} ${h}`); return s; }
-function add(parent,tag,attrs,txt){ const e=document.createElementNS('http://www.w3.org/2000/svg',tag);
-  for(const k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; parent.appendChild(e); return e; }
+/* ============================================================
+   DAY CHART — mirrors the Trio app layout: a basal strip hanging
+   from the top (temp basal filled + rate line, schedule dashed),
+   the glucose chart with forecasts, then the IOB/COB strip.
+   ============================================================ */
+const PADL=10, PADR=38;
+const BAS_H=44, GAP1=8, MAIN_H=278, GAP2=12, IC_H=88, AX_H=20;
+const SVG_H=BAS_H+GAP1+MAIN_H+GAP2+IC_H+AX_H;
+let X=null;
+const chartWrap=document.getElementById('chartWrap'), dtip=document.getElementById('dtip');
 
-let X=null; // shared x-scale for current render
-function makeX(dd,w){ const a=dd.a,b=dd.b+(dd.ext||0); return t=>ML+(t-a)/(b-a)*(w-ML-MR); }
-
-function drawTimeAxis(svg,w,h,dd){
-  const end=dd.b+(dd.ext||0);
-  if(dd.ext){
-    add(svg,'rect',{x:X(dd.b),y:0,width:X(end)-X(dd.b),height:h-18,fill:css('--hover')});
-    add(svg,'line',{x1:X(dd.b),x2:X(dd.b),y1:0,y2:h-18,stroke:css('--axis'),'stroke-width':1,'stroke-dasharray':'4 3'});
-  }
-  for(let hr=0;dd.a+hr*3600<=end;hr+=2){
-    const t=dd.a+hr*3600, x=X(t);
-    add(svg,'line',{x1:x,y1:0,x2:x,y2:h-18,stroke:css('--grid'),'stroke-width':1});
-    add(svg,'text',{x,y:h-4,'text-anchor':'middle',fill:css('--muted'),
-      style:`font:${t>dd.b?'italic ':''}10.5px ui-monospace,Menlo,monospace`},String(hr%24).padStart(2,'0'));
-  }
+function nearestSgv(dd,t){ let best=null,bd=1e12; for(const e of dd.sgv){const d=Math.abs(e[0]-t); if(d<bd){bd=d;best=e;}} return bd<900?best:null; }
+function nearestCycle(dd,t){ let best=null,bd=1e12; for(const c of dd.cycles){const d=Math.abs(c.t-t); if(d<bd){bd=d;best=c;}} return best; }
+function rateAt(dd,t){ for(const s of dd.segs) if(t>=s.a&&t<s.b) return s; return null; }
+function bgCol(v){ return v<70?'var(--bglow)':v>180?'var(--bghigh)':'var(--bgin)'; }
+/* per-cycle target as a step series (reflects overrides & temp targets automatically) */
+function targetAt(dd,t){
+  let v=null; for(const c of dd.cycles){ if(c.t<=t && c.tgt!=null) v=c.tgt; if(c.t>t) break; }
+  if(v==null && dd.cycles.length && dd.cycles[0].tgt!=null && t<dd.cycles[0].t) v=dd.cycles[0].tgt;
+  return v!=null?v:(PROFILE&&PROFILE.target!=null?PROFILE.target:null);
 }
 
-function renderGlucose(dd,w){
-  const h=286, ha=h-18, STRIP=38, TOP=STRIP+12;
-  boxG.querySelectorAll('svg').forEach(e=>e.remove());
-  const svg=svgEl(w,h); svg.setAttribute('role','img'); svg.setAttribute('aria-label','glucose and insulin delivery chart; click to inspect a loop cycle'); boxG.appendChild(svg);
-  const dLO=M(36);
-  const maxbg=Math.max(M(225), ...dd.sgv.map(e=>M(e[1])))+M(14.5);
-  const y=v=>ha-( (v-dLO)/(maxbg-dLO) )*(ha-TOP);
-  drawTimeAxis(svg,w,h,dd);
-  /* basaal-bovenbalk: vlak hangt vanaf de bovenrand omlaag (zoals in de app) */
-  const maxr=Math.max(1.6,...dd.segs.map(s=>s.rate))*1.08;
-  const hb=r=>(r/maxr)*(STRIP-4);
-  for(const s of dd.segs){
-    if(s.rate<=0) continue;
-    add(svg,'rect',{x:X(s.a),y:0,width:Math.max(0.5,X(s.b)-X(s.a)),height:hb(s.rate),
-      fill:'var(--basalfill)',opacity:s.temp?1:.55});
+function renderDayChart(dd){
+  chartWrap.querySelectorAll('svg,.chartempty').forEach(e=>e.remove());
+  const w=chartWrap.clientWidth||880;
+  if(w<60) return;
+  X=t=>PADL+(t-dd.a)/(dd.b-dd.a)*(w-PADL-PADR);
+  let s='';
+  const now=Date.now()/1000;
+  const plotR=w-PADR;
+
+  /* ---- x grid + hour labels (labels under the IOB/COB strip, like the app) ---- */
+  const hourStep = w<420?6 : w<560?4 : w<760?3 : 2;
+  const gridBot=BAS_H+GAP1+MAIN_H+GAP2+IC_H;
+  for(let hr=0;hr<=24;hr+=hourStep){
+    const t=dd.a+hr*3600, x=X(Math.min(t,dd.b));
+    s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="0" y2="${gridBot}" stroke="var(--grid)" stroke-width=".8" stroke-dasharray="2 4"/>`;
+    if(hr<24) s+=`<text x="${x.toFixed(1)}" y="${SVG_H-5}" text-anchor="middle" fill="var(--muted)" style="font:10.5px ui-monospace,Menlo,monospace">${String(hr).padStart(2,'0')}</text>`;
   }
-  let bstr=''; for(let t=dd.a;t<=dd.b;t+=300){ bstr+=(bstr?'L':'M')+X(t).toFixed(1)+' '+hb(schedBasal(t)).toFixed(1)+' '; }
-  add(svg,'path',{d:bstr,fill:'none',stroke:css('--muted'),'stroke-width':1.2,'stroke-dasharray':'3 3',opacity:.9});
-  add(svg,'line',{x1:ML,x2:w-MR,y1:STRIP,y2:STRIP,stroke:css('--grid'),'stroke-width':1});
-  /* suspend/resume/site in de balk */
+
+  /* ---- basal strip: bars hang from the top edge, rate line at their lower edge ---- */
+  const maxr=Math.max(1.4,...dd.segs.map(x=>x.rate))*1.06;
+  const hb=r=>Math.max(0,(r/maxr))*(BAS_H-8);
+  s+=`<defs><linearGradient id="basgrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--insulin)" stop-opacity=".08"/>
+      <stop offset="1" stop-color="var(--insulin)" stop-opacity=".5"/></linearGradient></defs>`;
+  for(const sg of dd.segs){
+    if(!sg.temp||sg.rate<=0) continue;
+    const x0=X(sg.a), x1=X(sg.b), he=hb(sg.rate);
+    s+=`<rect x="${x0.toFixed(1)}" y="0" width="${Math.max(.5,x1-x0).toFixed(1)}" height="${he.toFixed(1)}" fill="url(#basgrad)"/>`;
+    s+=`<path d="M${x0.toFixed(1)} 0 V${he.toFixed(1)} H${x1.toFixed(1)} V0" fill="none" stroke="var(--insulin)" stroke-width="1.1" opacity=".85"/>`;
+  }
+  /* scheduled basal: dashed insulin-colored step line (like the app) */
+  let bp='';
+  for(let t=dd.a;t<=dd.b;t+=300){ bp+=(bp?'L':'M')+X(t).toFixed(1)+' '+hb(schedBasal(t)).toFixed(1)+' '; }
+  s+=`<path d="${bp}" fill="none" stroke="var(--insulin)" stroke-width="1.4" stroke-dasharray="2 4" opacity=".9"/>`;
+  /* suspensions: grey block over the scheduled height */
+  let susStart=null;
   for(const [t,txt] of dd.notes){
-    if(/PumpSuspend/.test(txt)) add(svg,'text',{x:X(t),y:STRIP-5,'text-anchor':'middle',fill:css('--lo'),style:'font:600 9.5px system-ui'},'⏸');
-    if(/PumpResume/.test(txt)) add(svg,'text',{x:X(t),y:STRIP-5,'text-anchor':'middle',fill:css('--good'),style:'font:600 9.5px system-ui'},'▶');
+    if(/PumpSuspend/.test(txt)) susStart=t;
+    if(/PumpResume/.test(txt)&&susStart!=null){
+      s+=`<rect x="${X(susStart).toFixed(1)}" y="0" width="${Math.max(1,X(t)-X(susStart)).toFixed(1)}" height="${Math.max(6,hb(schedBasal(susStart))).toFixed(1)}" fill="var(--muted)" opacity=".4"/>`;
+      susStart=null; }
   }
+  if(susStart!=null) s+=`<rect x="${X(susStart).toFixed(1)}" y="0" width="${Math.max(1,X(Math.min(now,dd.b))-X(susStart)).toFixed(1)}" height="${Math.max(6,hb(schedBasal(susStart))).toFixed(1)}" fill="var(--muted)" opacity=".4"/>`;
   for(const t of (dd.siteChange||[]))
-    add(svg,'text',{x:X(t),y:STRIP-5,'text-anchor':'middle',style:'font:10px system-ui'},'◆');
-  /* bolussen & SMB's: driehoek ▼ boven de glucoselijn; carbs: ▲ eronder (zoals de app) */
-  const OFF=M(20); /* bolusOffset: 20 mg/dL, in display units */
-  function nearestBG(t){ const e=nearestSgv(dd,t); return e?M(e[1]):null; }
-  function insulinMark(t,u,isBolus){
-    const bg=nearestBG(t); if(bg==null) return;
-    const x=X(t), sz=(5+u*1.8)*0.9, cy0=Math.max(STRIP+8, y(bg+OFF)-sz*0.6);
-    const tri=add(svg,'path',{d:`M${x-sz/2} ${cy0} L${x+sz/2} ${cy0} L${x} ${cy0+sz*0.85} Z`,fill:css('--insulin')});
-    tri.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title')).textContent=`${hhmm(t)} ${isBolus?'bolus':'SMB'} ${f2(u)} U`;
-    if(u>=0.5) add(svg,'text',{x,y:cy0-3,'text-anchor':'middle',fill:css('--ink2'),
-      style:'font:600 9px ui-monospace,Menlo,monospace'},f2(u));
+    s+=`<text x="${X(t).toFixed(1)}" y="${BAS_H-2}" text-anchor="middle" style="font:10px system-ui" fill="var(--ink2)">◆</text>`;
+
+  /* ---- main glucose chart ---- */
+  const T0=BAS_H+GAP1, T1=T0+MAIN_H;
+  const dLO=M(38);
+  const maxbg=Math.max(M(230), ...dd.sgv.map(e=>M(e[1])+M(16)),
+    ...(selCycle&&selCycle.pred?['IOB','ZT','COB','UAM'].flatMap(k=>(selCycle.pred[k]||[]).map(v=>M(v)+M(6))):[]));
+  const y=v=>T1-((Math.max(dLO,Math.min(maxbg,v))-dLO)/(maxbg-dLO))*(MAIN_H-10);
+  /* in-range band + y labels on the right */
+  s+=`<rect x="${PADL}" y="${y(M(180)).toFixed(1)}" width="${plotR-PADL}" height="${(y(M(70))-y(M(180))).toFixed(1)}" fill="var(--band)"/>`;
+  for(const g of (isMmol()?[4,6,8,10,12,14,16,18]:[70,110,150,190,230,270,320])) if(g<maxbg&&g>dLO){
+    s+=`<line x1="${PADL}" x2="${plotR}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--grid)" stroke-width=".8" stroke-dasharray="2 4"/>`;
+    s+=`<text x="${plotR+7}" y="${(y(g)+3.5).toFixed(1)}" text-anchor="start" fill="var(--muted)" style="font:10.5px ui-monospace,Menlo,monospace">${g}</text>`;
   }
-  for(const [t,u] of dd.smb) insulinMark(t,u,false);
-  for(const [t,u] of dd.bolus) insulinMark(t,u,true);
-  for(const [t,g] of dd.carbs){
-    const bg=nearestBG(t); if(bg==null) continue;
-    const x=X(t), sz=Math.min(5+g*0.3,20), ty=Math.min(ha-12, y(bg-OFF)+sz*0.1);
-    const tri=add(svg,'path',{d:`M${x-sz/2} ${ty+sz*0.85} L${x+sz/2} ${ty+sz*0.85} L${x} ${ty} Z`,fill:css('--carb')});
-    tri.appendChild(document.createElementNS('http://www.w3.org/2000/svg','title')).textContent=`${hhmm(t)} carbs ${Math.round(g)} g`;
-    add(svg,'text',{x,y:ty+sz*0.85+10,'text-anchor':'middle',fill:css('--ink2'),
-      style:'font:600 9px ui-monospace,Menlo,monospace'},Math.round(g));
+  /* target step line from cycle data (overrides & temp targets show up as steps) */
+  {
+    let tp='', lastv=null;
+    for(let t=dd.a;t<=dd.b;t+=300){
+      const v=targetAt(dd,t); if(v==null){ continue; }
+      const px=X(t).toFixed(1), py=y(v).toFixed(1);
+      if(!tp) tp=`M${px} ${py} `;
+      else if(v!==lastv) tp+=`L${px} ${y(lastv).toFixed(1)} L${px} ${py} `;
+      else tp+=`L${px} ${py} `;
+      lastv=v;
+    }
+    if(tp) s+=`<path d="${tp}" fill="none" stroke="var(--good)" stroke-width="1" opacity=".75"/>`;
   }
-  /* target band 3.9-10 */
-  add(svg,'rect',{x:ML,y:y(M(180)),width:w-ML-MR,height:y(M(70))-y(M(180)),fill:css('--band')});
-  if(DATA.profile.target!=null)
-    add(svg,'line',{x1:ML,x2:w-MR,y1:y(DATA.profile.target),y2:y(DATA.profile.target),
-      stroke:css('--good'),'stroke-width':1,'stroke-dasharray':'5 4',opacity:.7});
-  for(const g of (isMmol()?[4,6,8,10,12,14,16]:[70,110,150,190,230,270])) if(g<maxbg&&g>dLO){
-    add(svg,'text',{x:ML-6,y:y(g)+3.5,'text-anchor':'end',fill:css('--muted'),
-      style:'font:10.5px ui-monospace,Menlo,monospace'},g);
-    add(svg,'line',{x1:ML,x2:w-MR,y1:y(g),y2:y(g),stroke:css('--grid'),'stroke-width':1,opacity:.7});
+  /* temp targets (green) & overrides (purple): thick soft line at the active target level */
+  for(const e of (dd.tempTargets||[])){
+    const [t,dur,lo]=e;
+    if(!dur||lo==null||lo<=0) continue;
+    const lvl = isMmol()&&lo>=40 ? lo/18.016 : lo; /* NS temp targets are mg/dL by convention */
+    const x0=X(Math.max(t,dd.a)), x1=X(Math.min(t+dur*60,dd.b));
+    s+=`<line x1="${x0.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${y(lvl).toFixed(1)}" y2="${y(lvl).toFixed(1)}" stroke="var(--good)" stroke-width="7" stroke-linecap="round" opacity=".3"/>`;
   }
-  /* prediction fan — alleen de curves (details/markers staan in het paneel bij stap 2) */
-  if(selCycle && selCycle.pred){
+  for(const e of (dd.overrides||[])){
+    const [t,dur,label]=e;
+    if(!dur) continue;
+    const x0=X(Math.max(t,dd.a)), x1=X(Math.min(t+dur*60,dd.b));
+    const lvl=targetAt(dd,Math.max(t,dd.a)+120)||(isMmol()?6:100);
+    s+=`<line x1="${x0.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${y(lvl).toFixed(1)}" y2="${y(lvl).toFixed(1)}" stroke="var(--ov)" stroke-width="7" stroke-linecap="round" opacity=".38"><title>${esc(label)}</title></line>`;
+    if(x1-x0>44) s+=`<text x="${(x0+4).toFixed(1)}" y="${(y(lvl)-7).toFixed(1)}" fill="var(--txt-ov)" style="font:600 9.5px system-ui" opacity=".9">${esc(label)}</text>`;
+  }
+  /* forecast curves for the selected cycle (clipped at day end) */
+  if(selCycle&&selCycle.pred){
     const t0=selCycle.t, maxI=Math.floor((dd.b-t0)/300);
     for(const k of ['ZT','COB','UAM','IOB']){
       const arr=selCycle.pred[k]; if(!arr||arr.length<2) continue;
       let d='';
-      arr.forEach((v,i)=>{ if(i>maxI) return; const px=X(t0+i*300), py=y(Math.max(dLO,Math.min(maxbg,M(v))));
-        d+=(d?'L':'M')+px.toFixed(1)+' '+py.toFixed(1)+' '; });
-      add(svg,'path',{d,fill:'none',stroke:css(FANCOL[k]),'stroke-width':2,opacity:.9,
-        'stroke-dasharray':k==='ZT'?'3 3':'none'});
+      arr.forEach((v,i)=>{ if(i>maxI) return; d+=(d?'L':'M')+X(t0+i*300).toFixed(1)+' '+y(M(v)).toFixed(1)+' '; });
+      s+=`<path d="${d}" fill="none" stroke="var(--${k.toLowerCase()})" stroke-width="2" opacity=".9"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
     }
   }
-  /* sgv dots — app-kleuren: groen in range, oranje hoog, rood laag */
-  for(const [t,v] of dd.sgv){
-    const mm=M(v);
-    const col = v<70?css('--bglow') : v>180?css('--bghigh') : css('--bgin');
-    add(svg,'circle',{cx:X(t),cy:y(mm),r:2.2,fill:col});
+  /* bolus/SMB ▼ above the glucose line; carbs ▲ below (Trio shapes & offsets) */
+  const OFF=M(20);
+  const nearBG=t=>{ const e=nearestSgv(dd,t); return e?M(e[1]):null; };
+  for(const list of [dd.smb,dd.bolus]){
+    const isBolus=list===dd.bolus;
+    for(const e of list){
+      const [t,u]=e;
+      const bg=nearBG(t); if(bg==null) continue;
+      const x=X(t), sz=(5+u*1.8)*0.95, ty=Math.max(T0+10, y(bg+OFF)-sz*0.9);
+      s+=`<path d="M${(x-sz/2).toFixed(1)} ${ty.toFixed(1)} L${(x+sz/2).toFixed(1)} ${ty.toFixed(1)} L${x.toFixed(1)} ${(ty+sz*0.9).toFixed(1)} Z" fill="var(--insulin)"><title>${hhmm(t)} ${isBolus?'bolus':'SMB'} ${f2(u)} U</title></path>`;
+      if(u>=0.5) s+=`<text x="${x.toFixed(1)}" y="${(ty-3).toFixed(1)}" text-anchor="middle" fill="var(--ink2)" style="font:600 9px ui-monospace,Menlo,monospace">${f2(u)}</text>`;
+    }
   }
+  for(const e of dd.carbs){
+    const [t,g]=e;
+    const bg=nearBG(t); if(bg==null) continue;
+    const x=X(t), sz=Math.min(5+g*0.3,20), ty=Math.min(T1-10, y(bg-OFF));
+    s+=`<path d="M${(x-sz/2).toFixed(1)} ${(ty+sz*0.9).toFixed(1)} L${(x+sz/2).toFixed(1)} ${(ty+sz*0.9).toFixed(1)} L${x.toFixed(1)} ${ty.toFixed(1)} Z" fill="var(--carb)"><title>${hhmm(t)} carbs ${Math.round(g)} g</title></path>`;
+    s+=`<text x="${x.toFixed(1)}" y="${(ty+sz*0.9+11).toFixed(1)}" text-anchor="middle" fill="var(--ink2)" style="font:600 9px ui-monospace,Menlo,monospace">${Math.round(g)}</text>`;
+  }
+  /* glucose dots */
+  for(const e of dd.sgv)
+    s+=`<circle cx="${X(e[0]).toFixed(1)}" cy="${y(M(e[1])).toFixed(1)}" r="2.3" fill="${bgCol(e[1])}"/>`;
+  /* current time marker (dashed grey, like the app) */
+  if(now>dd.a&&now<dd.b)
+    s+=`<line x1="${X(now).toFixed(1)}" x2="${X(now).toFixed(1)}" y1="0" y2="${gridBot}" stroke="var(--axis)" stroke-width="1.6" stroke-dasharray="3 3" opacity=".8"/>`;
   /* selected cycle marker */
   if(selCycle){
     const x=X(selCycle.t);
-    add(svg,'line',{x1:x,x2:x,y1:0,y2:ha,stroke:css('--sel'),'stroke-width':2,opacity:.75});
-    add(svg,'circle',{cx:x,cy:y(M(selCycle.bg)),r:6,fill:'none',stroke:css('--sel'),'stroke-width':2});
-    const lw=34, lx=Math.min(w-MR-lw, Math.max(ML, x-lw/2));
-    add(svg,'rect',{x:lx,y:1,width:lw,height:13,rx:3,fill:css('--sel')});
-    add(svg,'text',{x:lx+lw/2,y:11,'text-anchor':'middle',fill:css('--page'),
-      style:'font:700 9.5px ui-monospace,Menlo,monospace'},hhmm(selCycle.t));
+    s+=`<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${T0}" y2="${T1}" stroke="var(--sel)" stroke-width="1.8" opacity=".7"/>`;
+    s+=`<circle cx="${x.toFixed(1)}" cy="${y(M(selCycle.bg)).toFixed(1)}" r="6" fill="none" stroke="var(--sel)" stroke-width="2"/>`;
+    const lw=38, lx=Math.min(plotR-lw, Math.max(PADL, x-lw/2));
+    s+=`<rect x="${lx.toFixed(1)}" y="${T0+1}" width="${lw}" height="15" rx="4" fill="var(--sel)"/>`;
+    s+=`<text x="${(lx+lw/2).toFixed(1)}" y="${T0+12.5}" text-anchor="middle" fill="var(--page)" style="font:700 10px ui-monospace,Menlo,monospace">${hhmm(selCycle.t)}</text>`;
   }
-  addHoverLine(svg,ha);
-  attachHover(svg,dd,'G');
-  document.getElementById('predlegend').style.display = selCycle?'inline-flex':'none';
-}
 
-function renderIOB(dd,w){
-  const h=88, ha=h-18; boxI.querySelectorAll('svg').forEach(e=>e.remove());
-  const svg=svgEl(w,h); svg.setAttribute('role','img');
-  svg.setAttribute('aria-label','insulin and carbs on board');
-  boxI.appendChild(svg);
-  const scaleIob=v=>v>0?v*8:v*9;                     /* app: CobIobChart.swift */
-  const iobS=dd.cycles.map(c=>scaleIob(c.iob));
-  const cobS=dd.cycles.map(c=>c.cob||0);
-  const mx=Math.max(16,...iobS,...cobS)*1.08, mn=Math.min(0,...iobS);
-  const y=v=>ha-((v-mn)/(mx-mn))*(ha-8);
-  drawTimeAxis(svg,w,h,dd);
-  add(svg,'line',{x1:ML,x2:w-MR,y1:y(0),y2:y(0),stroke:css('--axis'),'stroke-width':1});
-  /* linker as: IOB in U (blauw); rechter as: COB in g (oranje) */
-  for(const u of [0,2,4]) if(scaleIob(u)<mx)
-    add(svg,'text',{x:ML-6,y:y(scaleIob(u))+3.5,'text-anchor':'end',fill:css('--iobline'),
-      style:'font:10px ui-monospace,Menlo,monospace'},u);
-  for(const g of [0,20,40]) if(g<mx&&g>0)
-    add(svg,'text',{x:w-MR+3,y:y(g)+3.5,'text-anchor':'start',fill:css('--cobline'),
-      style:'font:10px ui-monospace,Menlo,monospace'},g);
-  function series(vals,color,areaOp){
-    if(!dd.cycles.length) return;
-    let dstr='', area='M'+X(dd.cycles[0].t).toFixed(1)+' '+y(0).toFixed(1)+' ';
-    dd.cycles.forEach((c,i)=>{ const px=X(c.t).toFixed(1), py=y(vals[i]).toFixed(1);
-      dstr+=(dstr?'L':'M')+px+' '+py+' '; area+='L'+px+' '+py+' '; });
-    area+='L'+X(dd.cycles[dd.cycles.length-1].t).toFixed(1)+' '+y(0).toFixed(1)+' Z';
-    add(svg,'path',{d:area,fill:color,opacity:areaOp});
-    add(svg,'path',{d:dstr,fill:'none',stroke:color,'stroke-width':1.8});
+  /* ---- IOB / COB strip ---- */
+  const I0=T1+GAP2, I1=I0+IC_H;
+  if(dd.cycles.length){
+    const scaleIob=v=>v>0?v*8:v*9;   /* the app's CobIobChart weighting */
+    const iobS=dd.cycles.map(c=>scaleIob(c.iob)), cobS=dd.cycles.map(c=>c.cob||0);
+    const mx=Math.max(16,...iobS,...cobS)*1.1, mn=Math.min(0,...iobS)*1.1;
+    const yi=v=>I1-((v-mn)/(mx-mn))*(IC_H-6);
+    s+=`<line x1="${PADL}" x2="${plotR}" y1="${yi(0).toFixed(1)}" y2="${yi(0).toFixed(1)}" stroke="var(--axis)" stroke-width="1"/>`;
+    const series=(vals,color)=>{
+      let ln='', ar=`M${X(dd.cycles[0].t).toFixed(1)} ${yi(0).toFixed(1)} `;
+      dd.cycles.forEach((c,i)=>{ const px=X(c.t).toFixed(1), py=yi(vals[i]).toFixed(1);
+        ln+=(ln?'L':'M')+px+' '+py+' '; ar+='L'+px+' '+py+' '; });
+      ar+=`L${X(dd.cycles[dd.cycles.length-1].t).toFixed(1)} ${yi(0).toFixed(1)} Z`;
+      s+=`<path d="${ar}" fill="${color}" opacity=".12"/><path d="${ln}" fill="none" stroke="${color}" stroke-width="1.7"/>`;
+    };
+    series(cobS,'var(--cobline)');
+    series(iobS,'var(--iobline)');
+    if(selCycle){
+      const x=X(selCycle.t);
+      s+=`<circle cx="${x.toFixed(1)}" cy="${yi(scaleIob(selCycle.iob)).toFixed(1)}" r="4" fill="var(--iobline)" opacity=".9"/>`;
+      s+=`<circle cx="${x.toFixed(1)}" cy="${yi(selCycle.cob||0).toFixed(1)}" r="4" fill="var(--cobline)" opacity=".9"/>`;
+    }
+    s+=`<text x="${plotR+7}" y="${(I0+8)}" fill="var(--iobline)" style="font:600 9px ui-monospace,Menlo,monospace">IOB</text>`;
+    s+=`<text x="${plotR+7}" y="${(I0+19)}" fill="var(--cobline)" style="font:600 9px ui-monospace,Menlo,monospace">COB</text>`;
   }
-  series(cobS,css('--cobline'),.10);
-  series(iobS,css('--iobline'),.10);
-  if(selCycle){
-    const x=X(selCycle.t);
-    add(svg,'line',{x1:x,x2:x,y1:0,y2:ha,stroke:css('--sel'),'stroke-width':1,opacity:.5,'stroke-dasharray':'2 3'});
-    add(svg,'circle',{cx:x,cy:y(scaleIob(selCycle.iob)),r:4,fill:css('--iobline'),opacity:.85});
-    add(svg,'circle',{cx:x,cy:y(selCycle.cob||0),r:4,fill:css('--cobline'),opacity:.85});
+  /* hover guide line */
+  s+=`<line id="hoverX" x1="-9" x2="-9" y1="0" y2="${gridBot}" stroke="var(--muted)" stroke-width="1" opacity=".6" pointer-events="none"/>`;
+
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox',`0 0 ${w} ${SVG_H}`);
+  svg.setAttribute('width',w); svg.setAttribute('height',SVG_H);
+  svg.setAttribute('role','img');
+  svg.setAttribute('aria-label','glucose and insulin delivery for the day; click to inspect a loop cycle');
+  svg.innerHTML=s;
+  chartWrap.appendChild(svg);
+  if(!dd.sgv.length&&!dd.cycles.length){
+    const e=document.createElement('div'); e.className='chartempty';
+    e.textContent=fetching?'loading…':'no data for this day'; chartWrap.appendChild(e);
   }
-  addHoverLine(svg,ha);
-  attachHover(svg,dd,'I');
+  attachChart(svg,dd,w);
+  renderLegend();
 }
 
-const LIMROWS=[
- {key:'guard', label:'hypo guard', c:'--lo'},
- {key:'zero', label:'forecast < target', c:'--zt'},
- {key:'maxbolus', label:'SMB limited', c:'--hi'},
- {key:'smbwait', label:'SMB interval', c:'--smbwait'},
- {key:'maxbasal', label:'basal limited', c:'--serious'},
-];
-function renderLimits(dd,w){
-  const wantsNothing = c => !((c.req||0)>0.01);
-  const ALLROWS=[
-    {key:'idle',label:'no insulin needed',c:'--muted',op:.35,
-     test:(c,keys)=>keys.length===0 && wantsNothing(c)},
-    {key:'none',label:'unrestricted',c:'--good',op:.6,
-     test:(c,keys)=>keys.length===0 && !wantsNothing(c)},
-    ...LIMROWS];
-  const rowH=12, h=ALLROWS.length*rowH+16;
-  boxL.querySelectorAll('svg').forEach(e=>e.remove());
-  const svg=svgEl(w,h); boxL.appendChild(svg);
-  const counts={};
-  ALLROWS.forEach((row,i)=>{
-    counts[row.key]=0;
-    const yy=i*rowH;
-    const runs=[]; let run=null;
-    dd.cycles.forEach((c,j)=>{
-      const keys=limitKeys(c);
-      const active = row.test ? row.test(c,keys) : keys.includes(row.key);
-      if(active) counts[row.key]++;
-      const next = j+1<dd.cycles.length ? dd.cycles[j+1].t : Math.min(c.t+300,dd.b);
-      const end = Math.min(next, c.t+600, dd.b);
-      if(active){
-        if(run && c.t-run.end<=1) run.end=end;
-        else { run={start:c.t,end}; runs.push(run); }
-      } else run=null;
-    });
-    for(const r of runs)
-      add(svg,'rect',{x:X(r.start),y:yy,width:Math.max(1.5,X(r.end)-X(r.start)),height:rowH,
-        fill:css(row.c),opacity:row.op||.9});
-  });
-  /* één kader + hairlines tussen de banen */
-  for(let i=1;i<ALLROWS.length;i++)
-    add(svg,'line',{x1:ML,x2:w-MR,y1:i*rowH,y2:i*rowH,stroke:css('--surface'),'stroke-width':1});
-  add(svg,'rect',{x:ML,y:0,width:w-ML-MR,height:ALLROWS.length*rowH,rx:2,fill:'none',
-    stroke:css('--grid'),'stroke-width':1});
-  document.getElementById('limlegend').innerHTML = ALLROWS.map(r=>
-    `<span><i style="background:var(${r.c});opacity:${r.op?r.op+.2:1}"></i>${r.label} <span style="color:var(--muted)">${counts[r.key]}&times;</span></span>`).join('');
-  for(let hr=0;dd.a+hr*3600<=dd.b+(dd.ext||0);hr+=2){ const x=X(dd.a+hr*3600);
-    add(svg,'text',{x,y:h-4,'text-anchor':'middle',fill:css('--muted'),style:'font:10px ui-monospace,Menlo,monospace'},String(hr).padStart(2,'0')); }
-  if(selCycle) add(svg,'line',{x1:X(selCycle.t),x2:X(selCycle.t),y1:0,y2:ALLROWS.length*rowH,stroke:css('--sel'),'stroke-width':1,opacity:.6,'stroke-dasharray':'2 3'});
-  addHoverLine(svg,ALLROWS.length*rowH);
-  attachHover(svg,dd,'L');
+function renderLegend(){
+  const li=(sw,txt)=>`<span class="li">${sw}${txt}</span>`;
+  let h= li('<span class="bx" style="background:rgba(30,150,252,.35);border:1px solid var(--insulin)"></span>','temp basal')
+       + li('<span class="sw" style="border-color:var(--insulin);border-top-style:dashed"></span>','schedule')
+       + li('<span style="color:var(--insulin)">▼</span>','bolus / SMB')
+       + li('<span style="color:var(--carb)">▲</span>','carbs')
+       + li('<span class="sw" style="border-color:var(--iobline)"></span>','IOB')
+       + li('<span class="sw" style="border-color:var(--cobline)"></span>','COB')
+       + li('<span class="sw" style="border-color:var(--ov)"></span>','override');
+  if(selCycle) h+= li('','forecast:')
+       + li('<span class="sw" style="border-color:var(--iob)"></span>','IOB')
+       + li('<span class="sw" style="border-color:var(--zt);border-top-style:dashed"></span>','ZT')
+       + li('<span class="sw" style="border-color:var(--cob)"></span>','COB')
+       + li('<span class="sw" style="border-color:var(--uam)"></span>','UAM');
+  document.getElementById('legend').innerHTML=h;
 }
 
-/* ---------- hover & click ---------- *//* ---------- hover & click ---------- */
-function nearestSgv(dd,t){ let best=null,bd=1e12; for(const e of dd.sgv){const d=Math.abs(e[0]-t); if(d<bd){bd=d;best=e;}} return bd<900?best:null; }
-function nearestCycle(dd,t){ let best=null,bd=1e12; for(const c of dd.cycles){const d=Math.abs(c.t-t); if(d<bd){bd=d;best=c;}} return best; }
-function rateAt(dd,t){ for(const s of dd.segs) if(t>=s.a&&t<s.b) return s; return null; }
-
-let hoverLines=[];
-function addHoverLine(svg,h){
-  const l=add(svg,'line',{x1:-10,x2:-10,y1:0,y2:h,stroke:css('--muted'),'stroke-width':1,opacity:.6,'pointer-events':'none'});
-  hoverLines.push(l); return l;
-}
 const COARSE=matchMedia('(pointer:coarse)').matches;
-function attachHover(svg,dd,which){
+function attachChart(svg,dd,w){
   svg.style.cursor='pointer';
+  const hx=()=>svg.querySelector('#hoverX');
   svg.addEventListener('mousemove',ev=>{
     if(COARSE) return;
     const r=svg.getBoundingClientRect();
-    const px=ev.clientX-r.left, w=r.width;
-    if(px<ML||px>w-MR){tip.style.display='none';hoverLines.forEach(l=>{l.setAttribute('x1',-10);l.setAttribute('x2',-10);});return;}
-    const t=dd.a+(px-ML)/(w-ML-MR)*86400;
+    const px=(ev.clientX-r.left)*(w/r.width);
+    if(px<PADL||px>w-PADR){ dtip.style.display='none'; const l=hx(); if(l){l.setAttribute('x1',-9);l.setAttribute('x2',-9);} return; }
+    const t=dd.a+(px-PADL)/(w-PADL-PADR)*(dd.b-dd.a);
     const c=nearestCycle(dd,t);
-    if(!c){tip.style.display='none';return;}
-    const hx=X(c.t);
-    hoverLines.forEach(l=>{l.setAttribute('x1',hx);l.setAttribute('x2',hx);});
+    if(!c){ dtip.style.display='none'; return; }
+    const cx=X(c.t); const l=hx(); if(l){l.setAttribute('x1',cx);l.setAttribute('x2',cx);}
     const seg=rateAt(dd,c.t);
-    const bgcol=c.bg<70?'--bglow':c.bg>180?'--bghigh':'--bgin';
     let html=`<b>${hhmm(c.t)}</b> — loop cycle`;
-    html+=`<br><span style="color:var(${bgcol})">●</span> glucose <b>${fBG(M(c.bg))}</b> ${bgUnit()}`;
+    html+=`<br><span style="color:${bgCol(c.bg)}">●</span> glucose <b>${fBG(M(c.bg))}</b> ${bgUnit()}`;
     if(seg) html+=`<br><span style="color:var(--insulin)">●</span> basal <b>${f2(seg.rate)}</b> U/h ${seg.temp?'(temp)':'(scheduled)'}`;
     html+=`<br><span style="color:var(--iobline)">●</span> IOB <b>${f2(c.iob)}</b> U · <span style="color:var(--cobline)">●</span> COB <b>${c.cob||0}</b> g`;
-    const lk=limitKeys(c);
-    if(lk.length) html+=`<br>${lk.map(k=>{const r=LIMROWS.find(r=>r.key===k);return `<span style="color:var(${r?r.c:'--muted'})">●</span> ${r?r.label:k}`;}).join(' · ')}`;
-    tip.innerHTML=html;
-    tip.style.display='block';
-    const gb=boxG.getBoundingClientRect();
-    let lx=hx+14; if(lx>gb.width-180) lx=hx-170;
-    tip.style.left=lx+'px';
-    tip.style.top=Math.max(0,(ev.clientY-gb.top+12))+'px';
+    dtip.innerHTML=html; dtip.style.display='block';
+    const gb=chartWrap.getBoundingClientRect();
+    const sx=cx*(r.width/w);
+    dtip.style.left=(sx+16>gb.width-175? sx-172 : sx+16)+'px';
+    dtip.style.top=Math.max(0,ev.clientY-gb.top+14)+'px';
   });
-  svg.addEventListener('mouseleave',()=>{tip.style.display='none';
-    hoverLines.forEach(l=>{l.setAttribute('x1',-10);l.setAttribute('x2',-10);});});
+  svg.addEventListener('mouseleave',()=>{ dtip.style.display='none';
+    const l=hx(); if(l){l.setAttribute('x1',-9);l.setAttribute('x2',-9);} });
   svg.addEventListener('click',ev=>{
     const r=svg.getBoundingClientRect();
-    const px=ev.clientX-r.left, w=r.width;
-    const t=dd.a+(px-ML)/(w-ML-MR)*86400;
+    const px=(ev.clientX-r.left)*(w/r.width);
+    const t=dd.a+(px-PADL)/(w-PADL-PADR)*(dd.b-dd.a);
     const c=nearestCycle(dd,t);
-    if(c){ selCycle=c; setDeep(c); renderAll(false); tip.style.display='none';
-      if(matchMedia('(max-width:1080px)').matches) panel.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: no-preference)').matches?'smooth':'auto'});
+    if(c){ selCycle=c; setDeep(c); renderAll(false); dtip.style.display='none';
+      if(matchMedia('(max-width:980px)').matches)
+        document.getElementById('panel').scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: no-preference)').matches?'smooth':'auto'});
     }
   });
 }
 
-/* keyboard nav */
-let stepping=false;
-async function stepCycle(dir){
-  if(stepping) return;
-  const dd=dayData(curDay);
-  const i=selCycle?dd.cycles.indexOf(selCycle):-1;
-  if(i>=0){
-    const j=i+dir;
-    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; setDeep(selCycle); renderAll(false); return; }
-  } else if(dd.cycles.length){ /* nog niets geselecteerd: begin bij het laatste rondje */
-    selCycle=dd.cycles[dd.cycles.length-1]; setDeep(selCycle); renderAll(false); return;
-  }
-  /* voorbij de dagrand: door naar de aangrenzende dag */
-  const nd=dir>0?nextDay(curDay):prevDay(curDay);
-  if(!LIVE && !days.includes(nd)) return;
-  if(LIVE && nd>todayStart()) return;
-  stepping=true;
-  try{
-    selCycle=null;
-    await selectDay(nd);
-    const dd2=dayData(curDay);
-    if(dd2.cycles.length){
-      selCycle = dir>0 ? dd2.cycles[0] : dd2.cycles[dd2.cycles.length-1];
-      setDeep(selCycle); renderAll(false);
-    }
-  } finally { stepping=false; }
+/* ============================================================
+   SNAPSHOT PANEL — what Trio showed at that decision moment
+   ============================================================ */
+const panel=document.getElementById('panel');
+
+function sgvTrend(dd,t){
+  const pts=dd.sgv.filter(e=>e[0]<=t+30&&e[0]>=t-900);
+  if(pts.length<2) return null;
+  const a=pts[pts.length-2], b=pts[pts.length-1];
+  const dt=(b[0]-a[0])/300; if(dt<=0) return null;
+  const d5=(b[1]-a[1])/dt; /* mg/dL per 5 min */
+  const arrow=d5>=10?'↑':d5>=5?'↗':d5>-5?'→':d5>-10?'↘':'↓';
+  return {arrow,delta:M(d5)};
 }
-document.addEventListener('keydown',ev=>{
-  if(ev.target.matches('input,textarea,select')) return;
-  if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
-  ev.preventDefault();
-  stepCycle(ev.key==='ArrowLeft'?-1:1);
+
+/* --- forecast chart: ~45 min of real readings, then the four curves --- */
+let FC=null;
+function fcDefaultRo(){
+  const ro=document.getElementById('fcro');
+  if(ro) ro.innerHTML=`<span style="color:var(--muted)">forecast · <span style="color:var(--txt-iob)">IOB</span> <span style="color:var(--txt-zt)">ZT</span> <span style="color:var(--txt-cob)">COB</span> <span style="color:var(--txt-uam)">UAM</span> · <span style="color:var(--txt-good)">– – target</span></span>`;
+}
+function renderForecast(c,dd,thr){
+  const fcEl=document.getElementById('fc'); if(!fcEl) return;
+  FC=null;
+  if(!c||!c.pred){ fcEl.innerHTML=''; return; }
+  const pr=c.pred, keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
+  if(!keys.length){ fcEl.innerHTML=''; return; }
+  const W=Math.max(300,fcEl.clientWidth||340), H=170, PL=6, PR=34, PT=10, PB=18;
+  const BACK=45*60, AHEAD=150*60; /* like the app: forecasts capped at 2.5 h */
+  const ta=c.t-BACK, tb=c.t+AHEAD;
+  const x=t=>PL+(t-ta)/(tb-ta)*(W-PL-PR);
+  const real=dd.sgv.filter(e=>e[0]>=ta&&e[0]<=c.t);
+  const tgt=c.tgt||(isMmol()?6.1:110);
+  let mn=Math.min(thr,...real.map(e=>M(e[1]))), mx=Math.max(tgt,M(c.bg),...real.map(e=>M(e[1])));
+  const maxI=Math.floor(AHEAD/300);
+  for(const k of keys) pr[k].forEach((v,i)=>{ if(i<=maxI){ const m=M(v); if(m<mn)mn=m; if(m>mx)mx=m; } });
+  const pad=Math.max((mx-mn)*0.1,isMmol()?0.4:7); mn-=pad; mx+=pad;
+  const y=v=>H-PB-((Math.max(mn,Math.min(mx,v))-mn)/(mx-mn))*(H-PT-PB);
+  let s='';
+  /* in-range band + gridlines w/ right labels */
+  const b0=y(Math.min(mx,M(180))), b1=y(Math.max(mn,M(70)));
+  if(b1>b0) s+=`<rect x="${PL}" y="${b0.toFixed(1)}" width="${(W-PL-PR)}" height="${(b1-b0).toFixed(1)}" fill="var(--band)"/>`;
+  const steps=isMmol()?[1,2,4]:[20,40,80];
+  let st=steps[steps.length-1]; for(const q of steps){ if(q/(mx-mn)*(H-PT-PB)>=26){ st=q; break; } }
+  for(let g=Math.ceil(mn/st)*st; g<mx; g+=st){
+    s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--grid)" stroke-width=".8" stroke-dasharray="2 4"/>`;
+    s+=`<text x="${W-PR+6}" y="${(y(g)+3.5).toFixed(1)}" fill="var(--muted)" style="font:10px ui-monospace,Menlo,monospace">${+g.toFixed(1)}</text>`;
+  }
+  /* hour ticks */
+  for(let t=Math.ceil(ta/3600)*3600; t<tb; t+=3600)
+    s+=`<text x="${x(t).toFixed(1)}" y="${H-5}" text-anchor="middle" fill="var(--muted)" style="font:9.5px ui-monospace,Menlo,monospace">${hhmm(t)}</text>`;
+  /* target + threshold */
+  s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(tgt).toFixed(1)}" y2="${y(tgt).toFixed(1)}" stroke="var(--good)" stroke-width="1" stroke-dasharray="4 3" opacity=".8"/>`;
+  s+=`<line x1="${PL}" x2="${W-PR}" y1="${y(thr).toFixed(1)}" y2="${y(thr).toFixed(1)}" stroke="var(--lo)" stroke-width="1" stroke-dasharray="3 3" opacity=".7"/>`;
+  s+=`<text x="${PL+2}" y="${(y(thr)+11).toFixed(1)}" fill="var(--txt-lo)" paint-order="stroke" stroke="var(--surface)" stroke-width="2.5" style="font:600 9px ui-monospace,Menlo,monospace" opacity=".9">threshold ${fBG(thr)}</text>`;
+  /* now divider */
+  s+=`<line x1="${x(c.t).toFixed(1)}" x2="${x(c.t).toFixed(1)}" y1="${PT-4}" y2="${H-PB}" stroke="var(--axis)" stroke-width="1.2" stroke-dasharray="3 3"/>`;
+  /* forecast curves */
+  for(const k of keys){
+    let d='';
+    pr[k].forEach((v,i)=>{ if(i>maxI) return; d+=(d?'L':'M')+x(c.t+i*300).toFixed(1)+' '+y(M(v)).toFixed(1)+' '; });
+    s+=`<path d="${d}" fill="none" stroke="var(--${k.toLowerCase()})" stroke-width="1.8" opacity=".92"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`;
+  }
+  /* real readings + the decision point */
+  for(const e of real) s+=`<circle cx="${x(e[0]).toFixed(1)}" cy="${y(M(e[1])).toFixed(1)}" r="2.1" fill="${bgCol(e[1])}"/>`;
+  s+=`<circle cx="${x(c.t).toFixed(1)}" cy="${y(M(c.bg)).toFixed(1)}" r="4.4" fill="none" stroke="var(--sel)" stroke-width="1.6"/>`;
+  s+=`<line id="fcX" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7" pointer-events="none"/>`;
+  fcEl.innerHTML=`<svg id="fcsvg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:100%;height:auto" role="img" aria-label="recent glucose and forecast curves">${s}</svg>`;
+  FC={t0:c.t,ta,tb,W,PL,PR,pr,maxI,dd};
+  fcDefaultRo();
+}
+panel.addEventListener('mousemove',ev=>{
+  const svg=ev.target.closest&&ev.target.closest('#fcsvg');
+  const ro=document.getElementById('fcro');
+  if(!svg||!FC){ if(ro&&ro.dataset.on){ delete ro.dataset.on; fcDefaultRo(); } return; }
+  const r=svg.getBoundingClientRect();
+  const px=(ev.clientX-r.left)*(FC.W/r.width);
+  const t=FC.ta+(px-FC.PL)/(FC.W-FC.PL-FC.PR)*(FC.tb-FC.ta);
+  const l=svg.querySelector('#fcX');
+  const parts=[];
+  if(t<=FC.t0){
+    const e=nearestSgv(FC.dd,t);
+    if(e){ parts.push(`<b>${hhmm(e[0])}</b>`); parts.push(`<span style="color:${bgCol(e[1])}">BG ${fBG(M(e[1]))}</span>`);
+      if(l){const xx=FC.PL+(e[0]-FC.ta)/(FC.tb-FC.ta)*(FC.W-FC.PL-FC.PR); l.setAttribute('x1',xx);l.setAttribute('x2',xx);} }
+  } else {
+    const i=Math.max(0,Math.min(FC.maxI,Math.round((t-FC.t0)/300)));
+    if(l){const xx=FC.PL+((FC.t0+i*300)-FC.ta)/(FC.tb-FC.ta)*(FC.W-FC.PL-FC.PR); l.setAttribute('x1',xx);l.setAttribute('x2',xx);}
+    parts.push(`<b>${hhmm(FC.t0+i*300)}</b> (+${i*5}m)`);
+    const tc={IOB:'--txt-iob',ZT:'--txt-zt',COB:'--txt-cob',UAM:'--txt-uam'};
+    for(const k of ['IOB','ZT','COB','UAM']) if(FC.pr[k]&&FC.pr[k][i]!=null)
+      parts.push(`<span style="color:var(${tc[k]})">${k} ${fBG(M(FC.pr[k][i]))}</span>`);
+  }
+  if(ro&&parts.length){ ro.innerHTML=parts.join(' · '); ro.dataset.on='1'; }
 });
 
-/* ---------- panel ---------- */
-/* ---------- the algorithm trace: panel = pipeline + explanations + source ---------- */
+/* ---------- the algorithm trace: steps + explanations + source ---------- */
 const openSteps=new Set();
 const GHB='https://github.com/nightscout/trio-oref/blob/main/lib/';
 const SRC={
@@ -808,294 +952,7 @@ function vchips(list){ return '<div class="vrow">'+list.map(v=>{
 function srcBlock(k){ const x=SRC[k];
   return `<details class="src"><summary>source · ${x.loc}</summary><pre>${x.code.replace(/</g,'&lt;')}</pre><a href="${GHB}${x.gh}" target="_blank" rel="noopener">view in nightscout/trio-oref ↗</a></details>`; }
 const dash='—';
-/* ---- forecast-fan: één gedeelde renderer voor hoofdgrafiek én sparkline ---- */
-const FANCOL={IOB:'--iob',ZT:'--zt',COB:'--cob',UAM:'--uam'};
-/* kandidaat-punten (min + eindpunt per curve) en beslisswaarden (guard/minPred/ebg).
-   Een besliswaarde matcht een curvepunt, of ligt als blend TUSSEN twee bronpunten
-   (srcs), of zweeft bij het dichtstbijzijnde kandidaat-punt. Alles in display-units. */
-function fanPoints(c){
-  if(!c||!c.pred) return null;
-  const p=parseReason(c), pr=c.pred, tol=isMmol()?0.16:3;
-  const minI=(k,from)=>{ const a=pr[k]; if(!a||a.length<2) return null;
-    let mi=Math.min(from||0,a.length-1); for(let i=mi;i<a.length;i++) if(a[i]<a[mi]) mi=i;
-    return {k,i:mi,v:M(a[mi])}; };
-  const endI=k=>{ const a=pr[k]; if(!a||a.length<2) return null; return {k,i:a.length-1,v:M(a[a.length-1])}; };
-  const mins={}, ends={};
-  for(const k of ['IOB','ZT','COB','UAM']){ const m=minI(k,0); if(m) mins[k]=m; const e=endI(k); if(e) ends[k]=e; }
-  function resolve(val,cands,noBlend){
-    let best=null;
-    for(const x of cands){ const d=Math.abs(x.v-val); if(d<tol&&(!best||d<best.d)) best={pt:x,d}; }
-    if(best) return {i:best.pt.i,v:best.pt.v,k:best.pt.k,srcs:[]};
-    let lo=null,hi=null; /* blend: omsluitend paar → punt op de lijn tussen beide bronnen */
-    if(!noBlend) for(const x of cands){ if(x.v<=val&&(!lo||x.v>lo.v)) lo=x; if(x.v>=val&&(!hi||x.v<hi.v)) hi=x; }
-    if(lo&&hi&&hi.v>lo.v){
-      const f=(val-lo.v)/(hi.v-lo.v);
-      return {i:lo.i+(hi.i-lo.i)*f,v:val,k:null,srcs:[lo,hi],f};
-    }
-    let near=null; /* geen omsluitend paar: zweef naast het dichtstbijzijnde punt */
-    for(const x of cands) if(!near||Math.abs(x.v-val)<Math.abs(near.v-val)) near=x;
-    return near?{i:near.i,v:val,k:null,srcs:[near]}:null;
-  }
-  const decisions=[];
-  const guardFired=p.limits.some(l=>l.key==='guard');
-  if(p.minGuard!=null){
-    const r=resolve(p.minGuard,['UAM','COB','IOB'].map(k=>mins[k]).filter(Boolean));
-    if(r) decisions.push({kind:'guard',label:'minGuardBG',val:p.minGuard,fired:guardFired,...r});
-  }
-  if(p.minPred!=null && !(p.minGuard!=null&&Math.abs(p.minPred-p.minGuard)<tol)){
-    /* minPredBG telt pas mee na de insulinepiek-wachttijd: ~90 m (60 m voor UAM) */
-    const r=resolve(p.minPred,[minI('IOB',18),minI('COB',18),minI('UAM',12)].filter(Boolean));
-    if(r) decisions.push({kind:'minpred',label:'minPredBG',val:p.minPred,...r});
-  }
-  if(c.ebg!=null){
-    /* ebg = max(formule, eindpunten): nooit een blend — bij geen match zweven bij het dichtstbijzijnde eindpunt */
-    const r=resolve(M(c.ebg),['UAM','COB','ZT','IOB'].map(k=>ends[k]).filter(Boolean),true);
-    if(r) decisions.push({kind:'ebg',label:'eventualBG',val:M(c.ebg),...r});
-  }
-  return {mins,ends,decisions};
-}
-/* labels zonder overlap: 8 kandidaat-posities, botsingsscore tegen geplaatste labels + punten */
-function layoutLabels(items,b){
-  const fs=b.fs, cw=fs*0.62, hh=fs+2, placed=(b.avoid||[]).slice(), out=[];
-  const C=[[7,3,'start'],[7,-6,'start'],[7,12,'start'],[-7,3,'end'],[-7,-6,'end'],[-7,12,'end'],[0,-9,'middle'],[0,fs+8,'middle']];
-  const inter=(a,q)=>Math.max(0,Math.min(a.x+a.w,q.x+q.w)-Math.max(a.x,q.x))*Math.max(0,Math.min(a.y+a.h,q.y+q.h)-Math.max(a.y,q.y));
-  for(const it of items){
-    const w=it.text.length*cw;
-    let best=null;
-    for(const [dx,dy,anchor] of C){
-      const lx=it.x+dx, ly=it.y+dy;
-      const rx=anchor==='end'?lx-w:anchor==='middle'?lx-w/2:lx;
-      const r={x:rx,y:ly-fs+1,w,h:hh};
-      if(r.x<b.x0||r.x+r.w>b.x1||r.y<b.y0||r.y+r.h>b.y1) continue;
-      const ov=placed.reduce((a,q)=>a+inter(r,q),0);
-      if(!best||ov<best.ov){ best={lx,ly,anchor,r,ov}; if(!ov) break; }
-    }
-    if(!best){ const lx=it.x+7,ly=it.y+3; best={lx,ly,anchor:'start',r:{x:lx,y:ly-fs+1,w:it.text.length*cw,h:hh},ov:0}; }
-    placed.push(best.r); out.push({...it,lx:best.lx,ly:best.ly,anchor:best.anchor});
-  }
-  return out;
-}
-/* env: {xi:i→px, y:v→py (display-units), lo/hi: klembereik, s: schaal, fs: labelfont,
-   maxI: laatste zichtbare tick, b:{x0,y0,x1,y1}: labelgrenzen} → lijst tekenspecs */
-function drawFan(c,env){
-  const pr=c.pred||{}, fp=env.fp||fanPoints(c), specs=[];
-  if(!fp) return specs;
-  const P=(i,v)=>[env.xi(i),env.y(Math.max(env.lo,Math.min(env.hi,v)))];
-  const maxI=env.maxI??1e9, s=env.s;
-  for(const k of ['ZT','COB','UAM','IOB']){
-    const a=pr[k]; if(!a||a.length<2) continue;
-    let d='';
-    a.forEach((v,i)=>{ if(i>maxI) return; const [px,py]=P(i,M(v)); d+=(d?'L':'M')+px.toFixed(1)+' '+py.toFixed(1)+' '; });
-    const sp={t:'path',d,fill:'none',stroke:`var(${FANCOL[k]})`,'stroke-width':2*s,opacity:.9};
-    if(k==='ZT') sp['stroke-dasharray']=`${3*s} ${3*s}`;
-    specs.push(sp);
-  }
-  const avoid=(env.avoid||[]).slice();
-  const dot=(pt,r)=>{ if(pt.i>maxI) return; const [px,py]=P(pt.i,pt.v);
-    specs.push({t:'circle',cx:px,cy:py,r,fill:`var(${FANCOL[pt.k]})`,stroke:'var(--surface)','stroke-width':s});
-    avoid.push({x:px-r-1,y:py-r-1,w:2*(r+1),h:2*(r+1)}); };
-  for(const k in fp.mins) dot(fp.mins[k],2.1*s);
-  for(const k in fp.ends) dot(fp.ends[k],2.1*s);
-  const labels=[];
-  for(const dc of fp.decisions){
-    if(dc.i>maxI) continue;
-    const [px,py]=P(dc.i,dc.v);
-    for(const src of dc.srcs){ const [sx,sy]=P(src.i,src.v);
-      specs.push({t:'line',x1:sx,y1:sy,x2:px,y2:py,stroke:'var(--muted)','stroke-width':s,'stroke-dasharray':`${2*s} ${2*s}`,opacity:.85}); }
-    const col=dc.k?`var(${FANCOL[dc.k]})`:'var(--ink2)';
-    if(dc.kind==='ebg') specs.push({t:'circle',cx:px,cy:py,r:4*s,fill:col,stroke:'var(--surface)','stroke-width':1.5*s});
-    else if(dc.kind==='guard') specs.push({t:'circle',cx:px,cy:py,r:5*s,fill:'none',stroke:`var(${dc.fired?'--lo':'--muted'})`,'stroke-width':2*s});
-    else specs.push({t:'circle',cx:px,cy:py,r:4.5*s,fill:'none',stroke:col,'stroke-width':1.6*s,'stroke-dasharray':`${2*s} ${2*s}`});
-    avoid.push({x:px-6*s,y:py-6*s,w:12*s,h:12*s});
-    labels.push({x:px,y:py,text:`${dc.label} ${fBG(dc.val)}`,fill:dc.kind==='guard'&&dc.fired?'var(--txt-lo)':'var(--ink2)'});
-  }
-  for(const L of layoutLabels(labels,{...env.b,fs:env.fs,avoid}))
-    specs.push({t:'text',x:L.lx,y:L.ly,'text-anchor':L.anchor,fill:L.fill,'paint-order':'stroke',stroke:'var(--surface)','stroke-width':3*s,
-      style:`font:600 ${env.fs}px ui-monospace,Menlo,monospace`,_:L.text});
-  return specs;
-}
-function fanSpecStr(specs){ return specs.map(sp=>{
-  const {t,_,...at}=sp;
-  const a=Object.entries(at).map(([k,v])=>`${k}="${String(v).replace(/"/g,'&quot;')}"`).join(' ');
-  return _!=null?`<${t} ${a}>${_}</${t}>`:`<${t} ${a}/>`;
-}).join(''); }
-/* 1-D anti-overlap: spreidt y-posities minstens gap uiteen binnen [lo,hi] */
-function dodge1d(items,gap,lo,hi){
-  const ord=items.map((_,i)=>i).sort((a,b)=>items[a].y-items[b].y);
-  let prev=lo-gap;
-  for(const i of ord){ const v=Math.max(items[i].y,prev+gap); items[i].cy=v; prev=v; }
-  const last=ord.length?items[ord[ord.length-1]].cy:0;
-  if(last>hi){ let p=hi+gap; for(let j=ord.length-1;j>=0;j--){ const i=ord[j]; const v=Math.min(items[i].cy,p-gap); items[i].cy=v; p=v; } }
-  return items;
-}
-/* consistente markervorm voor grafiek én rail */
-function fanMarker(kind,cx,cy,accent,fired,s){
-  s=s||1; const X=cx.toFixed(1),Y=cy.toFixed(1);
-  if(kind==='ebg') return `<circle cx="${X}" cy="${Y}" r="${(4*s).toFixed(1)}" fill="${accent}" stroke="var(--surface)" stroke-width="${1.4*s}"/>`;
-  if(kind==='guard') return `<circle cx="${X}" cy="${Y}" r="${(5*s).toFixed(1)}" fill="none" stroke="${fired?'var(--lo)':accent}" stroke-width="${2*s}"/>`;
-  return `<circle cx="${X}" cy="${Y}" r="${(4.5*s).toFixed(1)}" fill="none" stroke="${accent}" stroke-width="${1.6*s}" stroke-dasharray="${2*s} ${2*s}"/>`;
-}
-/* mooie gridwaarden: kleinste stap die nog ≥minGap px uit elkaar valt (dus 5 verschijnt als er ruimte is) */
-function niceTicks(mn,mx,mmol,plotH,minGap){
-  const steps=mmol?[1,2,4]:[20,40,80]; plotH=plotH||160; minGap=minGap||22;
-  let step=steps[steps.length-1];
-  for(const s of steps){ if(s/(mx-mn)*plotH>=minGap){ step=s; break; } }
-  const out=[]; for(let g=Math.ceil(mn/step)*step; g<mx; g+=step) out.push(+g.toFixed(2));
-  return out;
-}
-/* een datakwaltiteit-hik in één cyclus mag nooit het hele paneel (en dus de selectie) blokkeren */
-function safeSpark(c,thr){ try{ return sparkline(c,thr); }catch(e){ SPARK=null;
-  return `<div class="pcard" style="color:var(--muted)">forecast chart unavailable for this cycle (${String(e&&e.message||e).replace(/</g,'&lt;')})</div>`; } }
-let SPARK=null;
-function sparkline(c,thr){
-  const pr=c.pred||{}; const keys=['ZT','COB','UAM','IOB'].filter(k=>pr[k]&&pr[k].length>1);
-  if(!keys.length){ SPARK=null; return ''; }
-  const fp=fanPoints(c);
-  /* zo breed als het paneel toelaat (indent teruggewonnen via .sparkwrap); rechts een rail voor afgeleide punten */
-  const W=Math.max(330,Math.min(540,((typeof panel!=='undefined'&&panel&&panel.clientWidth)||360)+4));
-  const railW=106,PL=20,PT=13,PB=17,H=196;
-  const plotR=W-railW, railX=plotR+26;
-  const tgt=c.tgt||(isMmol()?6.1:110);
-  /* de as wordt bepaald door de curves (+ drempel/target) — niet door afgeleide waarden,
-     want die kunnen in extreme (over-insuline) gevallen ver negatief zijn en de as opblazen;
-     zulke chips worden geklemd naar de rand i.p.v. de schaal te verpesten */
-  let dmn=Infinity,dmx=-Infinity;
-  for(const k of keys) for(const v of pr[k]){ const m=M(v); if(m<dmn)dmn=m; if(m>dmx)dmx=m; }
-  if(fp) for(const dc of fp.decisions){ if(dc.val>=dmn-(isMmol()?1:18)&&dc.val<dmn)dmn=dc.val; if(dc.val<=dmx+(isMmol()?1:18)&&dc.val>dmx)dmx=dc.val; }
-  /* drempel én target altijd in beeld voor oriëntatie; verder strak rond de actie */
-  let mn=Math.min(dmn,thr),mx=Math.max(dmx,tgt);
-  const pad=Math.max((mx-mn)*0.07,isMmol()?0.25:4); mn-=pad; mx+=pad;
-  const cl=v=>Math.max(mn,Math.min(mx,v));
-  const y=v=>H-PB-((cl(v)-mn)/(mx-mn))*(H-PT-PB);
-  const n=Math.max(...keys.map(k=>pr[k].length));
-  const x=i=>PL+i/(n-1)*(plotR-PL);
-  SPARK={t0:c.t,n,pr,PL,PR:railW,W,pts:[]};
-  const CN={IOB:'--txt-iob',ZT:'--txt-zt',COB:'--txt-cob',UAM:'--txt-uam'};
-  let out=`<svg class="spark" id="sparksvg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="max-width:100%" role="img" aria-label="forecast curves, next 4 hours">`;
-  /* groene doelband (3.9–10), net als de hoofdgrafiek, voor oriëntatie */
-  const cly=v=>Math.max(PT,Math.min(H-PB,y(v))), bTop=cly(M(180)), bBot=cly(M(70));
-  if(bBot>bTop) out+=`<rect x="${PL}" y="${bTop.toFixed(1)}" width="${(plotR-PL).toFixed(1)}" height="${(bBot-bTop).toFixed(1)}" fill="var(--band)"/>`;
-  for(const g of niceTicks(mn,mx,isMmol(),H-PT-PB,22)){
-    out+=`<line x1="${PL}" x2="${plotR}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--grid)" stroke-width="1"/>`;
-    out+=`<text x="${PL-4}" y="${(y(g)+3).toFixed(1)}" text-anchor="end" fill="var(--muted)" style="font:9.5px ui-monospace,Menlo,monospace">${g}</text>`;
-  }
-  const hrIdx=[]; for(let k=0;k*12<=n-1;k++) hrIdx.push(k*12);
-  if(hrIdx[hrIdx.length-1]!==n-1){ if(x(n-1)-x(hrIdx[hrIdx.length-1])<28) hrIdx.pop(); hrIdx.push(n-1); }
-  hrIdx.forEach((idx,ii)=>{ const xi=x(idx);
-    out+=`<text x="${xi.toFixed(1)}" y="${H-4}" text-anchor="${ii===0?'start':ii===hrIdx.length-1?'end':'middle'}" fill="var(--muted)" style="font:9.5px ui-monospace,Menlo,monospace">${hhmm(c.t+idx*300)}</text>`; });
-  /* target & threshold: label aan de LINKERkant (weg bij de rail-punten) */
-  out+=`<line x1="${PL}" x2="${plotR}" y1="${y(tgt).toFixed(1)}" y2="${y(tgt).toFixed(1)}" stroke="var(--good)" stroke-dasharray="4 3" stroke-width="1" opacity=".85"/>`;
-  out+=`<text x="${(PL+3)}" y="${(y(tgt)-3).toFixed(1)}" text-anchor="start" fill="var(--txt-good)" paint-order="stroke" stroke="var(--surface)" stroke-width="2.5" style="font:600 8.5px ui-monospace,Menlo,monospace">target ${fBG(tgt)}</text>`;
-  out+=`<line x1="${PL}" x2="${plotR}" y1="${y(thr).toFixed(1)}" y2="${y(thr).toFixed(1)}" stroke="var(--lo)" stroke-dasharray="3 3" stroke-width="1" opacity=".75"/>`;
-  out+=`<text x="${(PL+3)}" y="${(y(thr)-3).toFixed(1)}" text-anchor="start" fill="var(--txt-lo)" paint-order="stroke" stroke="var(--surface)" stroke-width="2.5" style="font:600 8.5px ui-monospace,Menlo,monospace">threshold ${fBG(thr)}</text>`;
-  /* curves (lopen tot de rail, niet erin) */
-  for(const k of keys){ let d='';
-    pr[k].forEach((v,i)=>{ d+=(d?'L':'M')+x(i).toFixed(1)+' '+y(M(v)).toFixed(1)+' '; });
-    out+=`<path d="${d}" fill="none" stroke="var(${FANCOL[k]})" stroke-width="1.7" opacity=".92"${k==='ZT'?' stroke-dasharray="3 3"':''}/>`; }
-  /* rail-scheiding */
-  out+=`<line x1="${plotR}" x2="${plotR}" y1="${PT-4}" y2="${H-PB}" stroke="var(--grid)" stroke-width="1" opacity=".8"/>`;
-  const rel=i=>{const m=Math.round(i)*5;return m<60?`+${m}m`:`+${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`;};
-  const head=(g,title,col,i)=>`<div class="pchead"><b style="color:var(${col})">${g} ${title}</b><span>${rel(i)} · ${hhmm(c.t+Math.round(i)*300)}</span></div>`;
-  let hits='';
-  if(fp){
-    /* zichtbare kandidaat-dots op de curves (min + eindpunt), met halo zodat ze altijd leesbaar zijn */
-    const cand=[];
-    for(const k in fp.mins) cand.push({...fp.mins[k],kind:'min'});
-    for(const k in fp.ends) cand.push({...fp.ends[k],kind:'end'});
-    for(const cd of cand){ const px=x(cd.i),py=y(cd.v),acc=`var(${FANCOL[cd.k]})`;
-      out+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3.7" fill="${acc}" stroke="var(--surface)" stroke-width="1.5"/>`;
-      const html=cd.kind==='min'
-        ? head('●',`${cd.k} minimum ${fBG(cd.v)}`,CN[cd.k],cd.i)+(cd.k==='ZT'
-            ?`Lowest point of the zero-temp curve — the “all delivery stops now” floor. It never argues for insulin; it floors the averaged forecast and tempers the UAM dosing minimum.`
-            :`Lowest point of the ${cd.k} curve, counting from <i>now</i>. A candidate for minGuardBG — if the chosen guard minimum dips under threshold ${fBG(thr)}, the hypo guard cuts all insulin.`)
-        : head('●',`${cd.k} endpoint ${fBG(cd.v)}`,CN[cd.k],cd.i)+`Where the ${cd.k} curve lands after 4 h.`+(cd.k==='COB'||cd.k==='UAM'
-            ?` The COB and UAM endpoints can <i>raise</i> eventualBG above naive + deviation.`
-            :cd.k==='IOB'?` Reference: where BG settles on the insulin already delivered alone.`:` Where the no-delivery future settles.`);
-      const j=SPARK.pts.length; SPARK.pts.push({accent:acc,html,hover:`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6.5" fill="${acc}" fill-opacity=".18" stroke="${acc}" stroke-width="1.8"/>`});
-      hits+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="8" fill="transparent" data-pt="${j}"/>`;
-    }
-    /* afgeleide waarden → rail-chips: y = de waarde (betrouwbaar), tijd niet geïmpliceerd; verticaal ontweven */
-    const chips=fp.decisions.map(dc=>{
-      const acc=dc.kind==='guard'&&dc.fired?'var(--lo)':(dc.k?`var(${FANCOL[dc.k]})`:'var(--muted)');
-      const tgts=(dc.srcs.length?dc.srcs:[{k:dc.k,i:dc.i,v:dc.val}]).map(s=>({x:x(s.i),y:y(s.v)}));
-      const two=dc.srcs.length===2,pct=two?Math.round(dc.f*100):null;
-      const src2=two?`Not on any single curve: ≈${100-pct}% ${dc.srcs[0].k} (${fBG(dc.srcs[0].v)}) + ${pct}% ${dc.srcs[1].k} (${fBG(dc.srcs[1].v)}) — it lies on the connector between its two source points. `:'';
-      const near=dc.srcs.length===1?`Logged value; nearest curve point is the ${dc.srcs[0].k} minimum (${fBG(dc.srcs[0].v)}). `:'';
-      let name,html;
-      if(dc.kind==='guard'){ name='minGuardBG';
-        html=head('○',`minGuardBG ${fBG(dc.val)}`,dc.fired?'--txt-lo':(dc.k?CN[dc.k]:'--ink2'),dc.i)
-          +(dc.k?`The ${dc.k} curve’s minimum — the no-wait floor of the guarding curves (mid-meal it’s blended from COB and UAM by carbs left). `:two?src2+`Blend of the COB/UAM guard minima, weighted by how many announced carbs are still left. `:near)
-          +`vs threshold ${fBG(thr)} → ${dc.fired?`<b style="color:var(--txt-lo)">FIRED — zero temp, SMBs blocked</b>`:'passes'}.`;
-      } else if(dc.kind==='minpred'){ name='minPredBG';
-        html=head('◌',`minPredBG ${fBG(dc.val)}`,dc.k?CN[dc.k]:'--ink2',dc.i)
-          +(dc.k?`The ${dc.k} curve’s lowest point <i>after</i> the insulin-peak wait (~90 m; 60 m for UAM) — the dip that insulin already underway will fix is skipped. `
-             :two?src2+`oref blends the post-wait minima, weighted by carbs left and tempered by the ZT floor. `:near)
-          +`Caps dosing: insulinReq = (min(minPredBG, eventualBG) − target) ÷ ISF.`;
-      } else { name='eventualBG';
-        html=head('●',`eventualBG ${fBG(dc.val)}`,dc.k?CN[dc.k]:'--ink2',dc.i)
-          +(dc.k?`Adopted from the ${dc.k} curve’s endpoint — the highest of naive + deviation and the curve endpoints. `
-             :`From the formula naive + deviation — higher than any curve endpoint this cycle. `)
-          +`This is the value compared against target in the next step.`;
-      }
-      return {dc,acc,name,html,tgts,trueY:y(dc.val),y:y(dc.val),fired:dc.kind==='guard'&&dc.fired};
-    });
-    dodge1d(chips,15,PT+4,H-PB-4);
-    for(const ch of chips){
-      /* subtiele leader: rail-chip ↔ werkelijk niveau aan de plotrand, zacht gebogen */
-      out+=`<path d="M ${plotR} ${ch.trueY.toFixed(1)} C ${(plotR+12).toFixed(1)} ${ch.trueY.toFixed(1)}, ${(railX-14).toFixed(1)} ${ch.cy.toFixed(1)}, ${(railX-7).toFixed(1)} ${ch.cy.toFixed(1)}" fill="none" stroke="var(--muted)" stroke-width=".9" opacity=".4"/>`;
-      out+=fanMarker(ch.dc.kind,railX,ch.cy,ch.acc,ch.fired,1.15);
-      out+=`<text x="${(railX+11).toFixed(1)}" y="${(ch.cy+3).toFixed(1)}" fill="${ch.fired?'var(--txt-lo)':'var(--ink2)'}" style="font:600 9.5px ui-monospace,Menlo,monospace">${ch.name}</text>`;
-      /* hover: niveau-geleider + zacht gebogen verbindingen naar de bronpunt(en) */
-      const hv=`<line x1="${PL}" y1="${ch.trueY.toFixed(1)}" x2="${plotR}" y2="${ch.trueY.toFixed(1)}" stroke="var(--muted)" stroke-dasharray="2 3" stroke-width="1" opacity=".55"/>`
-        +ch.tgts.map(t=>`<path d="M ${railX} ${ch.cy.toFixed(1)} C ${(railX-34).toFixed(1)} ${ch.cy.toFixed(1)}, ${(t.x+26).toFixed(1)} ${t.y.toFixed(1)}, ${t.x.toFixed(1)} ${t.y.toFixed(1)}" fill="none" stroke="${ch.acc}" stroke-width="1.5" opacity=".95"/><circle cx="${t.x.toFixed(1)}" cy="${t.y.toFixed(1)}" r="4.5" fill="${ch.acc}" fill-opacity=".2" stroke="${ch.acc}" stroke-width="1.8"/>`).join('')
-        +`<circle cx="${railX}" cy="${ch.cy.toFixed(1)}" r="10" fill="${ch.acc}" fill-opacity=".14" stroke="${ch.acc}" stroke-width="1.5" opacity=".7"/>`;
-      const j=SPARK.pts.length; SPARK.pts.push({accent:ch.acc,html:ch.html,hover:hv});
-      hits+=`<rect x="${(plotR+4).toFixed(1)}" y="${(ch.cy-9).toFixed(1)}" width="${(W-plotR-4).toFixed(1)}" height="18" fill="transparent" data-pt="${j}"/>`;
-    }
-  }
-  out+=`<g id="sparkhover"></g>`;
-  out+=`<line id="sparkx" x1="-9" x2="-9" y1="${PT}" y2="${H-PB}" stroke="var(--muted)" stroke-width="1" opacity=".7" pointer-events="none"/>`;
-  out+=hits+'</svg>';
-  const def=`hover the curves for values · <span style="color:var(--txt-good)">– – target</span> · <span style="color:var(--txt-lo)">– – threshold ${fBG(thr)}</span>`;
-  out+=`<div id="sparkro" data-def="${def.replace(/"/g,'&quot;')}" style="font:10.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;min-height:15px;color:var(--ink2)">${def}</div>`;
-  const pdef=`<span style="color:var(--muted)">hover a dot on a curve, or a value in the rail, to see how it’s determined — dots mark each curve’s minimum &amp; endpoint; the rail holds the values the decision used, at their level.</span>`;
-  out+=`<div id="sparkpt" class="pcard" data-def="${pdef.replace(/"/g,'&quot;')}">${pdef}</div>`;
-  return `<div class="sparkwrap">${out}</div>`;
-}
-panel.addEventListener('mousemove',ev=>{
-  const ro=document.getElementById('sparkro'), card=document.getElementById('sparkpt'), hov=document.getElementById('sparkhover');
-  const svg=ev.target.closest&&ev.target.closest('#sparksvg');
-  if(!svg||!SPARK){
-    if(ro&&ro.dataset.on){ ro.innerHTML=ro.dataset.def; delete ro.dataset.on;
-      const xl=document.getElementById('sparkx'); if(xl){xl.setAttribute('x1',-9);xl.setAttribute('x2',-9);} }
-    if(card&&card.dataset.on){ card.innerHTML=card.dataset.def; card.style.borderLeftColor=''; delete card.dataset.on; delete card.dataset.pt; }
-    if(hov&&hov.dataset.pt){ hov.innerHTML=''; delete hov.dataset.pt; }
-    return;
-  }
-  /* punt onder de muis: connectoren tekenen + kaart vullen; blijft tot een ander punt of tot buiten de svg */
-  const hit=ev.target.closest&&ev.target.closest('[data-pt]');
-  if(hit&&SPARK.pts){
-    const key=hit.dataset.pt, pt=SPARK.pts[+key];
-    if(pt&&card&&card.dataset.pt!==key){ card.innerHTML=pt.html; card.style.borderLeftColor=pt.accent||''; card.dataset.on='1'; card.dataset.pt=key; }
-    if(pt&&hov&&hov.dataset.pt!==key){ hov.innerHTML=pt.hover||''; hov.dataset.pt=key; }
-  } else {
-    if(card&&card.dataset.on){ card.innerHTML=card.dataset.def; card.style.borderLeftColor=''; delete card.dataset.on; delete card.dataset.pt; }
-    if(hov&&hov.dataset.pt){ hov.innerHTML=''; delete hov.dataset.pt; }
-  }
-  const r=svg.getBoundingClientRect();
-  const plPx=SPARK.PL/SPARK.W*r.width, prPx=SPARK.PR/SPARK.W*r.width;
-  const frac=Math.max(0,Math.min(1,(ev.clientX-r.left-plPx)/(r.width-plPx-prPx)));
-  const i=Math.round(frac*(SPARK.n-1));
-  const vx=SPARK.PL+i/(SPARK.n-1)*(SPARK.W-SPARK.PL-SPARK.PR);
-  const xl=svg.querySelector('#sparkx');
-  if(xl){ xl.setAttribute('x1',vx); xl.setAttribute('x2',vx); }
-  const tcol={IOB:'--txt-iob',ZT:'--txt-zt',COB:'--txt-cob',UAM:'--txt-uam'};
-  const parts=[`<b>${hhmm(SPARK.t0+i*300)}</b> (+${i*5}m)`];
-  for(const k of ['IOB','ZT','COB','UAM'])
-    if(SPARK.pr[k]&&SPARK.pr[k][i]!=null)
-      parts.push(`<span style="color:var(${tcol[k]})">${k} ${fBG(M(SPARK.pr[k][i]))}</span>`);
-  if(ro){ ro.innerHTML=parts.join(' · '); ro.dataset.on='1'; }
-});
+
 function buildSteps(c,p){
   const lim = k => c&&p.limits.find(l=>l.key===k);
   const guard=lim('guard'), zero=lim('zero'), capS=lim('maxbolus'), wait=lim('smbwait'), capB=lim('maxbasal');
@@ -1106,7 +963,6 @@ function buildSteps(c,p){
   const F=fBG, F2=f2, mm=v=>fBG(M(v));
   const pr=c?(c.pred||{}):{};
   const minOf=k=>pr[k]?M(Math.min(...pr[k])):null;
-  /* minPredBG: uit de log, anders benaderd uit de curves (gem. van IOB- en UAM/COB-minimum) */
   let minPred=c?p.minPred:null, minApprox=false;
   if(c&&minPred==null){
     const a=minOf('IOB'), b=minOf('UAM')??minOf('COB');
@@ -1115,13 +971,10 @@ function buildSteps(c,p){
   const tgtV=c?(c.tgt||(isMmol()?6.1:110)):null;
   const isfV=c?p.isf:null;
   const sched=c?schedBasal(c.t):null;
-  const thr=(c&&(c.thr??p.thr)) ?? (c&&(c.tgt||null)!=null
-    ? (isMmol()? Math.max(3.3,Math.min(6.7,c.tgt-0.5*(c.tgt-2.2))) : Math.max(60,Math.min(120,c.tgt-0.5*(c.tgt-40))))
-    : (isMmol()?4.4:80));
+  const thr=thrOf(c,p);
   const rows=[];
   const skipAfter = n => exited && n>exited;
   const cy=t=>`\n<span class="cy">» ${t}</span>`;
-  /* alle afgeleide grootheden centraal, zodat elke stap en elke chip ermee kan rekenen */
   const naive=c&&isfV!=null?M(c.bg)-c.iob*isfV:null;
   const gm=c?{IOB:minOf('IOB'),COB:minOf('COB'),UAM:minOf('UAM'),ZT:minOf('ZT')}:{};
   const capVal = capS ? +(capS.why.match(/capped at ([0-9.]+)/)?.[1]??NaN) : null;
@@ -1133,41 +986,41 @@ function buildSteps(c,p){
   const impliedSmbMin=(capVal!=null&&sched>0)?Math.round(capVal/sched*60):null;
   VALS = c ? {
     IOB:F2(c.iob)+' U', COB:(c.cob||0)+' g',
-    autosens:p.autosens!=null?('\u00d7'+p.autosens):'\u2014',
-    ISF:isfV!=null?fBG(isfV):'\u2014', CR:p.cr!=null?(p.cr+' g/U'):'\u2014',
-    TDD:c.tdd!=null?(f1(c.tdd)+' U'):'\u2014',
-    BGI:p.bgi!=null?String(p.bgi):'\u2014', deviation:p.dev!=null?((p.dev>0?'+':'')+p.dev):'\u2014',
-    delta:'\u2014', short_avgdelta:'\u2014',
-    naive_eventualBG:naive!=null?fBG(naive):'\u2014',
-    eventualBG:c.ebg!=null?fBG(M(c.ebg)):'\u2014',
-    minPredBG:minPred!=null?((minApprox?'\u2248':'')+fBG(minPred)):'\u2014',
-    minGuardBG:p.minGuard!=null?fBG(p.minGuard):'\u2014',
+    autosens:p.autosens!=null?('×'+p.autosens):'—',
+    ISF:isfV!=null?fBG(isfV):'—', CR:p.cr!=null?(p.cr+' g/U'):'—',
+    TDD:c.tdd!=null?(f1(c.tdd)+' U'):'—',
+    BGI:p.bgi!=null?String(p.bgi):'—', deviation:p.dev!=null?((p.dev>0?'+':'')+p.dev):'—',
+    delta:'—', short_avgdelta:'—',
+    naive_eventualBG:naive!=null?fBG(naive):'—',
+    eventualBG:c.ebg!=null?fBG(M(c.ebg)):'—',
+    minPredBG:minPred!=null?((minApprox?'≈':'')+fBG(minPred)):'—',
+    minGuardBG:p.minGuard!=null?fBG(p.minGuard):'—',
     threshold:fBG(thr),
-    ZT:gm.ZT!=null?('\u2198'+fBG(gm.ZT)):'\u2014',
-    UAM:gm.UAM!=null?('\u2198'+fBG(gm.UAM)):'\u2014',
-    insulinReq:req!=null?(F2(req)+' U'):'\u2014',
-    maxIOB:'\u2014 (not exported)',
-    maxBolus:capVal!=null?(F2(capVal)+' U'):'\u2014',
-    smb_delivery_ratio:ratioNum!=null?('\u2248'+ratioNum.toFixed(2)):'0.5 (default)',
-    SMBInterval:wait?'waiting':'\u2014',
-    maxSafeBasal:mmB?(mmB[2]+' U/h'):'\u2014',
-    fractionCarbsLeft:impliedF!=null?('\u2248'+impliedF.toFixed(2)):'\u2014',
+    ZT:gm.ZT!=null?('↘'+fBG(gm.ZT)):'—',
+    UAM:gm.UAM!=null?('↘'+fBG(gm.UAM)):'—',
+    insulinReq:req!=null?(F2(req)+' U'):'—',
+    maxIOB:'— (not exported)',
+    maxBolus:capVal!=null?(F2(capVal)+' U'):'—',
+    smb_delivery_ratio:ratioNum!=null?('≈'+ratioNum.toFixed(2)):'0.5 (default)',
+    SMBInterval:wait?'waiting':'—',
+    maxSafeBasal:mmB?(mmB[2]+' U/h'):'—',
+    fractionCarbsLeft:impliedF!=null?('≈'+impliedF.toFixed(2)):'—',
     enacted:c.rec?'yes':'suggested only',
   } : {};
 
-  /* conclusie-blok */
+  /* conclusion */
   let conc='';
   if(c){
-    if(guard) conc=`<div class="conc" style="color:var(--txt-lo);font-size:12.5px;font-weight:600">hypo guard active — all dosing stopped (zero temp)</div>`;
-    else if(zero) conc=`<div class="conc" style="font-size:12.5px"><b style="color:var(--txt-zt)">forecast below target</b> — basal wound down, nothing added</div>`;
+    if(guard) conc=`<div class="conc guard">Hypo guard active — all dosing stopped (zero temp)</div>`;
+    else if(zero) conc=`<div class="conc zero"><b>Forecast below target</b> — basal wound down, nothing added</div>`;
     else if(req!=null&&req>0.01){
       const maxb=Math.max(req,smbGiven,0.01), pct=Math.round(smbGiven/req*100);
       conc=`<div class="conc">
-        <div class="crow"><span class="clbl">needed</span><span class="bar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="cval">${F2(req)} U</span><span class="cpct"></span></div>
-        <div class="crow"><span class="clbl">given now</span><span class="bar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} U</span><span class="cpct">${pct}%</span></div>
-        ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits below</div>`:''}</div>`;
+        <div class="crow"><span class="clbl">needed</span><span class="cbar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="cval">${F2(req)} U</span><span class="cpct"></span></div>
+        <div class="crow"><span class="clbl">given now</span><span class="cbar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} U</span><span class="cpct">${pct}%</span></div>
+        ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits in the steps below</div>`:''}</div>`;
     }
-    else conc=`<div class="conc" style="font-size:12.5px;color:var(--ink2)">no extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
+    else conc=`<div class="conc" style="color:var(--ink2)">No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
   }
 
   /* 1 — inputs */
@@ -1192,8 +1045,7 @@ function buildSteps(c,p){
   rows.push({id:'forecast',lab:'forecast',
     val:c?`${chips.join(' ')} ⇒ eventualBG <b>${c.ebg!=null?mm(c.ebg):dash}</b>`
        :'IOB · ZT · COB · UAM curves ⇒ eventualBG',
-    body:(c?safeSpark(c,thr):'')+
-      `<p>Four futures, one per assumption, each stepped from the current BG in 5-minute ticks, 4 hours ahead: <b style="color:var(--txt-iob)">IOB</b> — the insulin already delivered plays out, nothing else happens; <b style="color:var(--txt-zt)">ZT</b> — delivery stops right now (the dashed safety floor); <b style="color:var(--txt-cob)">COB</b> — announced carbs keep absorbing; <b style="color:var(--txt-uam)">UAM</b> — the unexplained rise fades out. Safety is read from the lowest relevant points, dosing from the highest endpoints. The labeled markers — drawn identically here and in the main chart — are the values this cycle’s decision actually used.</p>
+    body:`<p>Four futures, one per assumption, each stepped from the current BG in 5-minute ticks, 4 hours ahead (the chart above shows the first 2½): <b style="color:var(--txt-iob)">IOB</b> — the insulin already delivered plays out, nothing else happens; <b style="color:var(--txt-zt)">ZT</b> — delivery stops right now (the dashed safety floor); <b style="color:var(--txt-cob)">COB</b> — announced carbs keep absorbing; <b style="color:var(--txt-uam)">UAM</b> — the unexplained rise fades out. Safety is read from the lowest relevant points, dosing from the highest endpoints.</p>
       ${c?`<div class="frm">${['IOB','ZT','COB','UAM'].filter(k=>pr[k]&&pr[k].length>1).map(k=>{
         const a=pr[k];
         return `<span style="color:var(--txt-${k.toLowerCase()})">${k.padEnd(3)}</span> ${fBG(M(a[0]))} → min ${fBG(M(Math.min(...a)))} → end ${fBG(M(a[a.length-1]))}`;
@@ -1212,14 +1064,10 @@ function buildSteps(c,p){
       </div></details>
       <details class="more"><summary>Where the deviation comes from</summary><div class="mbody">
       <p>Trio keeps three trend measurements, all expressed as change per 5 minutes: <b>delta</b> — versus the reading ~5 minutes ago; <b>short_avgdelta</b> — the average slope against every reading 2.5–17.5 minutes back (the “15-min” delta); <b>long_avgdelta</b> — the same for 17.5–42.5 minutes back (the “45-min” one). The forecast uses <b>minDelta</b>, the smaller of delta and short_avgdelta, so one jumpy reading can’t exaggerate a rise. Subtract BGI — the change the insulin on board should be causing right now — and what remains is unexplained; × 6 projects it 30 minutes ahead as the <b>deviation</b>. A negative result gets a second opinion: recomputed with the 15-min average, and if still negative, taken from the 45-min one. A single low or noisy reading therefore can’t talk the loop out of insulin — a genuine sustained fall still comes through, at the steadier long-window slope.</p>
-      </div></details>
-      <details class="more"><summary>Reading the marked points</summary><div class="mbody">
-      <p>Small dots mark every candidate point the decision could draw on: each curve’s minimum and its endpoint. The labeled markers are the values it actually used: a <b>ring</b> on minGuardBG, the lowest point counting from now — red when it dipped under the threshold and the hypo guard cut all insulin; a <b>dashed ring</b> on minPredBG, the low point the safety caps are computed from (it skips the dip before insulin already underway peaks); a <b>filled dot</b> on the endpoint adopted as eventualBG.</p>
-      <p>A marker in a curve’s color sits on that curve. A grey marker is a value that is on <i>no single curve</i>: it was blended from two points, and sits at its logged value on a thin dashed line connecting its two sources — mid-meal minGuardBG, for example, is blended from the COB and UAM minima by how many carbs remain. Both charts draw all of this identically.</p>
       </div></details>`
       +vchips(['delta','short_avgdelta','BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
 
-  /* 3 — hypo guard: afleiding van minGuardBG + nul-temp-dimensionering */
+  /* 3 — hypo guard */
   let guardDeriv='';
   if(c){
     const gchips=['IOB','COB','UAM','ZT'].filter(k=>gm[k]!=null)
@@ -1275,7 +1123,7 @@ function buildSteps(c,p){
   let smbVal, smbSt=null, smbDot=null;
   if(skipAfter(6)||idle){ smbVal = idle?'skipped — no need':'not reached'; smbSt='skip'; }
   else if(!c){ smbVal='SMB = min(insulinReq × ratio, maxBolus), respecting the interval'; }
-  else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-smbwait)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--smbwait'; }
+  else if(wait&&!smbGiven){ smbVal=`<span class="warn" style="color:var(--txt-hi)">waiting — SMB interval</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(capS){ smbVal=`min(need × ratio, cap <b>${capVal!=null?F2(capVal):'?'} U</b>) = <b>${F2(smbGiven)} U</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxBolus</span>`; smbSt='fired'; smbDot='--hi'; }
   else if(smbGiven){ smbVal=`→ microbolus <b>${F2(smbGiven)} U</b> <span class="ok">✓</span>`; smbDot='--good'; }
   else { smbVal='no SMB this cycle'; }
@@ -1286,11 +1134,11 @@ function buildSteps(c,p){
       <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)   // ratio setting, default 0.5 — not part of Nightscout exports${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(capS?`cap ${capVal!=null?F2(capVal):'?'} U wins → ${F2(smbGiven)} U${impliedSmbMin!=null?` · implies max(UAM)SMBBasalMinutes ≈ ${impliedSmbMin} m (cap ÷ basal ${f2(sched)})`:''}`:`${F2(req)} × ratio(≈${(smbGiven/req).toFixed(2)}) = ${F2(smbGiven)} U`):''}</div>`
       +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
 
-  /* 7 — basal */
+  /* 7 — temp basal */
   let basVal, basSt=null, basDot=null;
   if(skipAfter(7)){ basVal='not reached'; basSt='skip'; }
   else if(!c){ basVal='temp = basal + 2×insulinReq, capped at maxSafeBasal'; }
-  else if(capB){ basVal=`req ${mmB?.[1]??''} U/h → <b>${mmB?.[2]??''} U/h</b> <span class="warn" style="color:var(--txt-serious)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--serious'; }
+  else if(capB){ basVal=`req ${mmB?.[1]??''} U/h → <b>${mmB?.[2]??''} U/h</b> <span class="warn" style="color:var(--txt-hi)">⚠ maxSafeBasal</span>`; basSt='fired'; basDot='--hi'; }
   else if(c.rate!=null&&c.dur>0){ basVal=`temp <b>${F2(c.rate)} U/h</b> for ${Math.round(c.dur)} m${smbGiven&&c.rate===0?' (post-SMB buffer)':''}`; }
   else { basVal='current temp continues'; }
   rows.push({id:'basal',lab:'temp basal',st:basSt,dot:basDot,skip:skipAfter(7),
@@ -1306,43 +1154,64 @@ function buildSteps(c,p){
        :'deliver, then start over in ~5 minutes',
     body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
       +vchips(['enacted'])});
-  return {rows,conc};
+  return {rows,conc,thr};
 }
-/* open/dicht-status van details (uitleg, bron, raw log) overleeft her-renders */
+
+/* open/closed state of <details> survives re-renders */
 const openDetails=new Set();
 const dKey=d=>d.querySelector('summary')?.textContent??'';
+
 function renderPanel(dd){
   const c=selCycle, p=c?parseReason(c):null;
-  const i=c?dd.cycles.indexOf(c):-1;
-  const head = c
-    ? `<div class="when">
-        <span class="t">${hhmm(c.t)}</span>
-        <span class="navgrp"><button class="navbtn" id="prevC" aria-label="previous">←</button><button class="navbtn" id="nextC" aria-label="next">→</button></span>
-        <button class="navbtn" id="copyLink" aria-label="copy a link to this decision" title="Copy link to this decision">🔗</button>
-        <span class="badge-enact">${c.rec?'enacted':'suggested only'}</span></div>`
-    : `<div class="empty" style="padding:2px 0 6px">The oref1 pipeline — click a cycle in the chart to fill in its real values.</div>`;
-  const {rows,conc}=buildSteps(c,p);
-  const list=rows.map(r=>{
+  let head;
+  if(c){
+    const trend=sgvTrend(dd,c.t);
+    const seg=rateAt(dd,c.t);
+    const bgc=c.bg<70?'var(--txt-lo)':c.bg>180?'var(--txt-hi)':'var(--txt-good)';
+    head=`<div class="snapnav">
+        <button class="navb" id="prevC" aria-label="previous decision">‹</button>
+        <div class="snaptime"><div class="t">${hhmm(c.t)}</div><div class="d">${dayLabel(localMidnight(c.t))}</div></div>
+        <button class="navb" id="nextC" aria-label="next decision">›</button>
+        <div class="grow"></div>
+        <button class="iconbtn" id="copyLink" title="Copy link to this decision" aria-label="copy link" style="font-size:13px">🔗</button>
+        <span class="pill ${c.rec?'en':'sg'}">${c.rec?'enacted ✓':'suggested'}</span>
+      </div>
+      <div class="snapbg">
+        <span class="bg" style="color:${bgc}">${fBG(M(c.bg))}</span>
+        ${trend?`<span class="trend">${trend.arrow} <span style="font-size:13px;color:var(--muted)">${(trend.delta>=0?'+':'')+(isMmol()?f1(trend.delta):Math.round(trend.delta))}</span></span>`:''}
+        <span class="unit">${bgUnit()}</span>
+      </div>
+      <div class="snapkv">
+        <span>IOB <b>${f2(c.iob)} U</b></span><span>COB <b>${c.cob||0} g</b></span>
+        ${seg?`<span>basal <b>${f2(seg.rate)} U/h</b></span>`:''}
+        ${c.tgt!=null?`<span>target <b>${fBG(c.tgt)}</b></span>`:''}
+      </div>`;
+  } else {
+    head=`<div class="snapempty">${dd.cycles.length?'Pick a moment in the day overview, or step with ← →.':'No loop decisions on this day.'}</div>`;
+  }
+  const built=buildSteps(c,p);
+  const list=built.rows.map(r=>{
     const open=openSteps.has(r.id);
     return `<div class="step ${open?'open':''} ${r.skip?'skip':''}">
-      <button class="srow" data-step="${r.id}">
+      <button class="srow" data-step="${r.id}" aria-expanded="${open?'true':'false'}">
         <span class="sdot"${r.dot?` style="background:var(${r.dot})"`:''}></span>
         <span class="slab">${r.lab} <span class="scar">▶</span></span>
         <span class="sval">${r.val}</span></button>
       ${open?`<div class="sbody">${r.body}<div class="vardef" style="display:none"></div></div>`:''}
     </div>`;}).join('');
   const raw = c?`<details class="raw"><summary>raw reason log</summary><div class="reason">${c.reason.replace(/</g,'&lt;')}</div></details>`:'';
-  panel.innerHTML=`<h2>Loop decision</h2>${head}${conc}<div class="steps">${list}</div>${raw}`;
+  panel.innerHTML=`${head}${built.conc}${c?`<div id="fc"></div><div id="fcro"></div>`:''}<div class="sect-h">How this decision was made</div><div class="steps">${list}</div>${raw}`;
+  if(c) renderForecast(c,dd,built.thr);
   panel.querySelectorAll('details').forEach(d=>{ if(openDetails.has(dKey(d))) d.open=true; });
   const lv=document.getElementById('srlive');
-  if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${rows[rows.length-1].val.replace(/<[^>]+>/g,'')}`;
+  if(lv&&c) lv.textContent=`${hhmm(c.t)} — ${built.rows[built.rows.length-1].val.replace(/<[^>]+>/g,'')}`;
   if(c){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
     if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
     if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
     const cl=document.getElementById('copyLink');
     if(cl) cl.onclick=async()=>{
-      setDeep(c); /* this decision's deep link is the current URL */
+      setDeep(c);
       const link=location.href;
       try{ await navigator.clipboard.writeText(link); }
       catch(e){ const ta=document.createElement('textarea'); ta.value=link; document.body.appendChild(ta); ta.select();
@@ -1376,185 +1245,157 @@ panel.addEventListener('click',ev=>{
   }
 });
 
-/* ---------- master render ---------- *//* ---------- master render ---------- */
-function renderAll(full=true){
-  hoverLines=[];
-  tabsEl.querySelectorAll('.tab').forEach(b=>{ if(b.dataset.day) b.setAttribute('aria-pressed', String(+b.dataset.day===curDay)); });
+/* ---------- keyboard / step navigation ---------- */
+let stepping=false;
+async function stepCycle(dir){
+  if(stepping) return;
   const dd=dayData(curDay);
-  dd.ext = 0;
-  const w=boxG.clientWidth||900;
-  X=makeX(dd,w);
-  if(full) renderTiles(dd);
-  renderGlucose(dd,w);
-  renderIOB(dd,w);
-  renderLimits(dd,w);
+  const i=selCycle?dd.cycles.findIndex(x=>x.t===selCycle.t):-1;
+  if(i>=0){
+    const j=i+dir;
+    if(j>=0&&j<dd.cycles.length){ selCycle=dd.cycles[j]; setDeep(selCycle); renderAll(false); return; }
+  } else if(dd.cycles.length){
+    selCycle=dd.cycles[dd.cycles.length-1]; setDeep(selCycle); renderAll(false); return;
+  }
+  const nd=dir>0?nextDay(curDay):prevDay(curDay);
+  if(nd>todayStart()) return;
+  stepping=true;
+  try{
+    selCycle=null;
+    await selectDay(nd);
+    const dd2=dayData(curDay);
+    if(dd2.cycles.length){
+      selCycle = dir>0 ? dd2.cycles[0] : dd2.cycles[dd2.cycles.length-1];
+      setDeep(selCycle); renderAll(false);
+    }
+  } finally { stepping=false; }
+}
+document.addEventListener('keydown',ev=>{
+  if(ev.target.matches('input,textarea,select')) return;
+  if(ev.key!=='ArrowLeft'&&ev.key!=='ArrowRight') return;
+  ev.preventDefault();
+  stepCycle(ev.key==='ArrowLeft'?-1:1);
+});
+
+/* ---------- day selection & refresh ---------- */
+const dateLbl=document.getElementById('dateLbl'), dateInp=document.getElementById('dateInp');
+const dayStatusEl=document.getElementById('dayStatus'), refreshBtn=document.getElementById('refreshBtn');
+function renderDaybar(){
+  dateLbl.textContent=dayLabel(curDay);
+  dateInp.value=dayISO(curDay);
+  dateInp.max=dayISO(todayStart());
+  document.getElementById('dayNext').disabled = curDay>=todayStart();
+  document.getElementById('todayBtn').style.display = curDay===todayStart()?'none':'';
+  dayStatusEl.textContent=dayStatusTxt;
+  const c=dayCache[curDay];
+  document.getElementById('updText').textContent = c?('updated '+hhmm(c.fetchedAt/1000)):'';
+}
+async function selectDay(d,force){
+  const today=todayStart();
+  if(d>today) d=today;
+  curDay=d;
+  if(!dayCache[d]) loadPersisted(d);
+  const c=dayCache[d];
+  const stale = c && (d===today ? (Date.now()-c.fetchedAt>55000)
+    : (c.fetchedAt < nextDay(d)*1000+600000)); /* cached before the day had ended */
+  if(LIVE && (force || !c || stale) && !fetching){
+    fetching=true; refreshBtn.classList.add('spin');
+    dayStatusTxt = dayCache[d]?'':'loading…'; renderDaybar();
+    try{
+      await fetchDay(d);
+      const got=dayData(d);
+      dayStatusTxt = (got.sgv.length&&!got.cycles.length)
+        ? 'no oref loop data on this day — this tool reads Trio/OpenAPS devicestatus' : '';
+    }catch(e){
+      dayStatusTxt='fetch failed — showing cached data ('+e.message+')';
+    } finally { fetching=false; refreshBtn.classList.remove('spin'); }
+  }
+  const dd=dayData(curDay);
+  selCycle = selCycle ? (dd.cycles.find(x=>x.t===selCycle.t)||null) : null;
+  renderAll();
+}
+document.getElementById('dayPrev').onclick=()=>{ selCycle=null; setDeep(null); selectDay(prevDay(curDay)); };
+document.getElementById('dayNext').onclick=()=>{ selCycle=null; setDeep(null); selectDay(nextDay(curDay)); };
+document.getElementById('todayBtn').onclick=()=>{ selCycle=null; goLatest(true); };
+dateInp.addEventListener('change',()=>{ const d=isoToDay(dateInp.value); if(d!=null){ selCycle=null; setDeep(null); selectDay(d); } });
+refreshBtn.onclick=()=>selectDay(curDay,true);
+
+/* auto-refresh: today only, ~every minute, only while the tab is visible */
+function pollTick(){
+  if(!LIVE||document.hidden||fetching||curDay!==todayStart()) return;
+  const c=dayCache[curDay];
+  if(!c||Date.now()-c.fetchedAt>55000) selectDay(curDay);
+}
+setInterval(pollTick,30000);
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden) pollTick(); });
+
+/* mobile: day overview behind a toggle */
+const chartToggle=document.getElementById('chartToggle'), dayCard=document.getElementById('dayCard');
+chartToggle.onclick=()=>{
+  const on=!dayCard.classList.contains('open');
+  dayCard.classList.toggle('open',on); chartToggle.classList.toggle('on',on);
+  chartToggle.setAttribute('aria-expanded',on?'true':'false');
+  if(on) renderDayChart(dayData(curDay));
+};
+
+/* ---------- master render ---------- */
+function renderAll(full){
+  renderDaybar();
+  const dd=dayData(curDay);
+  if(full!==false) renderStats(dd);
+  renderDayChart(dd);
   renderPanel(dd);
 }
 let rto=null;
-window.addEventListener('resize',()=>{clearTimeout(rto); rto=setTimeout(()=>renderAll(false),120);});
-new MutationObserver(()=>renderAll(false)).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-
-/* ---------- Nightscout access, per-day fetch & persistent cache ---------- */
-const refreshInfo=document.getElementById('refreshInfo');
-const loginCard=document.getElementById('loginCard'), appBody=document.getElementById('appbody');
-const signOutBtn=document.getElementById('signOut');
-const LS_AUTH='trioInspector.auth', LS_DAY='trioInspector.day.';
-if(SHARE && !LIVE){ try{ LIVE=JSON.parse(localStorage.getItem(LS_AUTH)||'null'); }catch(e){} }
-
-function setInfo(){
-  const dd=dayData(curDay);
-  const arr=dd.sgv.length?dd.sgv:DATA.sgv;
-  if(!arr.length){ refreshInfo.textContent=''; return; }
-  const last=arr[arr.length-1][0];
-  refreshInfo.textContent=`data through ${dayLabel(localMidnight(last))} ${hhmm(last)}`;
-}
-function buildRaw(entries,treatments,dev){
-  const pts=x=>Math.floor(Date.parse(x)/1000);
-  const r2=v=>Math.round(v*100)/100, r1=v=>Math.round(v*10)/10;
-  const sgv=entries.filter(e=>e.type==='sgv'&&e.sgv).map(e=>[pts(e.dateString),e.sgv]).sort((a,b)=>a[0]-b[0]);
-  const tb=[],smb=[],bolus=[],carbs=[],notes=[],site=[];
-  for(const t of treatments){
-    if(!t.created_at) continue;
-    const x=pts(t.created_at), et=t.eventType;
-    if(et==='Temp Basal'){ const r=t.rate!=null?t.rate:t.absolute; if(r!=null) tb.push([x,r2(r),r1(t.duration||0)]); }
-    else if(et==='SMB'){ if(t.insulin) smb.push([x,r2(t.insulin)]); }
-    else if(et==='Bolus'||et==='Correction Bolus'||et==='Meal Bolus'){ if(t.insulin) bolus.push([x,r2(t.insulin)]); if(t.carbs) carbs.push([x,r1(t.carbs)]); }
-    else if(et==='Carb Correction'||t.carbs){ if(t.carbs) carbs.push([x,r1(t.carbs)]); }
-    else if(et==='Note') notes.push([x,t.notes||'']);
-    else if(et==='Site Change') site.push(x);
-  }
-  for(const l of [tb,smb,bolus,carbs,notes]) l.sort((a,b)=>a[0]-b[0]);
-  const cmap={}, enFreshAt={};
-  for(const r of dev){
-    const oa=r.openaps||{}; const su=oa.suggested, en=oa.enacted;
-    /* A loop cycle is identified by the SUGGESTED deliverAt — the moment the recommendation
-       was computed, which advances every ~5 min. The ENACTED deliverAt only advances when a
-       NEW temp basal/SMB is actually sent to the pump; on a "no change" cycle Trio re-reports
-       the PREVIOUS enact, so keying on it collapses every unchanged cycle onto the last
-       enacted one and silently drops it. Trio also uploads a cycle twice (a suggestion, then
-       an enacted confirmation) — both share the same suggested.deliverAt, so this key merges
-       them. */
-    const suT=su&&(su.deliverAt||su.timestamp), enT=en&&(en.deliverAt||en.timestamp);
-    const cycT=suT||enT; if(!cycT) continue;
-    const x=pts(cycT);
-    /* The enacted block belongs to THIS cycle only when its deliverAt matches; otherwise it is
-       a stale re-report. A fresh enacted block is the richer source (received flag, TDD, and a
-       profile-unit reason/target); when it is stale we read the suggested block, whose reason
-       and threshold/current_target are also in profile units on a "no change" upload. */
-    const enFresh=(en&&enT&&pts(enT)===x)?en:null;
-    const dec=enFresh||su||en; if(!dec||dec.bg==null) continue;
-    /* Prefer the fresh-enacted upload when both uploads of a cycle are present, regardless of order. */
-    if(cmap[x]&&!(enFresh&&!enFreshAt[x])) continue;
-    const preds=dec.predBGs||{}; const pred={};
-    for(const k of ['IOB','ZT','COB','UAM']) if(preds[k]) pred[k]=preds[k].map(v=>Math.round(v));
-    cmap[x]={t:x,bg:dec.bg,iob:r2(dec.IOB||0),cob:dec.COB||0,thr:dec.threshold,ebg:dec.eventualBG,req:dec.insulinReq,
-      rate:dec.rate,dur:dec.duration,tgt:dec.current_target,sens:dec.sensitivityRatio,tdd:dec.TDD,
-      units:dec.units,reason:String(dec.reason||'').replace(/&lt;/g,'<').replace(/&gt;/g,'>'),
-      rec:(enFresh&&enFresh.received)?1:0,pred};
-    enFreshAt[x]=!!enFresh;
-  }
-  return {sgv,tb,smb,bolus,carbs,notes,site,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
-}
-function loadPersisted(d){
-  if(!SHARE) return null;
-  try{ const v=JSON.parse(localStorage.getItem(LS_DAY+d)||'null'); if(v){ dayCache[d]=v; return v; } }catch(e){}
-  return null;
-}
-function pruneStore(extra){
-  try{
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY));
-    const items=keys.map(k=>({k,at:(JSON.parse(localStorage.getItem(k)||'{}').fetchedAt)||0}))
-      .sort((a,b)=>b.at-a.at);
-    const keep=extra?4:6;
-    for(const it of items.slice(keep)) localStorage.removeItem(it.k);
-  }catch(e){}
-}
-function persistDay(d){
-  if(!SHARE) return;
-  try{ localStorage.setItem(LS_DAY+d, JSON.stringify(dayCache[d])); pruneStore(); }
-  catch(e){ pruneStore(true); try{ localStorage.setItem(LS_DAY+d, JSON.stringify(dayCache[d])); }catch(e2){} }
-}
-async function fetchDay(d){
-  const from=new Date((d-3*3600)*1000).toISOString();
-  const to=new Date((nextDay(d)+3600)*1000).toISOString();
-  const base=String(LIVE.url||'').replace(/\/+$/,'');
-  const q=(p,extra)=>fetch(`${base}/api/v1/${p}?${extra}&token=${encodeURIComponent(LIVE.token)}`,
-      {signal:(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)?AbortSignal.timeout(25000):undefined})
-    .then(r=>{ if(!r.ok) throw new Error(p+' HTTP '+r.status); return r.json(); })
-    .then(j=>{ if(!Array.isArray(j)) throw new Error(p+': unexpected response'); return j; });
-  const [entries,treatments,dev,profileArr]=await Promise.all([
-    q('entries.json',`find[dateString][$gte]=${from}&find[dateString][$lte]=${to}&count=2000`),
-    q('treatments.json',`find[created_at][$gte]=${from}&find[created_at][$lte]=${to}&count=2500`),
-    q('devicestatus.json',`find[created_at][$gte]=${from}&find[created_at][$lte]=${to}&count=1500`),
-    q('profile.json','count=1')]);
-  try{
-    const p0=profileArr[0], store=p0.store[p0.defaultProfile||'default'];
-    DATA.profile={basal:store.basal.map(x=>[x.timeAsSeconds,x.value]),target:store.target_low[0].value,
-      isf:store.sens[0].value,cr:store.carbratio.map(x=>[x.timeAsSeconds,x.value]),dia:store.dia,
-      units:store.units||p0.units||'mmol'};
-  }catch(e){}
-  const raw=buildRaw(entries,treatments,dev);
-  const a=d,b=nextDay(d);
-  const data={a,b,
-    sgv:raw.sgv.filter(e=>e[0]>=a&&e[0]<b),
-    cycles:raw.cycles.filter(c=>c.t>=a&&c.t<b),
-    smb:raw.smb.filter(e=>e[0]>=a&&e[0]<b),
-    bolus:raw.bolus.filter(e=>e[0]>=a&&e[0]<b),
-    carbs:raw.carbs.filter(e=>e[0]>=a&&e[0]<b),
-    notes:raw.notes.filter(e=>e[0]>=a&&e[0]<b),
-    siteChange:raw.site.filter(t=>t>=a&&t<b)};
-  const lastT=Math.max(data.sgv.length?data.sgv[data.sgv.length-1][0]:a, data.cycles.length?data.cycles[data.cycles.length-1].t:a);
-  data.segs=basalSegs(a,Math.min(b,lastT+300),raw.tb);
-  dayCache[d]={data,fetchedAt:Date.now()};
-  persistDay(d);
-}
+window.addEventListener('resize',()=>{clearTimeout(rto); rto=setTimeout(()=>renderAll(false),140);});
 
 /* ---------- connect / sign out ---------- */
-function showLogin(msg){
-  appBody.style.display='none'; loginCard.style.display='block';
-  document.getElementById('nsError').textContent=msg||'';
-}
-function hideLogin(){ loginCard.style.display='none'; appBody.style.display='block'; }
+const loginEl=document.getElementById('login'), appBody=document.getElementById('appBody');
+const signOutBtn=document.getElementById('signOut');
+function showLogin(msg){ appBody.style.display='none'; loginEl.style.display='block';
+  refreshBtn.style.display='none'; signOutBtn.style.display='none';
+  document.getElementById('loginErr').textContent=msg||''; }
+function showApp(){ loginEl.style.display='none'; appBody.style.display='block';
+  refreshBtn.style.display=''; signOutBtn.style.display=''; }
 async function connectNS(){
-  const errEl=document.getElementById('nsError');
+  const errEl=document.getElementById('loginErr');
   let url=(document.getElementById('nsUrl').value||'').trim().replace(/\/+$/,'');
   const token=(document.getElementById('nsToken').value||'').trim();
   if(!/^https?:\/\//.test(url)){ errEl.textContent='Enter a full URL, starting with https://'; return; }
   if(url.startsWith('http:')&&location.protocol==='https:'){ errEl.textContent='This page is served over https, so the browser blocks plain-http Nightscout URLs. Use an https URL.'; return; }
   if(!token){ errEl.textContent='Enter an access token.'; return; }
-  errEl.textContent='connecting\u2026';
+  errEl.textContent='connecting…';
   try{
     const r=await fetch(`${url}/api/v1/status.json?token=${encodeURIComponent(token)}`,{signal:(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)?AbortSignal.timeout(15000):undefined});
-    if(!r.ok) throw new Error('HTTP '+r.status+(r.status===401?' \u2014 check the token':''));
+    if(!r.ok) throw new Error('HTTP '+r.status+(r.status===401?' — check the token':''));
     await r.json();
   }catch(e){ errEl.textContent='Could not connect: '+e.message; return; }
   LIVE={url,token};
   try{ localStorage.setItem(LS_AUTH,JSON.stringify(LIVE)); }catch(e){}
-  hideLogin(); signOutBtn.style.display='inline-block';
+  showApp();
   const t=deepT();
   if(t) goDeep(t); else { await selectDay(todayStart(),true); goLatest(true); }
 }
-if(SHARE){
-  document.getElementById('nsConnect').onclick=connectNS;
-  document.getElementById('nsToken').addEventListener('keydown',e=>{ if(e.key==='Enter') connectNS(); });
-  signOutBtn.onclick=()=>{
-    try{
-      localStorage.removeItem(LS_AUTH);
-      Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY)).forEach(k=>localStorage.removeItem(k));
-    }catch(e){}
-    location.reload();
-  };
-}
+document.getElementById('connectBtn').onclick=connectNS;
+document.getElementById('nsToken').addEventListener('keydown',e=>{ if(e.key==='Enter') connectNS(); });
+document.getElementById('nsUrl').addEventListener('keydown',e=>{ if(e.key==='Enter') connectNS(); });
+signOutBtn.onclick=()=>{
+  try{
+    localStorage.removeItem(LS_AUTH); localStorage.removeItem(LS_PROF);
+    Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY)).forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
+  location.reload();
+};
 
 /* ---------- deep-linking ----------
-   URL hash `#<epoch>` points at one decision; a clean URL (no hash) always resolves to the
-   newest decision. Explicit navigation writes the hash; the title / fresh load clears it. */
+   `#<epoch>` points at one decision; a clean URL always resolves to the newest. */
 function deepT(){ const h=(location.hash||'').replace(/^#/,''); const t=parseInt(h,10); return (h&&isFinite(t)&&t>1e9)?t:null; }
 function setDeep(c){ try{ history.replaceState(null,'',location.pathname+location.search+(c?('#'+c.t):'')); }catch(e){} }
-function newestCycle(){ const dd=dayData(curDay); return dd.cycles.length?dd.cycles[dd.cycles.length-1]:null; }
 async function goLatest(clearUrl){
-  try{ if(LIVE) await selectDay(todayStart()); }catch(e){}
-  const c=newestCycle(); if(c) selCycle=c;
+  try{ await selectDay(todayStart()); }catch(e){}
+  let dd=dayData(curDay);
+  if(!dd.cycles.length&&!dd.sgv.length){ try{ await selectDay(prevDay(curDay)); dd=dayData(curDay); }catch(e){} }
+  if(dd.cycles.length) selCycle=dd.cycles[dd.cycles.length-1];
   if(clearUrl) setDeep(null);
   renderAll(false);
 }
@@ -1565,18 +1406,12 @@ async function goDeep(t){
   if(c){ selCycle=c; setDeep(c); renderAll(false); } else { await goLatest(true); }
 }
 window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); else goLatest(false); });
-(function(){ const h=document.querySelector('header.top h1'); if(h){ h.style.cursor='pointer';
-  h.title='Go to the latest decision'; h.addEventListener('click',()=>goLatest(true)); } })();
+document.getElementById('brand').addEventListener('click',()=>{ if(LIVE) goLatest(true); });
 
-/* ---------- version selector ----------
-   Reads versions.json (written by build_versions.py at deploy time) and lists past
-   builds. The site root is always the newest build; older entries link to their frozen
-   snapshot. Absent versions.json (local file, personal snapshot, artifact) → stays hidden. */
+/* ---------- version selector (reads versions.json, hidden when absent) ---------- */
 (function(){
   const wrap=document.getElementById('verWrap'), btn=document.getElementById('verBtn'), menu=document.getElementById('verMenu');
-  if(!wrap||!btn||!menu) return;
-  let isOpen=false, loaded=false;
-  const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  let isOpen=false;
   function setOpen(o){ isOpen=o; menu.style.display=o?'block':'none'; btn.setAttribute('aria-expanded',o?'true':'false'); }
   async function load(){
     let list=null;
@@ -1589,7 +1424,7 @@ window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); els
         `${cur?' <span class="vercur">current</span>':''}</span>`+
         `<span class="versub">${esc(v.subject)}</span></a>`;
     }).join('');
-    loaded=true; wrap.style.display='';
+    wrap.style.display='';
   }
   btn.addEventListener('click',e=>{ e.stopPropagation(); setOpen(!isOpen); });
   document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
@@ -1598,10 +1433,9 @@ window.addEventListener('hashchange',()=>{ const t=deepT(); if(t) goDeep(t); els
 })();
 
 /* ---------- init ---------- */
-computeDays(); buildTabs(); setInfo(); renderAll();
-if(SHARE && !LIVE){ showLogin(); }
-else {
-  if(LIVE) signOutBtn.style.display=SHARE?'inline-block':'none';
+if(!LIVE){ showLogin(); }
+else{
+  showApp();
   const t0=deepT();
   (async()=>{ if(t0) await goDeep(t0); else await goLatest(true); })();
 }

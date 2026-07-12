@@ -1,7 +1,8 @@
-# Personal builds contain medical data and/or access tokens — never commit these
+# Data dumps / fixtures contain medical data and/or access tokens — never commit these
 trio_data.json
 *-snapshot.html
 *-live.html
+fixtures/
 
 # Local dev/test dependencies (e.g. Playwright for browser tests)
 node_modules/

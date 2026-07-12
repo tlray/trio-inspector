@@ -1,21 +1,24 @@
 # Trio Loop Inspector
 
 A single-file, interactive HTML app to understand **why** [Trio](https://github.com/nightscout/Trio)
-(the oref algorithm) dosed the way it did — cycle by cycle, day by day.
+(the oref algorithm) dosed the way it did — decision by decision, day by day.
 
 Point it at your own [Nightscout](https://nightscout.github.io/) site and it shows, for every
 5-minute loop cycle:
 
-- **Glucose & delivery** in the familiar Trio layout: temp basal deflecting downward from the top,
-  SMB/bolus triangles, carbs along the bottom — with the four forecast curves (IOB · ZT · COB · UAM,
-  in Trio's own colors) drawn from any cycle you click.
-- **What Trio knew, forecast and decided**: BG, IOB, COB, autosens, effective ISF, eventualBG,
-  the computed insulin need, and what was actually delivered ("needed vs given").
-- **Which safety limits stepped in**: hypo guard (minGuardBG), forecast-below-target zero temps,
-  maxBolus, the SMB interval and maxSafeBasal — as a compact per-day timeline plus a per-cycle
-  explanation parsed from the raw oref `reason` log.
-- **A live decision tree** that lights up the route the algorithm took for the selected cycle,
-  with the real numbers in the decision nodes.
+- **A decision snapshot**, like the app showed at that moment: time (with ‹ › stepping, also
+  across midnight), the glucose value with trend, IOB/COB/basal/target, the conclusion
+  ("needed vs given", hypo guard, forecast below target…) and a compact forecast chart —
+  the last ~45 minutes of real readings followed by the four forecast curves
+  (IOB · ZT · COB · UAM, in Trio's own colors).
+- **A day overview** styled after the Trio app's main chart: temp basal hanging from the top
+  with the schedule as a dashed line, SMB/bolus ▼ and carbs ▲ around the glucose trace,
+  overrides and temp targets on the target line, the IOB/COB strip below — with the selected
+  cycle's forecast curves drawn in place. The legend appears only while hovering the chart.
+- **How the decision was made**: the oref pipeline as expandable steps — inputs, forecast,
+  hypo guard, target check, insulin need, SMB, temp basal, delivery — each with the real
+  numbers, the formula, an explanation, a glossary and the matching algorithm source.
+- **Day stats**: time in range, average, insulin (split into basal / SMB / bolus) and carbs.
 
 Everything is one self-contained HTML file: no server, no build step, no dependencies.
 
@@ -28,12 +31,11 @@ Open `index.html` in a browser (double-click works). On first use it asks for:
 
 Both are stored **only in your browser** (`localStorage`) — they are never part of the file, so
 `index.html` is safe to share or host. Fetched days are cached in the browser too (last ~6 days),
-so revisiting is instant; "Today" auto-refreshes when the cache is older than 2 minutes.
-**Sign out** wipes the credentials and the cached data.
+so revisiting is instant. While you're looking at today, the app quietly refreshes about once a
+minute (plus a ↻ button in the header). **Sign out** wipes the credentials and the cached data.
 
-> ⚠️ The `build.py` script can also produce `personal-snapshot.html` with your own data baked in
-> for offline use. That file (and `trio_data.json`) is git-ignored on purpose: it contains
-> medical data. Don't commit or share it.
+The layout adapts to phones: you start at the newest decision and page through with ‹ ›; the day
+overview opens with a button.
 
 ## Experiments
 
@@ -51,12 +53,12 @@ untaken branches fade, safety limits light up, and the outcome recomputes. Educa
 
 The app is deployed to **GitHub Pages** at
 [tlray.github.io/trio-inspector](https://tlray.github.io/trio-inspector/). Every push to `main`
-that touches `index.html` rebuilds and redeploys automatically (`.github/workflows/pages.yml`).
+that touches `index.html` redeploys automatically (`.github/workflows/pages.yml`).
 Because `index.html` carries no secrets, the site is safe to host publicly, and the stable
 origin means your Nightscout URL/token (kept only in your browser) survive across releases — no
 re-login.
 
-A **🕘 Versions** menu in the header lists past builds: the root URL always serves the newest,
+A **🕘 versions** menu in the header lists past builds: the root URL always serves the newest,
 while older builds stay available as frozen snapshots (generated at deploy time by
 `build_versions.py`).
 
@@ -66,16 +68,7 @@ while older builds stay available as frozen snapshots (generated at deploy time 
 
 ## Develop
 
-`template.html` is the single source. It contains three placeholders:
-
-| Placeholder | Meaning |
-|---|---|
-| `/*__DATA__*/null` | replaced with a dataset JSON (empty skeleton for the shareable build) |
-| `/*__LIVE__*/null` | optionally replaced with `{url, token}` for a personal auto-connected build |
-| `/*__SHARE__*/false` | `true` enables the connect screen + persistent browser cache |
-
-`python3 build.py` regenerates `index.html` from the template (and, with `NIGHTSCOUT_URL` /
-`NIGHTSCOUT_TOKEN` set, a personal snapshot).
+`index.html` is the app *and* the source — edit it directly; there is no build step.
 
 Units follow your Nightscout profile automatically (mmol/L or mg/dL). Times are shown in your
 browser's local timezone (Nightscout stores UTC), DST-safe. The tool reads Trio and other
@@ -85,5 +78,5 @@ but no loop decisions.
 ## Origin
 
 Built as a learning tool for reading oref's behaviour, with the limit/forecast semantics taken
-from the algorithm source in `trio-oref` (`determine-basal.js`) and colors matching the Trio app's
-asset catalog.
+from the algorithm source in `trio-oref` (`determine-basal.js`) and the chart design and colors
+matching the Trio app itself.
