@@ -1,7 +1,9 @@
-# Trio Loop Inspector
+# Trioscope
 
-A single-file, interactive HTML app to understand **why** [Trio](https://github.com/nightscout/Trio)
-(the oref algorithm) dosed the way it did — decision by decision, day by day.
+*Put Trio's loop under the loupe.* A single-file, interactive HTML app for two things:
+**quickly seeing what happened**, and **learning the algorithm** behind it — decision by
+decision, day by day. It shows **why** [Trio](https://github.com/nightscout/Trio)
+(the oref algorithm) dosed the way it did.
 
 Point it at your own [Nightscout](https://nightscout.github.io/) site and it shows, for every
 5-minute loop cycle:
