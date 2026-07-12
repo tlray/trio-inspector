@@ -10,6 +10,10 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
 - `index.html` — the shareable build: template + empty dataset + SHARE=true. No secrets.
 - `build.py` — rebuilds index.html; with NIGHTSCOUT_URL/NIGHTSCOUT_TOKEN set also builds a
   git-ignored personal-snapshot.html (~3 days of data baked in).
+- `build_versions.py` — deploy-time only (run by pages.yml): snapshots each past `index.html`
+  from git history to `versions/<epoch>-<sha>.html` (with a fixed "go to latest" banner) and
+  writes `versions.json` for the in-app version selector. Needs full history (checkout
+  fetch-depth:0). Run locally to test: `python3 build_versions.py <outdir>`.
 - `variable-map.html`, `playground.html` — standalone experiments (data-flow map; executable
   annotated source). Not wired into the app.
 
@@ -81,8 +85,19 @@ own Nightscout site. Everything lives in ONE template; builds are string substit
   so a shared clean URL always resolves to newest. `renderAll` never touches the hash.
   The panel header 🔗 button copies the current decision's deep link.
 - Hosting: `.github/workflows/pages.yml` deploys `index.html` to GitHub Pages on push to
-  `main`. Stable origin ⇒ the entered Nightscout URL/token persists in localStorage across
-  releases (no re-login). No secrets are ever in `index.html`.
+  `main` (and runs `build_versions.py` for the version selector). Stable origin ⇒ the entered
+  Nightscout URL/token persists in localStorage across releases (no re-login). No secrets are
+  ever in `index.html`. ONE-TIME enablement is MANUAL and cannot be automated from here: the
+  repo must be Public (free tier) and Settings→Pages→Source set to "GitHub Actions". The
+  `configure-pages` `enablement:true` does NOT self-create the site (the Actions token hits
+  "Resource not accessible by integration"); that source toggle is what actually enables Pages.
+  The agent proxy also blocks `github.io`, so the live site can't be curled from here — verify
+  via the workflow run conclusion.
+- Version selector: a `🕘 Versions` dropdown in `header.top` (next to signOut) lazily fetches
+  `versions.json` and lists past builds (date + commit subject; newest = "current" → root URL,
+  older → its frozen `versions/<epoch>-<sha>.html` snapshot). Stays hidden when `versions.json`
+  is absent (local file / personal snapshot / claude.ai artifact). Root always serves newest;
+  each old snapshot carries a fixed "go to latest" banner injected by build_versions.py.
 
 ## Publishing
 - The app is published as a claude.ai artifact. To keep updating the SAME page from a new

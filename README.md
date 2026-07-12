@@ -47,6 +47,23 @@ determine-basal.js as live, executable annotated code: pick a real cycle as a st
 drag the input sliders (BG, forecasts, ISF, target, SMB settings) and watch the code re-run —
 untaken branches fade, safety limits light up, and the outcome recomputes. Educational only.
 
+## Hosting
+
+The app is deployed to **GitHub Pages** at
+[tlray.github.io/trio-inspector](https://tlray.github.io/trio-inspector/). Every push to `main`
+that touches `index.html` rebuilds and redeploys automatically (`.github/workflows/pages.yml`).
+Because `index.html` carries no secrets, the site is safe to host publicly, and the stable
+origin means your Nightscout URL/token (kept only in your browser) survive across releases — no
+re-login.
+
+A **🕘 Versions** menu in the header lists past builds: the root URL always serves the newest,
+while older builds stay available as frozen snapshots (generated at deploy time by
+`build_versions.py`).
+
+> One-time setup: the repo must be **Public** (GitHub Pages free tier) and **Settings → Pages →
+> Source** set to **"GitHub Actions"**. That source toggle is what enables Pages — the
+> workflow's `enablement: true` can't create the site on its own.
+
 ## Develop
 
 `template.html` is the single source. It contains three placeholders:
