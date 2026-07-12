@@ -43,9 +43,13 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   panel (400px). Mobile (≤980px): `.daysec` is ONE tappable card (nav+stats; tap or
   chevron expands the chart inside it), stat labels hidden; decision panel below; fixed
   bottom pager with wide ‹ time › buttons + a "now" button that doubles as live indicator
-  (green ● on the newest decision, blue ↦ otherwise → goLatest); the panel's ‹ › next to
-  the time are hidden on mobile. Swipe gestures: day block ⇄ days, panel ⇄ decisions
-  (addSwipe: dx≥55px, <600ms, |dx|>1.8|dy|). `touch-action:manipulation` everywhere
+  (green ● on the newest decision, blue ↦ otherwise → goLatest); at the newest decision
+  the forward buttons get `.end` (dimmed); the panel's ‹ › next to the time are hidden on
+  mobile; the day ‹ › sit absolutely at the card edges. Swipe gestures: day block ⇄ days,
+  panel ⇄ decisions (addSwipe: dx≥55px, <600ms, |dx|>1.8|dy|; the block follows the finger
+  damped ×0.35 and the new content slides in; handler returning false = snap back).
+  Day switches via ‹ ›/picker/swipe go through `gotoDay` and keep the selected decision's
+  time of day. `touch-action:manipulation` everywhere
   (kills iOS double-tap zoom + tap delay), sticky :hover reset under `@media (hover:none)`,
   inputs 16px on coarse pointers (no focus zoom). Stepping → past the newest decision of
   today quietly re-fetches (catch-up).
