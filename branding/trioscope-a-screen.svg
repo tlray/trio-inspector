@@ -2,5 +2,4 @@
   <!-- A "screen": oscilloscoop-schermpje met glucose-trace -->
   <rect x="7" y="12" width="50" height="40" rx="11" stroke="currentColor" stroke-width="5"/>
   <path d="M15 37 C20 27 25 25 30 31 S38 43 49 29" stroke="currentColor" stroke-width="5"/>
-  <circle cx="49" cy="29" r="4.5" fill="#22c55e" stroke="none"/>
 </svg>
