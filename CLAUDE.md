@@ -16,6 +16,10 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
 
 ## Test
 - Syntax check: extract the `<script>` body and `new Function()` it.
+- Tests freeze the app clock via addInitScript (shifted Date class, real timers) at a moment
+  covered by the fixtures — otherwise every run after local midnight breaks on "today".
+- Flex-column pitfall: `.cols>*` needs `min-width:0;max-width:100%` or a wide `white-space:pre`
+  formula block blows the panel past the mobile viewport.
 - Browser tests: Playwright with `executablePath:'/opt/pw-browsers/chromium'` (symlink to the
   chrome binary). Hermetic setup: serve `index.html` on a fake origin via `context.route`
   (`https://app.test/`), answer `https://fake-ns.test/api/v1/*` from fixtures captured with
@@ -46,8 +50,10 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   (green ● on the newest decision, blue ↦ otherwise → goLatest); at the newest decision
   the forward buttons get `.end` (dimmed); the panel's ‹ › next to the time are hidden on
   mobile; the day ‹ › sit absolutely at the card edges. Swipe gestures: day block ⇄ days,
-  panel ⇄ decisions (addSwipe: dx≥55px, <600ms, |dx|>1.8|dy|; the block follows the finger
-  damped ×0.35 and the new content slides in; handler returning false = snap back).
+  panel ⇄ decisions (addSwipe: dx≥45px, <700ms, |dx|>1.5|dy|; a teaser "ghost card" of the
+  neighbouring day/decision appears beside the block and both follow the finger; on release
+  the cards slide over and the handler fires; teaser returning null = nothing that side =
+  snap back; horizontal moves preventDefault so the page doesn't scroll mid-swipe).
   Day switches via ‹ ›/picker/swipe go through `gotoDay` and keep the selected decision's
   time of day. `touch-action:manipulation` everywhere
   (kills iOS double-tap zoom + tap delay), sticky :hover reset under `@media (hover:none)`,
@@ -70,7 +76,7 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   midnight), IOB/COB/basal/target row, then a SIMPLE forecast chart: ~45 min of real sgv
   dots, a "now" divider, the four forecast curves capped at +2.5 h (like the app), actual
   readings AFTER the decision at 50% opacity (forecast vs reality), target+threshold
-  dashed lines, hover readout line under it — deliberately NO markers/points/rail. The
+  dashed lines, hover readout line under it — deliberately NO markers/points/rail; the y-domain always spans the full in-range band so the axis stays put between decisions. The
   conclusion card sits BELOW the chart (so the chart never shifts while stepping) and
   carries the enacted ✓ / suggested chip top-right (hypo-guard red / below-target purple /
   needed-vs-given bars / idle). Below: the 8 pipeline steps (rail with status dots) with
