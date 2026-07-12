@@ -97,28 +97,35 @@ header.top .grow{flex:1}
   font-weight:650;font-size:14px}
 #connectBtn:hover{opacity:.88}
 #loginErr{color:var(--txt-lo);font-size:12.5px;margin-top:12px;min-height:1.2em}
-#login .hint{color:var(--muted);font-size:12px;margin-top:26px;line-height:1.55}
+#login .hint{color:var(--muted);font-size:12px;margin-top:18px;line-height:1.55}
+#login .hint+.hint{margin-top:8px}
 
-/* ---------- day bar & stats ---------- */
-.daywrap{position:relative;display:flex;justify-content:center;align-items:center}
-.daybar{display:flex;align-items:center;justify-content:center;gap:6px;padding:0 0 4px}
+/* ---------- top bar: day nav + stats on one line ---------- */
+.topbar{display:flex;align-items:center;gap:4px 22px;flex-wrap:wrap;padding:0 0 8px}
+.topbar .grow{flex:1}
+.daynav{display:flex;align-items:center;gap:2px}
 .navb{width:34px;height:34px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
   color:var(--ink2);font-size:17px;flex:none}
 .navb:hover{background:var(--hover);color:var(--ink)}
 .navb:disabled{opacity:.25;cursor:default;background:none}
-.datebtn{position:relative;font-size:15.5px;font-weight:650;letter-spacing:-.01em;padding:7px 14px;border-radius:10px;min-width:168px;text-align:center}
+.datebtn{font-size:15px;font-weight:650;letter-spacing:-.01em;padding:6px 10px;border-radius:10px;white-space:nowrap}
 .datebtn:hover{background:var(--hover)}
-.datebtn input{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;border:none}
-.todaybtn{color:var(--txt-iob);font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px;position:absolute;right:0}
+.datebtn .car{font-size:9px;color:var(--muted);margin-left:4px}
+.dateinp{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;border:0;padding:0}
+.dateinp.vis{position:static;width:auto;height:auto;opacity:1;pointer-events:auto;padding:5px 8px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);
+  font:13px ui-monospace,Menlo,monospace}
+.todaybtn{color:var(--txt-iob);font-size:12.5px;font-weight:600;padding:6px 10px;border-radius:8px}
 .todaybtn:hover{background:var(--hover)}
-#dayStatus{text-align:center;color:var(--muted);font-size:12px;min-height:18px;margin:0 0 8px}
+#dayStatus{text-align:center;color:var(--muted);font-size:12px;margin:0 0 6px;min-height:0}
+#dayStatus:empty{display:none}
 
-.stats{display:flex;justify-content:center;gap:clamp(22px,4.5vw,64px);flex-wrap:wrap;padding:6px 0 26px;text-align:left}
-.stat .k{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-.stat .v{font-size:22px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.stat .v small{font-size:12.5px;font-weight:500;color:var(--ink2);margin-left:2px}
-.stat .sub{font-size:11px;color:var(--muted);margin-top:3px;font-variant-numeric:tabular-nums}
-.minibar{display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:7px;background:var(--grid);min-width:110px}
+.stats{display:flex;align-items:center;gap:4px 24px;flex-wrap:wrap;font-size:13px;color:var(--ink2)}
+.stat{display:inline-flex;align-items:baseline;gap:7px;white-space:nowrap}
+.stat b{font-size:16px;font-weight:650;color:var(--ink);letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stat b small{font-size:11.5px;font-weight:500;color:var(--ink2);margin-left:1px}
+.stat .lbl{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.minibar{display:inline-flex;height:4px;border-radius:2px;overflow:hidden;background:var(--grid);width:34px;align-self:center;flex:none}
 .minibar div{height:100%}
 
 /* ---------- layout ---------- */
@@ -145,22 +152,33 @@ header.top .grow{flex:1}
 .chartempty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px}
 
 /* ---------- snapshot panel ---------- */
-.snap{padding:18px 18px 14px;position:sticky;top:14px}
-.snapnav{display:flex;align-items:center;gap:2px}
-.snaptime{text-align:center;min-width:86px}
-.snaptime .t{font:650 24px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em}
-.snaptime .d{font-size:11px;color:var(--muted);margin-top:1px}
-.snapnav .grow{flex:1}
-.pill{font-size:10.5px;font-weight:650;letter-spacing:.04em;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.snap{padding:16px 18px 14px;position:sticky;top:14px}
+.snaphead{display:flex;align-items:flex-start;gap:12px}
+.snaphead .bgside{flex:1;min-width:0}
+.snaptime{text-align:right;flex:none}
+.snaptime .tnav{display:inline-flex;align-items:center;gap:0}
+.snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 3px}
+.snaptime .d{font-size:11px;color:var(--muted);margin-top:2px;display:flex;justify-content:flex-end;align-items:center;gap:7px}
+.pill{font-size:10px;font-weight:650;letter-spacing:.04em;padding:2px 8px;border-radius:20px;white-space:nowrap}
 .pill.en{color:var(--txt-good);background:rgba(111,207,151,.14)}
 .pill.sg{color:var(--ink2);background:var(--hover)}
-.snapbg{display:flex;align-items:baseline;gap:10px;margin:16px 0 4px;flex-wrap:wrap}
-.snapbg .bg{font-size:40px;font-weight:700;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.snapbg{display:flex;align-items:baseline;gap:9px;margin:0;flex-wrap:wrap}
+.snapbg .bg{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
 .snapbg .unit{font-size:12px;color:var(--muted)}
-.snapbg .trend{font-size:16px;font-weight:600;color:var(--ink2)}
-.snapkv{color:var(--ink2);font-size:12.5px;margin:6px 0 14px;display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
+.snapbg .trend{font-size:15px;font-weight:600;color:var(--ink2)}
+.snapkv{color:var(--ink2);font-size:12.5px;margin:8px 0 12px;display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .snapkv b{color:var(--ink);font-weight:650}
 .snapempty{color:var(--muted);font-size:13px;padding:16px 0}
+
+/* mobile pager: thumb-reachable prev/next, fixed at the bottom */
+#pager{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:50;display:none;
+  align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:999px;
+  box-shadow:0 8px 28px rgba(0,0,0,.22);padding:4px}
+.pgbtn{width:48px;height:48px;border-radius:50%;font-size:24px;color:var(--ink2);display:flex;align-items:center;justify-content:center}
+.pgbtn:active{background:var(--hover);color:var(--ink)}
+.pgmid{min-width:88px;text-align:center;display:flex;flex-direction:column;line-height:1.15;padding:0 4px}
+.pgt{font:650 16px ui-monospace,SFMono-Regular,Menlo,monospace}
+.pgd{font-size:10px;color:var(--muted)}
 
 /* conclusion */
 .conc{border-radius:12px;padding:11px 13px;margin:0 0 14px;background:var(--hover);font-size:13px}
@@ -232,9 +250,13 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
 
 /* ---------- mobile ---------- */
 @media (max-width:980px){
-  .app{padding-top:12px}
-  header.top{padding-bottom:12px}
+  .app{padding-top:12px;padding-bottom:100px}
+  header.top{padding-bottom:10px}
   #updText{display:none}
+  .topbar{justify-content:center}
+  .topbar .grow{display:none}
+  .daynav{width:100%;justify-content:center}
+  .stats{width:100%;justify-content:center;gap:4px 16px}
   .cols{display:flex;flex-direction:column;gap:14px}
   .snap{position:static;order:3;padding:16px 14px 12px}
   .daycard{display:none;order:2}
@@ -245,8 +267,7 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   #chartToggle:hover{color:var(--ink)}
   #chartToggle .car{font-size:10px;transition:transform .15s;display:inline-block}
   #chartToggle.on .car{transform:rotate(180deg)}
-  .stats{gap:18px 30px;padding-bottom:18px}
-  .stat .v{font-size:19px}
+  #pager.on{display:flex}
   .snapbg .bg{font-size:36px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none !important;animation:none !important} }
@@ -271,27 +292,31 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   <h2>Connect to Nightscout</h2>
   <p class="note">See why Trio dosed the way it did — every loop cycle, explained.</p>
   <label for="nsUrl">Nightscout URL</label>
-  <input id="nsUrl" type="url" placeholder="https://my-site.example.com" autocomplete="url">
+  <input id="nsUrl" type="text" inputmode="url" placeholder="my-site.example.com" autocomplete="url">
   <label for="nsToken">Access token</label>
   <input id="nsToken" type="text" placeholder="token with readable permission">
   <button id="connectBtn">Connect</button>
   <div id="loginErr"></div>
+  <p class="hint">Tip: pasting your full Nightscout link is enough — https:// is added automatically, and a
+  <b>?token=…</b> in the link is used as the token.</p>
   <p class="hint">Your URL and token stay in this browser only — they are used to read glucose, treatments and
   loop data directly from your own Nightscout site. Create a token under <b>Admin tools → Subjects</b> with the
   <i>readable</i> role. Works with Trio and other oref-based (OpenAPS / AAPS) uploaders.</p>
 </section>
 
 <main id="appBody" style="display:none">
-  <div class="daywrap">
-    <div class="daybar">
+  <div class="topbar">
+    <div class="daynav">
       <button class="navb" id="dayPrev" aria-label="previous day">‹</button>
-      <button class="datebtn" id="dateBtn"><span id="dateLbl"></span><input type="date" id="dateInp" aria-label="pick a date"></button>
+      <button class="datebtn" id="dateBtn" aria-label="pick a date"><span id="dateLbl"></span><span class="car">▾</span></button>
+      <input type="date" id="dateInp" class="dateinp" tabindex="-1" aria-label="pick a date">
       <button class="navb" id="dayNext" aria-label="next day">›</button>
+      <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
     </div>
-    <button class="todaybtn" id="todayBtn" style="display:none">Today ↦</button>
+    <div class="grow"></div>
+    <div class="stats" id="stats"></div>
   </div>
   <div id="dayStatus"></div>
-  <div class="stats" id="stats"></div>
 
   <div class="cols">
     <button id="chartToggle" aria-expanded="false">Day overview <span class="car">▼</span></button>
@@ -306,6 +331,11 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
     <aside class="card snap" id="panel" aria-label="loop decision"></aside>
   </div>
   <span id="srlive" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)"></span>
+  <div id="pager">
+    <button class="pgbtn" id="pgPrev" aria-label="previous decision">‹</button>
+    <div class="pgmid"><span class="pgt" id="pgTime">—</span><span class="pgd" id="pgDate"></span></div>
+    <button class="pgbtn" id="pgNext" aria-label="next decision">›</button>
+  </div>
 </main>
 </div>
 
@@ -539,15 +569,18 @@ function renderStats(dd){
   const s=stats(dd), el=document.getElementById('stats');
   if(!s){ el.innerHTML=''; return; }
   const tot=s.basalU+s.smbU+s.bolU;
-  const seg=(u,c,t)=>tot>0?`<div style="width:${u/tot*100}%;background:${c}" title="${t}"></div>`:'';
+  const seg=(u,c)=>tot>0?`<div style="width:${u/tot*100}%;background:${c}"></div>`:'';
   el.innerHTML=`
-  <div class="stat"><div class="k">In range</div><div class="v">${Math.round(s.tir*100)}<small>%</small></div>
-    <div class="minibar"><div style="width:${s.lo*100}%;background:var(--bglow)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--bghigh)"></div></div></div>
-  <div class="stat"><div class="k">Average</div><div class="v">${fBG(s.mean)}<small>${bgUnit()}</small></div></div>
-  <div class="stat"><div class="k">Insulin</div><div class="v">${f1(tot)}<small>U</small></div>
-    <div class="minibar">${seg(s.basalU,'rgba(30,150,252,.45)','basal')}${seg(s.smbU,'var(--insulin)','SMB')}${seg(s.bolU,'var(--iobline)','bolus')}</div>
-    <div class="sub">basal ${f1(s.basalU)} · SMB ${f1(s.smbU)} · bolus ${f1(s.bolU)}</div></div>
-  <div class="stat"><div class="k">Carbs</div><div class="v">${Math.round(s.carbsG)}<small>g</small></div></div>`;
+  <span class="stat" title="time in range ${isMmol()?'3.9–10':'70–180'} ${bgUnit()} — low ${Math.round(s.lo*100)}% · high ${Math.round(s.hi*100)}%">
+    <b>${Math.round(s.tir*100)}<small>%</small></b>
+    <span class="minibar"><div style="width:${s.lo*100}%;background:var(--bglow)"></div><div style="width:${s.tir*100}%;background:var(--good)"></div><div style="width:${s.hi*100}%;background:var(--bghigh)"></div></span>
+    <span class="lbl">in range</span></span>
+  <span class="stat"><b>${fBG(s.mean)}</b><span class="lbl">avg ${bgUnit()}</span></span>
+  <span class="stat" title="basal ${f1(s.basalU)} · SMB ${f1(s.smbU)} · bolus ${f1(s.bolU)} U">
+    <b>${f1(tot)}<small>U</small></b>
+    <span class="minibar">${seg(s.basalU,'rgba(30,150,252,.45)')}${seg(s.smbU,'var(--insulin)')}${seg(s.bolU,'var(--iobline)')}</span>
+    <span class="lbl">insulin</span></span>
+  <span class="stat"><b>${Math.round(s.carbsG)}<small>g</small></b><span class="lbl">carbs</span></span>`;
 }
 
 /* ============================================================
@@ -606,6 +639,8 @@ function renderDayChart(dd){
   let bp='';
   for(let t=dd.a;t<=dd.b;t+=300){ bp+=(bp?'L':'M')+X(t).toFixed(1)+' '+hb(schedBasal(t)).toFixed(1)+' '; }
   s+=`<path d="${bp}" fill="none" stroke="var(--insulin)" stroke-width="1.4" stroke-dasharray="2 4" opacity=".9"/>`;
+  /* the top edge the basal bars hang from */
+  s+=`<line x1="${PADL}" x2="${plotR}" y1="0.5" y2="0.5" stroke="var(--axis)" stroke-width="1"/>`;
   /* suspensions: grey block over the scheduled height */
   let susStart=null;
   for(const [t,txt] of dd.notes){
@@ -624,8 +659,10 @@ function renderDayChart(dd){
   const maxbg=Math.max(M(230), ...dd.sgv.map(e=>M(e[1])+M(16)),
     ...(selCycle&&selCycle.pred?['IOB','ZT','COB','UAM'].flatMap(k=>(selCycle.pred[k]||[]).map(v=>M(v)+M(6))):[]));
   const y=v=>T1-((Math.max(dLO,Math.min(maxbg,v))-dLO)/(maxbg-dLO))*(MAIN_H-10);
-  /* in-range band + y labels on the right */
+  /* in-range band + high/low limit lines (the app's threshold lines: 1px, dash 5) + y labels right */
   s+=`<rect x="${PADL}" y="${y(M(180)).toFixed(1)}" width="${plotR-PADL}" height="${(y(M(70))-y(M(180))).toFixed(1)}" fill="var(--band)"/>`;
+  s+=`<line x1="${PADL}" x2="${plotR}" y1="${y(M(180)).toFixed(1)}" y2="${y(M(180)).toFixed(1)}" stroke="var(--bghigh)" stroke-width="1" stroke-dasharray="5 5" opacity=".6"/>`;
+  s+=`<line x1="${PADL}" x2="${plotR}" y1="${y(M(70)).toFixed(1)}" y2="${y(M(70)).toFixed(1)}" stroke="var(--bglow)" stroke-width="1" stroke-dasharray="5 5" opacity=".6"/>`;
   for(const g of (isMmol()?[4,6,8,10,12,14,16,18]:[70,110,150,190,230,270,320])) if(g<maxbg&&g>dLO){
     s+=`<line x1="${PADL}" x2="${plotR}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--grid)" stroke-width=".8" stroke-dasharray="2 4"/>`;
     s+=`<text x="${plotR+7}" y="${(y(g)+3.5).toFixed(1)}" text-anchor="start" fill="var(--muted)" style="font:10.5px ui-monospace,Menlo,monospace">${g}</text>`;
@@ -1168,18 +1205,22 @@ function renderPanel(dd){
     const trend=sgvTrend(dd,c.t);
     const seg=rateAt(dd,c.t);
     const bgc=c.bg<70?'var(--txt-lo)':c.bg>180?'var(--txt-hi)':'var(--txt-good)';
-    head=`<div class="snapnav">
-        <button class="navb" id="prevC" aria-label="previous decision">‹</button>
-        <div class="snaptime"><div class="t">${hhmm(c.t)}</div><div class="d">${dayLabel(localMidnight(c.t))}</div></div>
-        <button class="navb" id="nextC" aria-label="next decision">›</button>
-        <div class="grow"></div>
-        <button class="iconbtn" id="copyLink" title="Copy link to this decision" aria-label="copy link" style="font-size:13px">🔗</button>
-        <span class="pill ${c.rec?'en':'sg'}">${c.rec?'enacted ✓':'suggested'}</span>
-      </div>
-      <div class="snapbg">
-        <span class="bg" style="color:${bgc}">${fBG(M(c.bg))}</span>
-        ${trend?`<span class="trend">${trend.arrow} <span style="font-size:13px;color:var(--muted)">${(trend.delta>=0?'+':'')+(isMmol()?f1(trend.delta):Math.round(trend.delta))}</span></span>`:''}
-        <span class="unit">${bgUnit()}</span>
+    head=`<div class="snaphead">
+        <div class="bgside">
+          <div class="snapbg">
+            <span class="bg" style="color:${bgc}">${fBG(M(c.bg))}</span>
+            ${trend?`<span class="trend">${trend.arrow} <span style="font-size:13px;color:var(--muted)">${(trend.delta>=0?'+':'')+(isMmol()?f1(trend.delta):Math.round(trend.delta))}</span></span>`:''}
+            <span class="unit">${bgUnit()}</span>
+          </div>
+        </div>
+        <div class="snaptime">
+          <div class="tnav">
+            <button class="navb" id="prevC" aria-label="previous decision">‹</button>
+            <span class="t">${hhmm(c.t)}</span>
+            <button class="navb" id="nextC" aria-label="next decision">›</button>
+          </div>
+          <div class="d">${dayLabel(localMidnight(c.t))} <span class="pill ${c.rec?'en':'sg'}">${c.rec?'enacted ✓':'suggested'}</span></div>
+        </div>
       </div>
       <div class="snapkv">
         <span>IOB <b>${f2(c.iob)} U</b></span><span>COB <b>${c.cob||0} g</b></span>
@@ -1209,18 +1250,17 @@ function renderPanel(dd){
     const pb=document.getElementById('prevC'), nb=document.getElementById('nextC');
     if(pb) pb.onclick=async()=>{ await stepCycle(-1); document.getElementById('prevC')?.focus(); };
     if(nb) nb.onclick=async()=>{ await stepCycle(1); document.getElementById('nextC')?.focus(); };
-    const cl=document.getElementById('copyLink');
-    if(cl) cl.onclick=async()=>{
-      setDeep(c);
-      const link=location.href;
-      try{ await navigator.clipboard.writeText(link); }
-      catch(e){ const ta=document.createElement('textarea'); ta.value=link; document.body.appendChild(ta); ta.select();
-        try{ document.execCommand('copy'); }catch(e2){} ta.remove(); }
-      const o=cl.textContent; cl.textContent='✓'; cl.disabled=true;
-      setTimeout(()=>{ cl.textContent=o; cl.disabled=false; },1100);
-    };
+  }
+  /* mobile pager mirrors the selection */
+  const pager=document.getElementById('pager');
+  if(pager){
+    pager.classList.toggle('on',!!c);
+    if(c){ document.getElementById('pgTime').textContent=hhmm(c.t);
+      document.getElementById('pgDate').textContent=dayLabel(localMidnight(c.t)); }
   }
 }
+document.getElementById('pgPrev').onclick=()=>stepCycle(-1);
+document.getElementById('pgNext').onclick=()=>stepCycle(1);
 panel.addEventListener('toggle',ev=>{
   const d=ev.target; if(!d||d.tagName!=='DETAILS') return;
   const k=dKey(d); if(d.open) openDetails.add(k); else openDetails.delete(k);
@@ -1317,7 +1357,12 @@ async function selectDay(d,force){
 document.getElementById('dayPrev').onclick=()=>{ selCycle=null; setDeep(null); selectDay(prevDay(curDay)); };
 document.getElementById('dayNext').onclick=()=>{ selCycle=null; setDeep(null); selectDay(nextDay(curDay)); };
 document.getElementById('todayBtn').onclick=()=>{ selCycle=null; goLatest(true); };
-dateInp.addEventListener('change',()=>{ const d=isoToDay(dateInp.value); if(d!=null){ selCycle=null; setDeep(null); selectDay(d); } });
+document.getElementById('dateBtn').onclick=()=>{
+  try{ dateInp.showPicker(); }               /* modern browsers, top-level frames */
+  catch(e){ dateInp.classList.add('vis'); dateInp.focus(); } /* fallback: show a real date input */
+};
+dateInp.addEventListener('change',()=>{ dateInp.classList.remove('vis');
+  const d=isoToDay(dateInp.value); if(d!=null){ selCycle=null; setDeep(null); selectDay(d); } });
 refreshBtn.onclick=()=>selectDay(curDay,true);
 
 /* auto-refresh: today only, ~every minute, only while the tab is visible */
@@ -1359,11 +1404,19 @@ function showApp(){ loginEl.style.display='none'; appBody.style.display='block';
   refreshBtn.style.display=''; signOutBtn.style.display=''; }
 async function connectNS(){
   const errEl=document.getElementById('loginErr');
-  let url=(document.getElementById('nsUrl').value||'').trim().replace(/\/+$/,'');
-  const token=(document.getElementById('nsToken').value||'').trim();
-  if(!/^https?:\/\//.test(url)){ errEl.textContent='Enter a full URL, starting with https://'; return; }
-  if(url.startsWith('http:')&&location.protocol==='https:'){ errEl.textContent='This page is served over https, so the browser blocks plain-http Nightscout URLs. Use an https URL.'; return; }
-  if(!token){ errEl.textContent='Enter an access token.'; return; }
+  let raw=(document.getElementById('nsUrl').value||'').trim();
+  let token=(document.getElementById('nsToken').value||'').trim();
+  if(!raw){ errEl.textContent='Enter your Nightscout URL.'; return; }
+  if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(raw)) raw='https://'+raw;   /* bare hostname → https */
+  let u;
+  try{ u=new URL(raw); }catch(e){ errEl.textContent='That doesn’t look like a valid URL.'; return; }
+  if(u.protocol!=='https:'){ errEl.textContent='Only https:// Nightscout sites are supported (plain http is blocked by the browser).'; return; }
+  /* a pasted link may carry the token as a query parameter */
+  const qTok=u.searchParams.get('token');
+  if(!token&&qTok){ token=qTok.trim(); document.getElementById('nsToken').value=token; }
+  const url=(u.origin+u.pathname).replace(/\/+$/,'');
+  document.getElementById('nsUrl').value=url;
+  if(!token){ errEl.textContent='Enter an access token — or paste a Nightscout link that has ?token=… in it.'; return; }
   errEl.textContent='connecting…';
   try{
     const r=await fetch(`${url}/api/v1/status.json?token=${encodeURIComponent(token)}`,{signal:(typeof AbortSignal!=='undefined'&&AbortSignal.timeout)?AbortSignal.timeout(15000):undefined});
