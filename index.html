@@ -273,6 +273,10 @@ header.top .grow{flex:1}
 .vrow{display:flex;flex-wrap:wrap;gap:4px 11px;margin:7px 0 2px;font-size:11.5px}
 .vrow .vr{color:var(--ink2);font-family:ui-monospace,Menlo,monospace}
 .vr .vv{color:var(--ink);font-weight:600;margin-left:4px;border-bottom:none}
+.vrow.set{border-top:1px dashed var(--grid);padding-top:6px;margin-top:8px}
+.vrow.set .vr{font-family:inherit;color:var(--muted)}
+.vrow.set .setlbl{color:var(--muted);cursor:default}
+.spath{display:block;margin-top:5px;color:var(--muted);font-size:11px;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
 .vardef{font-size:12px;color:var(--ink2);background:var(--page);border-left:3px solid var(--iob);padding:6px 10px;margin:7px 0;border-radius:0 8px 8px 0}
 .vardef b{font-family:ui-monospace,Menlo,monospace}
 details.src{margin-top:5px}
@@ -530,16 +534,28 @@ function buildRaw(entries,treatments,dev){
     else if(et==='Site Change') site.push(x);
   }
   for(const l of [tb,smb,bolus,carbs,notes,ov,tt]) l.sort((a,b)=>a[0]-b[0]);
-  /* Trio uploads each override twice (the override + its run, ~1s apart) — merge those,
-     preferring the named entry over the generic "Custom Override" and the longer duration */
-  const ovm=[];
-  for(const o of ov){
-    const prev=ovm[ovm.length-1];
-    if(prev && o[0]-prev[0]<120){
-      prev[1]=Math.max(prev[1],o[1]);
-      if(prev[2]==='Custom Override'&&o[2]!=='Custom Override') prev[2]=o[2];
-    } else ovm.push(o.slice());
-  }
+  /* Trio uploads overrides & temp targets twice: the PLAN at start and the RUN when it
+     ends/cancels (~1s later created_at, actual duration, override runs often named
+     "Custom Override"). Within a merge window the LATER entry's end wins — never max():
+     a cancelled indefinite override otherwise keeps its 43200-min plan forever.
+     Only one override/temp target runs at a time, so each end is also clamped to the
+     next entry's start (limits the damage when a run upload never arrived). */
+  const mergePlanRuns=(list,extra)=>{
+    const out=[];
+    for(const o of list){
+      const prev=out[out.length-1];
+      if(prev && o[0]-prev[0]<120){
+        prev[1]=r1((o[0]-prev[0])/60+o[1]);
+        if(extra) extra(prev,o);
+      } else out.push(o.slice());
+    }
+    for(let i=0;i+1<out.length;i++)
+      if(out[i][0]+out[i][1]*60>out[i+1][0]) out[i][1]=r1((out[i+1][0]-out[i][0])/60);
+    return out;
+  };
+  const ovm=mergePlanRuns(ov,(prev,o)=>{
+    if(prev[2]==='Custom Override'&&o[2]!=='Custom Override') prev[2]=o[2]; });
+  const ttm=mergePlanRuns(tt,(prev,o)=>{ if(prev[2]==null&&o[2]!=null) prev[2]=o[2]; });
   const cmap={}, scoreAt={};
   for(const r of dev){
     const oa=r.openaps||{}; const su=oa.suggested, en=oa.enacted;
@@ -565,7 +581,7 @@ function buildRaw(entries,treatments,dev){
       rec:rec||prevRec,pred};
     scoreAt[x]=score;
   }
-  return {sgv,tb,smb,bolus,carbs,notes,site,ov:ovm,tt,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
+  return {sgv,tb,smb,bolus,carbs,notes,site,ov:ovm,tt:ttm,cycles:Object.values(cmap).sort((a,b)=>a.t-b.t)};
 }
 
 async function fetchDay(d){
@@ -1125,12 +1141,12 @@ const SRC={
 const VD={
  delta:'delta — BG change over the last ~5 min. oref uses min(delta, short_avgdelta) so one noisy reading cannot drive dosing.',
  short_avgdelta:'short_avgdelta — average BG change per 5 min over the last 2.5–17.5 min.',
- IOB:'IOB (Insulin on Board) — insulin still active, computed from every bolus, SMB and temp-basal deviation in pump history, decayed along the insulin activity curve (DIA).',
- COB:'COB (Carbs on Board) — announced carbs not yet absorbed; decays with the observed carb absorption rate.',
- autosens:'autosens — ratio of how insulin actually worked over recent hours vs. expected. >1 = resistant: effective ISF = ISF ÷ ratio; basal is scaled too (unless Dynamic ISF handles it) and target only if the sensitivity-raises-target / resistance-lowers-target preferences are on.',
- TDD:'TDD — Total Daily Dose of insulin; used by Dynamic ISF variants.',
- CR:'CR (carb ratio) — grams of carbs covered by 1 U of insulin.',
- ISF:'ISF (insulin sensitivity factor) — how far 1 U of insulin drops BG, in your BG unit per U.',
+ IOB:'IOB (Insulin on Board) — insulin still active, computed from every bolus, SMB and temp-basal deviation in pump history, decayed along the insulin activity curve.<span class="spath">⚙ curve shape: Settings → Algorithm → Additionals → Duration of Insulin Action &amp; Insulin Peak Time</span>',
+ COB:'COB (Carbs on Board) — announced carbs not yet absorbed; decays with the observed carb absorption rate.<span class="spath">⚙ cap: Therapy → Units and Limits → Maximum COB · decay floor: Algorithm → Additionals → Min 5m Carb Impact</span>',
+ autosens:'autosens — ratio of how insulin actually worked over recent hours vs. expected. >1 = resistant: effective ISF = ISF ÷ ratio; basal is scaled too (unless Dynamic ISF handles it) and target only if the sensitivity-raises-target / resistance-lowers-target preferences are on.<span class="spath">⚙ bounds: Settings → Algorithm → Autosens → Autosens Max / Autosens Min · formula: Algorithm → Dynamic Sensitivity</span>',
+ TDD:'TDD — Total Daily Dose of insulin; used by Dynamic ISF variants.<span class="spath">⚙ weighting: Settings → Algorithm → Dynamic Sensitivity → Weighted Average of TDD</span>',
+ CR:'CR (carb ratio) — grams of carbs covered by 1 U of insulin.<span class="spath">⚙ Settings → Therapy → Carb Ratios</span>',
+ ISF:'ISF (insulin sensitivity factor) — how far 1 U of insulin drops BG, in your BG unit per U; the profile value is re-scaled every cycle by autosens or Dynamic ISF.<span class="spath">⚙ Settings → Therapy → Insulin Sensitivities</span>',
  BGI:'BGI (blood glucose impact) — expected BG change per 5 min from insulin activity alone: −activity × ISF × 5.',
  deviation:'deviation — how much the observed BG change differs from BGI: the part insulin cannot explain (carbs, hormones, stress, sensor drift).',
  minDelta:'minDelta — the smaller of delta and short_avgdelta: the trend oref actually doses on, so one jumpy reading cannot exaggerate a rise (per 5 min, shown in your BG unit).',
@@ -1141,18 +1157,104 @@ const VD={
  carbsReq:'carbsReq — grams of fast carbs needed to stay above the threshold when even a full zero temp will not be enough; Trio raises a "carbs required" notification for it.',
  minGuardBG:'minGuardBG — the no-wait minimum of the active forecast curves (COB/UAM blended by remaining carbs, else UAM, else IOB). Unlike minPredBG it does not skip the pre-peak dip. The hypo guard compares it to the threshold.',
  fractionCarbsLeft:'fractionCarbsLeft — share of announced carbs not yet absorbed (mealCOB ÷ carbs entered). Weighs the COB vs UAM guard minima when minGuardBG is blended.',
- threshold:'threshold — safety floor: target − ½×(target − 40 mg/dL ⁄ 2.2 mmol/L), raised to your “glucose safety limit” setting if higher, clamped to 60–120 mg/dL (3.3–6.7 mmol/L). Current BG or forecast below it = all dosing stops.',
+ threshold:'threshold — safety floor: target − ½×(target − 40 mg/dL ⁄ 2.2 mmol/L), raised to your Minimum Safety Threshold setting if that is higher, clamped to 60–120 mg/dL (3.3–6.7 mmol/L). Current BG or forecast below it = all dosing stops. If the value shown is above the formula result, your setting raised it.<span class="spath">⚙ Settings → Therapy → Units and Limits → Minimum Safety Threshold</span>',
  UAM:'UAM (Unannounced Meal) — forecast that extends the current unexplained rise and decays it at the slope observed over the last hour (at least linearly to zero in 3 h).',
  ZT:'ZT (zero-temp) — worst-case forecast if the pump delivers nothing from now on. Its minimum floors the averaged forecast and tempers the UAM-based dosing minimum.',
  insulinReq:'insulinReq — additional insulin needed now: (min(minPredBG, eventualBG) − target) ÷ effective ISF, capped by maxIOB headroom.',
- maxIOB:'maxIOB — hard ceiling on total insulin on board; insulinReq can never push IOB above it.',
- maxBolus:'maxBolus — per-SMB cap: current basal × maxSMBBasalMinutes ÷ 60; the (usually stricter) maxUAMSMBBasalMinutes applies whenever IOB already exceeds the insulin needed for the remaining COB.',
- smb_delivery_ratio:'smb_delivery_ratio — fraction of insulinReq an SMB may deliver at once (default 0.5).',
- SMBInterval:'SMBInterval — minimum minutes between SMBs (default 3).',
- maxSafeBasal:'maxSafeBasal — temp-basal ceiling: min(max basal setting, 3 × highest scheduled basal, 4 × current scheduled basal).',
+ maxIOB:'maxIOB — hard ceiling on total insulin on board from automated dosing; insulinReq can never push IOB above it. Its value only appears in the data when the ceiling is actually hit.<span class="spath">⚙ Settings → Therapy → Units and Limits → Maximum Insulin on Board (IOB)</span>',
+ maxBolus:'maxBolus — per-SMB cap: current basal × maxSMBBasalMinutes ÷ 60; the (usually stricter) maxUAMSMBBasalMinutes applies whenever IOB already exceeds the insulin needed for the remaining COB. Not related to the therapy “Maximum Bolus” (manual boluses only).<span class="spath">⚙ Settings → Algorithm → Super Micro Bolus (SMB) → Max SMB Basal Minutes / Max UAM Basal Minutes</span>',
+ smb_delivery_ratio:'smb_delivery_ratio — fraction of insulinReq an SMB may deliver at once (default 0.5, allowed 0.3–0.7). The value shown is measured from given ÷ needed when an SMB fired uncapped.<span class="spath">⚙ Settings → Algorithm → Additionals → SMB Delivery Ratio</span>',
+ SMBInterval:'SMBInterval — minimum minutes since the last SMB or manual bolus before the next SMB (default 3).<span class="spath">⚙ Settings → Algorithm → Additionals → SMB Interval</span>',
+ maxSafeBasal:'maxSafeBasal — temp-basal ceiling: min(Maximum Basal Rate, 3 × highest scheduled basal, 4 × current scheduled basal); the multipliers are settings too.<span class="spath">⚙ Therapy → Units and Limits → Maximum Basal Rate · Algorithm → Additionals → Max Daily / Current Basal Safety Multiplier</span>',
  enacted:'enacted — the pump confirmed this command. "Suggested only" means it was computed but not (yet) delivered.',
 };
 let VALS={};
+/* Trio app settings, per step — exact labels & paths from the app's Settings tree
+   (SettingItems.swift). n=UI label, p=where it lives, d=what it does (condensed from the
+   app's own hint texts + oref source), def=the app default. Values live in SVALS: Trio
+   exports NO preferences to Nightscout, so a chip only shows a value when this cycle's
+   data reveals or implies it — everything else says so honestly and points at the app. */
+const SETT={
+ asmax:{n:'Autosens Max',p:'Settings → Algorithm → Autosens',def:'120%',
+  d:'Upper bound on the sensitivity ratio — applies to Autosens AND Dynamic ISF/Sigmoid. Caps how far basal is scaled up and ISF scaled down when resistance is detected.'},
+ asmin:{n:'Autosens Min',p:'Settings → Algorithm → Autosens',def:'70%',
+  d:'Lower bound on the sensitivity ratio: how far basal may be scaled down and ISF raised when extra sensitivity is detected.'},
+ rewind:{n:'Rewind Resets Autosens',p:'Settings → Algorithm → Autosens',def:'on',
+  d:'Medtronic/Dana pumps only: a reservoir rewind (assumed site change) resets the ratio to neutral, and Autosens relearns over ~6 h.'},
+ dynisf:{n:'Dynamic ISF',p:'Settings → Algorithm → Dynamic Sensitivity',def:'disabled',
+  d:'Replaces the Autosens ratio with a formula recomputed every cycle from TDD and current BG — Logarithmic or Sigmoid flavour. Still clamped by Autosens Max/Min.'},
+ af:{n:'Adjustment Factor (AF)',p:'Settings → Algorithm → Dynamic Sensitivity',def:'80%',
+  d:'Aggressiveness of Logarithmic Dynamic ISF: how strongly the ratio follows glucose, and at which BG the Autosens Max/Min bounds are reached.'},
+ afsig:{n:'Sigmoid Adjustment Factor',p:'Settings → Algorithm → Dynamic Sensitivity',def:'50%',
+  d:'Steepness of the Sigmoid Dynamic ISF curve around target — how fast the ratio swings between the Autosens Min and Max bounds.'},
+ tddw:{n:'Weighted Average of TDD',p:'Settings → Algorithm → Dynamic Sensitivity',def:'35%',
+  d:'Weight of the last 24 h insulin total vs the 10-day average in the Dynamic ISF input — 100% reacts fastest to habit changes, lower values are smoother.'},
+ adjbas:{n:'Adjust Basal',p:'Settings → Algorithm → Dynamic Sensitivity',def:'off',
+  d:'Also scales the basal rate with the TDD-weighted dynamic ratio (current basal × weighted TDD ÷ 10-day TDD) instead of the Autosens ratio.'},
+ dia:{n:'Duration of Insulin Action',p:'Settings → Algorithm → Additionals',def:'10 h',
+  d:'How many hours a dose keeps lowering BG — the tail of the insulin curve behind IOB and every forecast. Trio recommends tuning Insulin Peak Time rather than DIA.'},
+ peak:{n:'Insulin Peak Time',p:'Settings → Algorithm → Additionals',def:'by insulin type (55/75 min)',
+  d:'Minutes after delivery when insulin activity peaks (needs “Use Custom Peak Time”). Shapes IOB decay and with it all four forecast curves.'},
+ maxcob:{n:'Maximum Carbs on Board (COB)',p:'Settings → Therapy → Units and Limits',def:'120 g',
+  d:'Hard cap on the COB the algorithm will dose on; carbs beyond it stay queued until absorption frees room. Especially relevant with UAM on.'},
+ uam:{n:'Enable UAM',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off',
+  d:'Unannounced meals: builds the UAM forecast curve from unexplained rises, so meals or stress without a carb entry still get insulin (via SMB) — and falling deviations wind dosing back down.'},
+ min5m:{n:'Min 5m Carb Impact',p:'Settings → Algorithm → Additionals',def:'8 mg/dL per 5 min',
+  d:'Assumed carb absorption per 5 min when the CGM doesn’t show any — the floor that makes COB decay instead of lingering forever.'},
+ remfrac:{n:'Remaining Carbs Percentage',p:'Settings → Algorithm → Additionals',def:'100%',
+  d:'Share of entered carbs assumed still to absorb (over 4 h) when absorption isn’t visible in the data — the “tent” bump in the COB curve.'},
+ remcap:{n:'Remaining Carbs Cap',p:'Settings → Algorithm → Additionals',def:'90 g',
+  d:'Gram cap on that assumed-remaining carb bump.'},
+ senstgt:{n:'Sensitivity Raises Target',p:'Settings → Algorithm → Target Behavior',def:'off',
+  d:'When the ratio is below 1 (extra sensitive), the target used this cycle is automatically raised.'},
+ restgt:{n:'Resistance Lowers Target',p:'Settings → Algorithm → Target Behavior',def:'off',
+  d:'When the ratio is above 1 (resistant), the target used this cycle is automatically lowered.'},
+ htt:{n:'High Temp Target Raises Sensitivity',p:'Settings → Algorithm → Target Behavior',def:'off',
+  d:'A temp target above 100 mg/dL (5.6 mmol/L) also lowers the sensitivity ratio → less insulin; scaled via Half Basal Exercise Target.'},
+ ltt:{n:'Low Temp Target Lowers Sensitivity',p:'Settings → Algorithm → Target Behavior',def:'off',
+  d:'A temp target below 100 mg/dL (5.6 mmol/L) also raises the sensitivity ratio → more insulin (requires Autosens Max above 100%).'},
+ hbt:{n:'Half Basal Exercise Target',p:'Settings → Algorithm → Target Behavior',def:'160 mg/dL (8.9 mmol/L)',
+  d:'The temp target at which basal is scaled to 50% when the two sensitivity toggles above are on; other targets scale proportionally (e.g. ~75% at 120 mg/dL).'},
+ noisy:{n:'Noisy CGM Target Increase',p:'Settings → Algorithm → Additionals',def:'130%',
+  d:'While CGM data is flagged noisy/raw, the target is raised to this percentage so bad data doses less insulin.'},
+ smbalways:{n:'Enable SMB Always',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off',
+  d:'Allow SMBs whenever the calculation asks for insulin (except with a high temp target). When on, the four conditional enable-toggles below it disappear.'},
+ smbcob:{n:'Enable SMB With COB',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off',
+  d:'Allow SMBs while announced carbs are on board (COB > 0).'},
+ smbtt:{n:'Enable SMB With Temptarget',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off',
+  d:'Allow SMBs while a temp target below 100 mg/dL (5.6 mmol/L) is running.'},
+ smbcarbs:{n:'Enable SMB After Carbs',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off',
+  d:'Allow SMBs for 6 h after any carb entry, even once COB is back to 0.'},
+ smbhigh:{n:'Enable SMB With High Glucose',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off · target 110 mg/dL (6.1)',
+  d:'Allow SMBs whenever BG is above the “High Glucose Target” value set with this toggle.'},
+ smbhightt:{n:'Allow SMB With High Temptarget',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'off',
+  d:'Also allow SMBs during a temp target above 100 mg/dL (5.6 mmol/L) — keep off if high temp targets are your low-recovery tool.'},
+ smbmin:{n:'Max SMB Basal Minutes',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'30 min',
+  d:'Single-SMB cap expressed as minutes of current basal: maxBolus = basal × minutes ÷ 60. The implied value shown here is measured from a capped SMB (can’t tell SMB vs UAM minutes apart).'},
+ uammin:{n:'Max UAM Basal Minutes',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'30 min',
+  d:'The same per-SMB cap, used instead when the SMB is UAM-driven (IOB already covers the remaining COB).'},
+ smbjumpset:{n:'Max Allowed Glucose Rise for SMB',p:'Settings → Algorithm → Super Micro Bolus (SMB)',def:'20%',
+  d:'SMBs pause (temp basal continues) when the last two readings differ by more than this percentage of BG — protection against calibration jumps and CGM noise. Hard-capped at 40%.'},
+ maxbolus_t:{n:'Maximum Bolus',p:'Settings → Therapy → Units and Limits',def:'10 U',
+  d:'Caps MANUAL boluses only — SMBs are NOT limited by this, but by the basal-minutes caps in the SMB settings.'},
+ maxbasal_t:{n:'Maximum Basal Rate',p:'Settings → Therapy → Units and Limits',def:'2 U/h',
+  d:'Absolute temp-basal ceiling — one of the three terms of maxSafeBasal (the other two are the safety multipliers below).'},
+ mdsm:{n:'Max Daily Safety Multiplier',p:'Settings → Algorithm → Additionals',def:'300%',
+  d:'A temp basal may never exceed this multiple of your largest scheduled basal rate.'},
+ cbsm:{n:'Current Basal Safety Multiplier',p:'Settings → Algorithm → Additionals',def:'400%',
+  d:'…nor this multiple of the current-hour scheduled basal rate.'},
+ skipneutral:{n:'Skip Neutral Temps',p:'Settings → Algorithm → Additionals',def:'off',
+  d:'Skips setting neutral temps near the top of the hour (fewer Medtronic beeps); only takes effect when SMBs are off, and delays basal adjustments.'},
+ unsuspend:{n:'Unsuspend If No Temp',p:'Settings → Algorithm → Additionals',def:'off',
+  d:'Automatically resumes a suspended pump once the zero temp that was set before the suspend has run out.'},
+ closedloop:{n:'Closed Loop',p:'Settings (top of the list)',def:'off',
+  d:'The master switch: off = Trio only computes and suggests, on = the command is actually sent to the pump (enacted).'},
+};
+let SVALS={};
+function schips(list){ return '<div class="vrow set"><span class="setlbl" title="Trio settings that shape this step">⚙</span>'+list.map(k=>{
+  const val=SVALS[k];
+  return `<button type="button" class="vr" data-s="${k}" aria-expanded="false">${SETT[k].n}${val?`<span class="vv">${val}</span>`:''}</button>`;
+}).join('')+'</div>'; }
 function vchips(list){ return '<div class="vrow">'+list.map(v=>{
   const val=VALS[v];
   return `<button type="button" class="vr" data-v="${v}" aria-expanded="false">${v}${val?`<span class="vv">${val}</span>`:''}</button>`;
@@ -1220,6 +1322,16 @@ function buildSteps(c,p){
     fractionCarbsLeft:impliedF!=null?('≈'+impliedF.toFixed(2)):'—',
     enacted:c.rec?'yes':'suggested only',
   } : {};
+  /* setting values only where this cycle's data proves or implies them */
+  const uamOn = c && (pr.UAM || p.uamPred!=null
+    || (dayData(curDay).cycles||[]).some(x=>x.pred&&x.pred.UAM&&x.pred.UAM.length));
+  SVALS = c ? {
+    uam:uamOn?'on ✓':null,
+    dia:(PROFILE&&PROFILE.dia)?(PROFILE.dia+' h'):null,
+    smbmin:impliedSmbMin!=null?('≈'+impliedSmbMin+' min'):null,
+    smbjumpset:smbjump?'tripped now':null,
+    closedloop:(c.rec||(dayData(curDay).cycles||[]).some(x=>x.rec))?'on ✓':null,
+  } : {};
 
   /* conclusion (the enacted/suggested status lives here, top-right) */
   let conc='';
@@ -1249,7 +1361,8 @@ function buildSteps(c,p){
       <details class="more"><summary>Step 0 — the checks before anything runs</summary><div class="mbody">
       <p>Before this pipeline even starts, oref sanity-checks its inputs: CGM readings that are missing or stale (&gt;12 min old), a flat line of identical readings, error/calibration values, high sensor noise, or a running temp basal that doesn’t match the pump history all end the cycle immediately — any high temp is cancelled (or a long zero temp shortened to 30 min) and nothing below runs. The same happens when profile or IOB data is missing. Such cycles report no BG or forecast, so they can’t be shown as decisions here.</p>
       </div></details>`
-      +vchips(['delta','short_avgdelta','minDelta','IOB','COB','autosens','ISF','CR','TDD'])+srcBlock('inputs')});
+      +vchips(['delta','short_avgdelta','minDelta','IOB','COB','autosens','ISF','CR','TDD'])
+      +schips(['asmax','asmin','rewind','dynisf','af','afsig','tddw','adjbas','dia','peak','maxcob'])+srcBlock('inputs')});
 
   /* 2 — forecast */
   const chips=[];
@@ -1285,7 +1398,8 @@ function buildSteps(c,p){
       <details class="more"><summary>Where the deviation comes from</summary><div class="mbody">
       <p>Trio keeps three trend measurements, all expressed as change per 5 minutes: <b>delta</b> — versus the reading ~5 minutes ago; <b>short_avgdelta</b> — the average slope against every reading 2.5–17.5 minutes back (the “15-min” delta); <b>long_avgdelta</b> — the same for 17.5–42.5 minutes back (the “45-min” one). The forecast uses <b>minDelta</b>, the smaller of delta and short_avgdelta, so one jumpy reading can’t exaggerate a rise. Subtract BGI — the change the insulin on board should be causing right now — and what remains is unexplained; × 6 projects it 30 minutes ahead as the <b>deviation</b>. A negative result gets a second opinion: recomputed with the lower of the 15- and 45-minute averages, and if still negative, taken from the 45-minute one. A single low or noisy reading therefore can’t talk the loop out of insulin — a genuine sustained fall still comes through, at the steadier long-window slope.</p>
       </div></details>`
-      +vchips(['delta','short_avgdelta','BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])+srcBlock('forecast')});
+      +vchips(['delta','short_avgdelta','BGI','deviation','naive_eventualBG','eventualBG','minPredBG','minGuardBG','UAM','ZT'])
+      +schips(['uam','min5m','remfrac','remcap'])+srcBlock('forecast')});
 
   /* 3 — hypo guard */
   let guardDeriv='';
@@ -1331,7 +1445,8 @@ function buildSteps(c,p){
     body:(rising?`<p><b>${rising.t}.</b> ${rising.why}</p>`:'')+(zero?`<p><b>${zero.t}.</b> ${zero.why}</p>`:'')+
       `<p>Landing below target means the insulin already on board is more than enough — so the move is to <i>remove</i> future insulin, not add more. The required negative amount is doubled for extra hypo safety and translated into a low or zero temp. This is why a high BG with lots of IOB still produces a zero temp. One exception: when BG is climbing faster than the expected path (expectedDelta), nothing is cut — the normal basal is held as a neutral temp and the next cycle re-checks. (Barely falling — slower than expected — only shrinks the cut proportionally.)</p>
       <div class="frm">insulinReq = 2 × min(0, (eventualBG − target) ÷ ISF)  →  low/zero temp${zero&&c.ebg!=null&&isfV!=null&&req!=null?cy(`2 × min(0, (${mm(c.ebg)} − ${F(tgtV)}) ÷ ${F(isfV)}) = ${F2(req)} U`):''}${rising?cy(`minDelta ${VALS.minDelta} > expectedDelta ${VALS.expectedDelta} → hold basal`):''}</div>`
-      +vchips(['eventualBG','minDelta','expectedDelta','insulinReq','ISF'])+srcBlock('target')});
+      +vchips(['eventualBG','minDelta','expectedDelta','insulinReq','ISF'])
+      +schips(['senstgt','restgt','htt','ltt','hbt','noisy'])+srcBlock('target')});
 
   /* 5 — need */
   let needVal,needSt=skipAfter(5)?'skip':null,needDot=null;
@@ -1369,7 +1484,8 @@ function buildSteps(c,p){
       <p>Besides the limits above, SMBs must be <i>enabled</i> for the cycle — one of the preferences has to apply: always; while COB is present; for 6 h after any carb entry; with a low temp target; or above a configured high-BG level. And they are refused outright: with a high temp target (unless explicitly allowed), within 6 h of Bolus Wizard use, during a scheduled SMB-off window or an override that disables them, when the worst-case forecast (minGuardBG) is below the threshold, right after a &gt;20%-of-BG jump, or while BG itself is under the threshold. Most of these checks are only written to the console log, not the reason text — when one applies, this step simply shows “no SMB this cycle”.</p>
       </div></details>
       <div class="frm">maxBolus  = current basal × maxSMBBasalMinutes ÷ 60\nmicroBolus = min(insulinReq × smb_delivery_ratio, maxBolus)   // ratio setting, default 0.5 — not part of Nightscout exports${c&&req!=null&&req>0.01&&(smbGiven||capVal!=null)?cy(capS?`cap ${capVal!=null?F2(capVal):'?'} U wins → ${F2(smbGiven)} U${impliedSmbMin!=null?` · implies max(UAM)SMBBasalMinutes ≈ ${impliedSmbMin} m (cap ÷ basal ${f2(sched)})`:''}`:`${F2(req)} × ratio(≈${(smbGiven/req).toFixed(2)}) = ${F2(smbGiven)} U`):''}</div>`
-      +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])+srcBlock('smb')});
+      +vchips(['maxBolus','smb_delivery_ratio','SMBInterval'])
+      +schips(['smbalways','smbcob','smbtt','smbcarbs','smbhigh','smbhightt','uam','smbmin','uammin','smbjumpset','maxbolus_t'])+srcBlock('smb')});
 
   /* 7 — temp basal */
   let basVal, basSt=null, basDot=null, basNote='';
@@ -1389,7 +1505,8 @@ function buildSteps(c,p){
     body:basNote+((capB&&`<p><b>${capB.t}.</b> ${capB.why}</p>`)||'')+
       `<p>The revocable channel. Without an SMB the whole need is scheduled as a 30-min high temp (rate = basal + 2×insulinReq). Right after an SMB oref instead parks a compensating zero temp of up to 60 min (a need under 30 min becomes a 30-min low-but-nonzero temp): if the forecast was too optimistic, the withheld basal is the buffer. Either way the rate can never exceed maxSafeBasal — a multiple of your <i>scheduled</i> basal.</p>
       <div class="frm">rate = basal + 2 × insulinReq\nmaxSafeBasal = min(max basal, 3 × max daily basal, 4 × current basal)${c&&sched!=null&&req!=null&&req>0.01?cy(`${F2(sched)} + 2 × ${F2(req)} = ${F2(sched+2*req)} U/h${mmB?` → capped ${mmB[2]}`:(c.rate!=null?` → set ${F2(c.rate)}`:'')}`):''}</div>`
-      +vchips(['maxSafeBasal','insulinReq'])+srcBlock('basal')});
+      +vchips(['maxSafeBasal','insulinReq'])
+      +schips(['maxbasal_t','mdsm','cbsm','skipneutral','unsuspend'])+srcBlock('basal')});
 
   /* 8 — result */
   rows.push({id:'result',lab:'→ deliver',dot:(c&&c.rec)?'--good':null,
@@ -1397,7 +1514,7 @@ function buildSteps(c,p){
     val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${(c.rate!=null&&c.dur>0)?`<b>${F2(c.rate)} U/h</b> · ${Math.round(c.dur)} m`:'(unchanged)'}`
        :'deliver, then start over in ~5 minutes',
     body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
-      +vchips(['enacted'])});
+      +vchips(['enacted'])+schips(['closedloop'])});
   return {rows,conc,thr};
 }
 
@@ -1489,11 +1606,19 @@ panel.addEventListener('click',ev=>{
   const vr=ev.target.closest('.vr');
   if(vr){
     const body=vr.closest('.sbody'); const def=body&&body.querySelector('.vardef');
-    if(def){ const d=VD[vr.dataset.v]||'';
-      const wasOpen = def.style.display!=='none'&&def.dataset.v===vr.dataset.v;
+    if(def){
+      const sk=vr.dataset.s, key=sk?('s:'+sk):vr.dataset.v;
+      const wasOpen = def.style.display!=='none'&&def.dataset.v===key;
       body.querySelectorAll('.vr').forEach(x=>x.setAttribute('aria-expanded','false'));
       if(wasOpen){ def.style.display='none'; }
-      else { const cur=VALS[vr.dataset.v]; def.innerHTML='<b>'+vr.dataset.v+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+d.slice(d.indexOf('—')+2); def.dataset.v=vr.dataset.v; def.style.display='block'; vr.setAttribute('aria-expanded','true'); } }
+      else {
+        if(sk){ const s=SETT[sk], cur=SVALS[sk];
+          def.innerHTML='<b>'+s.n+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+s.d
+            +'<span class="spath">⚙ Trio app: '+s.p+(s.def?' · app default: '+s.def:'')
+            +(cur?'':' · current value not exported to Nightscout — check it in the app')+'</span>';
+        } else { const d=VD[vr.dataset.v]||'', cur=VALS[vr.dataset.v];
+          def.innerHTML='<b>'+vr.dataset.v+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+d.slice(d.indexOf('—')+2); }
+        def.dataset.v=key; def.style.display='block'; vr.setAttribute('aria-expanded','true'); } }
     return;
   }
   const row=ev.target.closest('.srow');

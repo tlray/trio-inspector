@@ -112,6 +112,19 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
 - `buildSteps(c,p)` computes derived values (thr via `thrOf`, naive, guard minima, capVal,
   ratio, impliedF, impliedSmbMin), fills `VALS` (live values in glossary chips) and returns
   {rows,conc,thr}.
+- Settings references: `SETT` maps the Trio app settings to each step — exact UI labels +
+  paths from `SettingItems.swift` (tlray/Trio) and condensed in-app hint texts. Rendered
+  per step via `schips([...])` as a ⚙ `.vrow.set` row; clicking uses the same `.vardef`
+  box (`data-s` vs `data-v`) and appends an `.spath` line (path · app default · value
+  provenance). `SVALS` (filled in buildSteps) holds the FEW values the daily data proves:
+  UAM on (a pred.UAM curve any cycle today), DIA (NS profile), implied max(UAM)SMBBasal-
+  Minutes from a capped SMB, smbjump tripped, closed loop (any enacted cycle today).
+  Trio uploads NO preferences to Nightscout (profile.json = schedules/ISF/CR/DIA/targets
+  only), so every other chip honestly says "not exported — check it in the app"; keep it
+  that way. Settings that sit 1:1 behind an existing variable chip (threshold, maxIOB,
+  maxBolus, smb_delivery_ratio, SMBInterval, maxSafeBasal, ISF, CR, …) carry their ⚙ path
+  inside the VD text instead of a duplicate ⚙ chip. When Trio's settings tree changes,
+  re-check labels/paths against `SettingItems.swift`.
 - Cycle identity (`buildRaw`): key each loop cycle on `suggested.deliverAt`, NOT
   `enacted.deliverAt`. The enacted deliverAt only advances when a NEW temp/SMB is sent; on a
   "no change" cycle Trio re-reports the previous enact, so keying on it silently drops every
@@ -123,10 +136,16 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   scores duplicates (formatted=2 + freshEnacted=1) and keeps the higher score; a losing twin
   can still set `rec` (enacted proof). Never prefer by created_at — order is not stable.
 - Overrides arrive as `eventType:"Exercise"` treatments (name in `notes`, duration min,
-  43200 = indefinite) and are uploaded TWICE by Trio (override + run, ~1s apart) — buildRaw
-  merges pairs starting <120s apart, preferring the non-"Custom Override" name and the
-  longer duration. There is NO target in the treatment; the drawn level comes from the
-  cycle target at that time (`targetAt`).
+  43200 = indefinite). Trio uploads the PLAN at start and the RUN at end/cancel (created_at
+  ~1s later, ACTUAL duration, often named "Custom Override" — Trio's own delete-the-plan
+  check misses because `copyRunningOverride` shifts the date 1s, so both stay in NS).
+  `mergePlanRuns` (buildRaw) merges entries starting <120s apart with LATER-END-WINS —
+  never max(): a cancelled indefinite override would keep its 43200-min plan forever —
+  keeps the non-"Custom Override" name, and clamps each end to the next entry's start
+  (only one override runs at a time). Temp targets get the same treatment (dual upload,
+  run carries actual duration; a dur-0 NS cancel entry acts as a terminator via the clamp).
+  There is NO target in the Exercise treatment; the drawn level comes from the cycle
+  target at that time (`targetAt`).
 - Nightscout access: localStorage only — keys `trioInspector.auth` {url,token},
   `trioInspector.day.<epoch>` (max ~6 days, pruned), `trioInspector.profile`. KEEP these
   key names — the stable Pages/artifact origin means existing users stay signed in across
