@@ -199,6 +199,11 @@ header.top .grow{flex:1}
 .snapbg .trend{font-size:15px;font-weight:600;color:var(--ink2)}
 .snapkv{color:var(--ink2);font-size:12.5px;margin:8px 0 12px;display:flex;gap:14px;flex-wrap:wrap;font-variant-numeric:tabular-nums}
 .snapkv b{color:var(--ink);font-weight:650}
+.adjline{font-size:12px;margin:-4px 0 10px;padding:5px 9px;border-radius:9px;font-variant-numeric:tabular-nums}
+.adjline.ov{color:var(--txt-ov);background:color-mix(in srgb,var(--ov) 10%,transparent)}
+.adjline.tt{color:var(--txt-good);background:color-mix(in srgb,var(--good) 10%,transparent)}
+.adjline b{font-weight:650}
+.adjline .apx{color:var(--muted);font-size:10.5px;margin-left:2px}
 .snapempty{color:var(--muted);font-size:13px;padding:16px 0}
 
 /* mobile pager: thumb-reachable prev/next + a "now" button, fixed at the bottom */
@@ -528,7 +533,7 @@ function buildRaw(entries,treatments,dev){
       if(t.insulin) bolus.push([x,r2(t.insulin)]); if(t.carbs) carbs.push([x,r1(t.carbs)]); }
     else if(et==='Exercise'){ ov.push([x,r1(t.duration||0),String(t.notes||'Override')]); }
     else if(et==='Temporary Target'){ const lo=t.targetBottom!=null?+t.targetBottom:null;
-      tt.push([x,r1(t.duration||0),lo]); }
+      tt.push([x,r1(t.duration||0),lo,String(t.name||t.reason||'').trim()]); }
     else if(et==='Carb Correction'||t.carbs){ if(t.carbs) carbs.push([x,r1(t.carbs)]); }
     else if(et==='Note') notes.push([x,t.notes||'']);
     else if(et==='Site Change') site.push(x);
@@ -555,7 +560,8 @@ function buildRaw(entries,treatments,dev){
   };
   const ovm=mergePlanRuns(ov,(prev,o)=>{
     if(prev[2]==='Custom Override'&&o[2]!=='Custom Override') prev[2]=o[2]; });
-  const ttm=mergePlanRuns(tt,(prev,o)=>{ if(prev[2]==null&&o[2]!=null) prev[2]=o[2]; });
+  const ttm=mergePlanRuns(tt,(prev,o)=>{ if(prev[2]==null&&o[2]!=null) prev[2]=o[2];
+    if(!prev[3]&&o[3]) prev[3]=o[3]; });
   const cmap={}, scoreAt={};
   for(const r of dev){
     const oa=r.openaps||{}; const su=oa.suggested, en=oa.enacted;
@@ -601,7 +607,12 @@ async function fetchDay(d){
     const p0=profileArr[0], store=p0.store[p0.defaultProfile||'default'];
     PROFILE={basal:store.basal.map(x=>[x.timeAsSeconds,x.value]),target:store.target_low[0].value,
       isf:store.sens[0].value,cr:store.carbratio.map(x=>[x.timeAsSeconds,x.value]),dia:store.dia,
-      units:store.units||p0.units||'mmol'};
+      units:store.units||p0.units||'mmol',
+      /* Trio uploads its override presets (for remote control): name/duration/percentage/
+         target (mg/dL). These are the CURRENT preset definitions — display with ≈. */
+      ovPresets:(p0.overridePresets||[]).map(o=>({n:String(o.name||'').trim(),
+        dur:o.duration!=null?+o.duration:null,pct:o.percentage!=null?+o.percentage:null,
+        tgt:o.target!=null?+o.target:null}))};
     try{ localStorage.setItem(LS_PROF,JSON.stringify(PROFILE)); }catch(e){}
   }catch(e){}
   const raw=buildRaw(entries,treatments,dev);
@@ -750,6 +761,13 @@ function targetAt(dd,t){
   if(v==null && dd.cycles.length && dd.cycles[0].tgt!=null && t<dd.cycles[0].t) v=dd.cycles[0].tgt;
   return v!=null?v:(PROFILE&&PROFILE.target!=null?PROFILE.target:null);
 }
+/* the CURRENT preset definition behind a named override (profile overridePresets) — may
+   differ from what the override did historically, so always present as ≈ */
+function ovPreset(label){ const l=String(label||'').trim();
+  return l?(((PROFILE&&PROFILE.ovPresets)||[]).find(q=>q.n===l)||null):null; }
+function ovInfo(label){ const q=ovPreset(label);
+  return q?[(q.pct!=null?q.pct+'%':null),(q.tgt?'target '+fBG(M(q.tgt)):null)].filter(Boolean).join(' · '):''; }
+const fDur=m=>m>=43200?'indefinite':(Math.round(m)+' m');
 
 function renderDayChart(dd){
   chartWrap.querySelectorAll('svg,.chartempty').forEach(e=>e.remove());
@@ -828,19 +846,21 @@ function renderDayChart(dd){
   }
   /* temp targets (green) & overrides (purple): thick soft line at the active target level */
   for(const e of (dd.tempTargets||[])){
-    const [t,dur,lo]=e;
+    const [t,dur,lo,name]=e;
     if(!dur||lo==null||lo<=0) continue;
     const lvl = isMmol()&&lo>=40 ? lo/18.016 : lo; /* NS temp targets are mg/dL by convention */
     const x0=X(Math.max(t,dd.a)), x1=X(Math.min(t+dur*60,dd.b));
-    s+=`<line x1="${x0.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${y(lvl).toFixed(1)}" y2="${y(lvl).toFixed(1)}" stroke="var(--good)" stroke-width="7" stroke-linecap="round" opacity=".3"/>`;
+    s+=`<line x1="${x0.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${y(lvl).toFixed(1)}" y2="${y(lvl).toFixed(1)}" stroke="var(--good)" stroke-width="7" stroke-linecap="round" opacity=".3"><title>${esc((name?name+' · ':'')+'temp target '+fBG(lvl)+' · '+fDur(dur)+' · from '+hhmm(t))}</title></line>`;
+    if(x1-x0>44) s+=`<text x="${(x0+4).toFixed(1)}" y="${(y(lvl)-7).toFixed(1)}" fill="var(--txt-good)" style="font:600 9.5px system-ui" opacity=".9">${esc((name?name+' · ':'')+fBG(lvl))}</text>`;
   }
   for(const e of (dd.overrides||[])){
     const [t,dur,label]=e;
     if(!dur) continue;
     const x0=X(Math.max(t,dd.a)), x1=X(Math.min(t+dur*60,dd.b));
     const lvl=targetAt(dd,Math.max(t,dd.a)+120)||(isMmol()?6:100);
-    s+=`<line x1="${x0.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${y(lvl).toFixed(1)}" y2="${y(lvl).toFixed(1)}" stroke="var(--ov)" stroke-width="7" stroke-linecap="round" opacity=".38"><title>${esc(label)}</title></line>`;
-    if(x1-x0>44) s+=`<text x="${(x0+4).toFixed(1)}" y="${(y(lvl)-7).toFixed(1)}" fill="var(--txt-ov)" style="font:600 9.5px system-ui" opacity=".9">${esc(label)}</text>`;
+    const info=ovInfo(label), pr=ovPreset(label);
+    s+=`<line x1="${x0.toFixed(1)}" x2="${x1.toFixed(1)}" y1="${y(lvl).toFixed(1)}" y2="${y(lvl).toFixed(1)}" stroke="var(--ov)" stroke-width="7" stroke-linecap="round" opacity=".38"><title>${esc(label+(info?' · '+info+' (≈ current preset)':'')+' · '+fDur(dur)+' · from '+hhmm(t))}</title></line>`;
+    if(x1-x0>44) s+=`<text x="${(x0+4).toFixed(1)}" y="${(y(lvl)-7).toFixed(1)}" fill="var(--txt-ov)" style="font:600 9.5px system-ui" opacity=".9">${esc(label+(pr&&pr.pct!=null?' · '+pr.pct+'%':''))}</text>`;
   }
   /* forecast curves for the selected cycle (clipped at day end) */
   if(selCycle&&selCycle.pred){
@@ -1550,6 +1570,15 @@ function renderPanel(dd){
         ${seg?`<span>basal <b>${f2(seg.rate)} U/h</b></span>`:''}
         ${c.tgt!=null?`<span>target <b>${fBG(c.tgt)}</b></span>`:''}
       </div>`;
+    /* adjustments active at this moment — everything Nightscout knows about them */
+    for(const e of (dd.overrides||[])) if(c.t>=e[0]&&c.t<e[0]+e[1]*60){
+      const info=ovInfo(e[2]);
+      head+=`<div class="adjline ov">⚡ Override <b>${esc(e[2])}</b>${info?` · ${info}`:''} · ${fDur(e[1])} · from ${hhmm(e[0])}${info?` <span class="apx">≈ current preset</span>`:''}</div>`;
+    }
+    for(const e of (dd.tempTargets||[])) if(e[1]&&e[2]>0&&c.t>=e[0]&&c.t<e[0]+e[1]*60){
+      const lvl=isMmol()&&e[2]>=40?e[2]/18.016:e[2];
+      head+=`<div class="adjline tt">🎯 Temp target${e[3]?` <b>${esc(e[3])}</b>`:''} · ${fBG(lvl)} · ${fDur(e[1])} · from ${hhmm(e[0])}</div>`;
+    }
   } else {
     head=`<div class="snapempty">${dd.cycles.length?'Pick a moment in the day overview, or step with ← →.':'No loop decisions on this day.'}</div>`;
   }

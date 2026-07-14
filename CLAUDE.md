@@ -145,7 +145,13 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   (only one override runs at a time). Temp targets get the same treatment (dual upload,
   run carries actual duration; a dur-0 NS cancel entry acts as a terminator via the clamp).
   There is NO target in the Exercise treatment; the drawn level comes from the cycle
-  target at that time (`targetAt`).
+  target at that time (`targetAt`). Trio DOES upload its override PRESETS in profile.json
+  (`overridePresets`: name/duration/percentage/target, target in mg/dL) → `PROFILE.ovPresets`;
+  `ovPreset/ovInfo` match by trimmed name. Shown in the bar label/tooltip and as an
+  `.adjline` pill under the panel snapkv for adjustments active at the selected cycle —
+  ALWAYS marked "≈ current preset" (presets can be edited later; "Custom Override" runs
+  never match a preset). Temp targets keep their NS name (`name`/`reason` field → tt[3];
+  old cached days have 3-element tt entries, so guard e[3]).
 - Nightscout access: localStorage only — keys `trioInspector.auth` {url,token},
   `trioInspector.day.<epoch>` (max ~6 days, pruned), `trioInspector.profile`. KEEP these
   key names — the stable Pages/artifact origin means existing users stay signed in across
