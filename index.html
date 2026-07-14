@@ -371,8 +371,13 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
         <div id="verList"></div>
       </div>
       <div class="mhr"></div>
+      <button class="mi" id="impBtn" role="menuitem">
+        <span>⇣&nbsp; Import Trio settings</span><span class="misub" id="impSub"></span>
+      </button>
+      <div class="mhr"></div>
       <button class="mi" id="signOut" role="menuitem">Sign out</button>
     </div>
+    <input type="file" id="impFile" accept=".csv,text/csv,text/comma-separated-values,text/plain" style="display:none" aria-hidden="true">
   </div>
 </header>
 
@@ -514,6 +519,46 @@ function dayData(d){
   if(dayCache[d]) return dayCache[d].data;
   const p=loadPersisted(d); if(p) return p.data;
   return emptyDay(d);
+}
+
+/* ---------- Trio settings-export import ----------
+   Settings → Trio Backup → Export Settings writes TrioSettings_yyyyMMdd_HHmmss.csv
+   (Setting Category,Subcategory,Setting Name,Value,Unit). Names AND values are localized
+   on the phone; IMPMAP is GENERATED from Trio's Localizable.xcstrings (all languages) and
+   maps every normalized variant back to a canonical key — regenerate when Trio's
+   translations change. Imported values are a snapshot: shown with ⇣ + the export date
+   (from the file name), and anything proven by the day's own data wins over them. */
+const IMPMAP={"n":{"максимум для алгоритма autosens":"asmax","autosensibilità max":"asmax","autosens max":"asmax","autosens tối đa":"asmax","autosens maxinställning":"asmax","максимум для алгоритму автосенс":"asmax","sensibilité automatique maximale (autosens maximal)":"asmax","自動敏感度最大值":"asmax","autosens maks":"asmax","минимум для алгоритма autosens":"asmin","autosens min.":"asmin","мінімум для алгоритму автосенс":"asmin","autosens minimuminställning":"asmin","autosens tối thiểu":"asmin","自動敏感度最小值":"asmin","autosens min":"asmin","autosensibilità min":"asmin","riavvolgi resetta autosensibilità":"rewind","przewiń resetuje autosens":"rewind","återställ autosens vid reservoarbyte":"rewind","превъртането нулира autosens":"rewind","omstart nullstiller autosens":"rewind","tua lại sẽ đặt lại autosens":"rewind","le changement du réservoir réinitialise la sensibilité automatique d'\"autosens\"":"rewind","převinutí resetuje autosens":"rewind","скинути автосенс при перезапуску помпи":"rewind","rewind resets autosens":"rewind","倒帶重設自動敏感度調整":"rewind","pumpe zurückspulen setzt autosens zurück":"rewind","terughalen resets autosens":"rewind","enable smb always":"smbalways","винаги активиране на smb":"smbalways","activar siempre smb":"smbalways","activeer smb altijd":"smbalways","включити постійні smb":"smbalways","aktiver smb altid":"smbalways","toujours activer smb":"smbalways","總是啟用小量注射":"smbalways","aktiver smb alltid":"smbalways","abilita smb sempre":"smbalways","använd alltid smb":"smbalways","włącz smb zawsze":"smbalways","povolit smb vždy":"smbalways","luôn kích hoạt smb":"smbalways","ativar sempre smb":"smbalways","включить постоянные smb":"smbalways","smb immer aktivieren":"smbalways","cho phép smb khi còn cob":"smbcob","povolit smb s aktivními sacharidy (cob)":"smbcob","activar smb con cob":"smbcob","abilita smb con cob":"smbcob","włącz smb z cob":"smbcob","enable smb with cob":"smbcob","aktiver smb med cob":"smbcob","активиране на smb при cob":"smbcob","включити smb за позитивного cob":"smbcob","включить smb при положительном cob":"smbcob","啟用碳水化合物下的小量注射":"smbcob","aktiviere smb mit cob":"smbcob","activer smb avec cob":"smbcob","activar smb com cob":"smbcob","använd smb med kolhydrater (cob)":"smbcob","activeer smb met cob":"smbcob","kích hoạt smb với mục tiêu tạm thời":"smbtt","använd smb vid låga tillfälliga mål":"smbtt","activar smb con temptarget":"smbtt","включить smb с временной целью":"smbtt","smb activo com alvo temporário":"smbtt","enable smb with temptarget":"smbtt","włącz smb z celem tymczasowym":"smbtt","aktiviere smb mit temporären zielen":"smbtt","активиране на smb при временна цел":"smbtt","啟用臨時目標的小量注射":"smbtt","activer smb avec cible temporaire":"smbtt","aktiver smb med temptarget":"smbtt","gebruik smb met tijdelijke doelen":"smbtt","aktiver smb med midlertidig mål":"smbtt","povolit smb s dočasným cílem":"smbtt","увімкнути smb з тимчасовою метою":"smbtt","abilita smb con target temporanei":"smbtt","啟用碳水化合物後的小量注射":"smbcarbs","aktiviere smb nach kohlenhydrataufnahme":"smbcarbs","abilita smb dopo i cho":"smbcarbs","activar smb después de carbohidratos":"smbcarbs","aktiver smb etter karbo":"smbcarbs","enable smb after carbs":"smbcarbs","włącz smb po węglowodanach":"smbcarbs","включити smb на 6 годин після вуглеводів":"smbcarbs","activer les smb après les glucides":"smbcarbs","povolit smb po sacharidech":"smbcarbs","ativar smb após carbs":"smbcarbs","använd smb efter kolhydrater":"smbcarbs","включить smb на 6 часов после углеводов":"smbcarbs","activeer smb na koolhydraten":"smbcarbs","kích hoạt smb sau nhập carbs":"smbcarbs","активиране на smb след въглехидрати":"smbcarbs","aktiver smb efter kulhydrater":"smbcarbs","aktiver smb ved høyt bs":"smbhigh","aktiviere smb bei hohem blutzucker":"smbhigh","активиране на smb при висока глюкоза":"smbhigh","smb inschakelen met hoge glucose":"smbhigh","activer smb avec un taux de glucose élevé":"smbhigh","włącz smb przy wysokim poziomie glikemii":"smbhigh","啟用 高血糖 smb":"smbhigh","enable smb with high glucose":"smbhigh","cho phép smb khi đường huyết cao":"smbhigh","aktiver smb med højt glukose":"smbhigh","aktivera smb vid ett högt glukosvärde":"smbhigh","povolit smb při vysoké glykémii":"smbhigh","hohes glukoseziel":"smbhightgt","høyt blodsukkermål":"smbhightgt","hoge glucose doel":"smbhightgt","cíl vysoké glukózy":"smbhightgt","горна целева глюкоза":"smbhightgt","high glucose target":"smbhightgt","højt glukose mål":"smbhightgt","högt glukosvärde":"smbhightgt","高血糖目標":"smbhightgt","mục tiêu đường huyết cao":"smbhightgt","cible de glucose haute":"smbhightgt","wysoki zakres docelowy":"smbhightgt","allow smb with high temptarget":"smbhightt","autoriser smb avec cible temporaire haute":"smbhightt","aktiver smb ved høyt midlertidig mål":"smbhightt","разрешить smb с высокой временной целью":"smbhightt","smb met hoog tijdelijk streefdoel toestaan":"smbhightt","consenti smb con alto temptarget":"smbhightt","разреши smb при висока временна цел":"smbhightt","cho phép smb khi mục tiêu tạm thời cao":"smbhightt","permitir smb com alto-alvo":"smbhightt","允許在高臨時目標下進行微量注射":"smbhightt","permitir smb con temptarget alto":"smbhightt","povolit smb při vysokém dočasném cíli":"smbhightt","erlaube smb bei hohen temporären zielen":"smbhightt","дозволити smb з високою тимчасовою метою":"smbhightt","tillåt smb vid högt tillfälligt mål":"smbhightt","zezwalaj na smb z wysokim tymczasowym celem docelowym":"smbhightt","tillad smb med højt temptarget":"smbhightt","aktivera uam":"uam","aktiver uam":"uam","активиране на uam":"uam","aktiviere uam":"uam","kích hoạt uam":"uam","enable uam":"uam","включить определение необъявленных углеводов uam":"uam","activer uam":"uam","увімкнути uam":"uam","povolit uam":"uam","uam inschakelen":"uam","habilitar uam":"uam","啟用未計劃用餐":"uam","abilita uam":"uam","activar uam":"uam","włącz uam":"uam","maks basalminutter for smb":"smbmin","máximo smb basal minutos":"smbmin","max smb basalminuter":"smbmin","số phút tiêm nền smb tối đa":"smbmin","最大smb基礎分鐘數":"smbmin","max smb basal minutes":"smbmin","max smb en minutes de basal":"smbmin","максимум smb базальных минут":"smbmin","maks. smb basal minutter":"smbmin","max smb basal minuten":"smbmin","макс. smb базал в минути":"smbmin","max. minut bazálu pro smb":"smbmin","minuti basali max smb":"smbmin","max smb basale minuten":"smbmin","máximo de minutos basais smb":"smbmin","максимум smb базальних хвилин":"smbmin","máximo uam basal minutos":"uammin","maks basalminutter for uam":"uammin","số phút tiêm nền uam tối đa":"uammin","max uam en minutes de basal":"uammin","max uam basaal minuten":"uammin","minuti basali max uam":"uammin","max uam basal minutes":"uammin","макс. базал уам":"uammin","max uam basalminuter":"uammin","max uam basal minuten":"uammin","最大uam基礎分鐘數":"uammin","max. minut bazálu pro uam":"uammin","maks. uam basal minutter":"uammin","макс. uam базал в минути":"uammin","máximo de minutos de basal do uam":"uammin","максимальна кількість базальних хвилин":"uammin","augmentation max du glucose autorisée pour smb":"smbjumpset","максимално допустимо покачване на глюкозата за smb":"smbjumpset","max allowed glucose rise for smb":"smbjumpset","max. zulässiger glukoseanstieg für smb":"smbjumpset","mức tăng đường huyết tối đa cho phép smb":"smbjumpset","maksymalny dopuszczalny wzrost poziomu glikemii dla smb":"smbjumpset","smb 可接受的最高血糖上升幅度":"smbjumpset","maks. tillatt blodsukkerstigning for smb":"smbjumpset","maximální povolený nárůst glykémie pro smb":"smbjumpset","isf dynamique":"dynisf","dynamický isf":"dynisf","dynamiczny isf":"dynisf","dynamischer isf":"dynisf","isf dinamica":"dynisf","動態 isf":"dynisf","dynamisk isf":"dynisf","dynamic isf":"dynisf","dynamische isf":"dynisf","ajuste de fator (f)":"af","aanpassingsfactor (af)":"af","調整因子 (af)":"af","фактор на регулиране (af)":"af","adjustment factor (af)":"af","facteur d'ajustement (af)":"af","factor de ajuste (af)":"af","hệ số điều chỉnh (af)":"af","fattore di regolazione (af)":"af","anpassungsfaktor (af)":"af","justeringsfaktor (af)":"af","коэффициент регулировки (af)":"af","współczynnik dostosowania (af)":"af","faktor úpravy (af)":"af","корекційний фактор (af)":"af","sigmoid-anpassungsfaktor":"afsig","коэффициент корректировки sigmoid":"afsig","сигмоиден коригиращ коефициент":"afsig","фактор коригування сигмоїда":"afsig","factor de ajuste sigmoide":"afsig","s型調整因子":"afsig","współczynnik dostosowania sigmoid":"afsig","faktor úpravy sigmoidní funkce":"afsig","sigmoid adjustment factor":"afsig","fator de ajuste sigmoid":"afsig","facteur d'ajustement sigmoïde":"afsig","hệ số điều chỉnh hàm sigmoid":"afsig","fattore di regolazione sigmoid":"afsig","aanpassingsfactor van sigmoid":"afsig","sigmoid justering faktor":"afsig","sigmoid justeringsfaktor":"afsig","vægtet gennemsnit af tdd":"tddw","gewichteter durchschnitt von tdd":"tddw","vážený průměr tdd":"tddw","média ponderada do tdd":"tddw","lượng trung bình của tdd":"tddw","претеглена средна стойност на tdd":"tddw","總日劑量的加權平均值":"tddw","moyenne pondérée de tdd":"tddw","media ponderada de tdd":"tddw","viktat genomsnitt av tdd":"tddw","gewogen gemiddelde van tdd":"tddw","weighted average of tdd":"tddw","средний взвешенный tdd":"tddw","media ponderata di tdd":"tddw","vektet gjennomsnitt av tdd":"tddw","за зваженим середнім показником на дд":"tddw","średnia ważona tdd":"tddw","регулиране на базала":"adjbas","regola basale":"adjbas","ajustar basal":"adjbas","basalraten anpassen":"adjbas","ajuster le basal":"adjbas","juster basal":"adjbas","điều chỉnh liều nền":"adjbas","justér basal":"adjbas","basaal aanpassen":"adjbas","dostosuj bazę":"adjbas","настроить базал":"adjbas","justera basal":"adjbas","регулювання базалу":"adjbas","기저 조정":"adjbas","upravit bazál":"adjbas","調整基礎":"adjbas","adjust basal":"adjbas","wysoki cel tymczasowy zwiększa wrażliwość":"htt","較高的臨時目標會提高胰島素敏感度":"htt","cible temporaire haute augmente la sensibilité":"htt","висока временна цел повишава чувствителността":"htt","høyt midlertidig mål øker insulinfølsomhet":"htt","mục tiêu tạm thời cao làm tăng độ nhạy":"htt","hohes temporäres ziel erhöht die sensitivität":"htt","vysoký dočasný cíl zvyšuje citlivost":"htt","high temptarget raises sensitivity":"htt","niski cel tymczasowy zmniejsza wrażliwość":"ltt","ниска временна цел намалява чувствителността":"ltt","niedriges temporäres ziel senkt die sensitivität":"ltt","low temptarget lowers sensitivity":"ltt","cible temporaire basse réduit la sensibilité":"ltt","nízký dočasný cíl snižuje citlivost":"ltt","lavt midlertidig mål reduserer insulinfølsomhet":"ltt","mục tiêu tạm thời thấp làm giảm độ nhạy":"ltt","較低的臨時目標會降低胰島素敏感度":"ltt","чувствителността повишава целта":"senstgt","sensibilità aumenta target":"senstgt","gevoeligheid verhoogt het doel":"senstgt","sensitivity raises target":"senstgt","følsomhed hæver mål":"senstgt","la sensibilidad aumenta el objetivo":"senstgt","чутливість підвищує ціль":"senstgt","độ nhạy làm tăng mục tiêu":"senstgt","敏感度提高目標":"senstgt","citlivost zvyšuje cíl":"senstgt","empfindlichkeit erhöht den zielwert":"senstgt","sensitivitet øker målverdi":"senstgt","insulinkänslighet höjer målet":"senstgt","wrażliwość podnosi cel":"senstgt","sensibilidade levanta alvo":"senstgt","sensibilité augmente la cible":"senstgt","чувствительность повышает цель":"senstgt","résistance réduit la cible":"restgt","resistens senker målverdi":"restgt","oporność obniża cel":"restgt","resistens nedre mål":"restgt","резистентність знижує мету":"restgt","insulinresistens sänker målvärde":"restgt","resistenz senkt den zielwert":"restgt","resistenza abbassa target":"restgt","kháng insulin → hạ mục tiêu":"restgt","resistentie verlaagt het doel":"restgt","rezistence snižuje cíl":"restgt","resistencia reduce el objetivo":"restgt","阻抗降低目標":"restgt","resistance lowers target":"restgt","резистентность понижает цель":"restgt","резистентността понижава целта":"restgt","resistência baixa alvo":"restgt","рівень мети для режиму тренування, при якому база буде зменшена вдвічі":"hbt","half basal exercise target":"hbt","半基礎運動目標":"hbt","objetivo de ejercicio basal de la mitad":"hbt","halve basaal bewegingsdoel":"hbt","cible à demi-basal":"hbt","halv basal motion mål":"hbt","obiettivo di esercizio metà basale":"hbt","alvo de exercício basal meio":"hbt","mục tiêu tập thể dục 1/2 liều nền":"hbt","cíl pro cvičení s polovičním bazálem":"hbt","tryb ćwiczeń":"hbt","уровень цели для режима упражнений, при котором база будет уменьшена вдвое":"hbt","halb-basal sportziel":"hbt","halva basaldosen vid motionsläge":"hbt","målverdi for halv basal ved trening":"hbt","moltiplicatore sicurezza max giornaliero":"mdsm","maks daglig sikkerhetsmultiplikator":"mdsm","maksymalny dzienny mnożnik bezpieczeństwa":"mdsm","multiplicador de seguridad diario máximo":"mdsm","multiplicador máximo de segurança diária":"mdsm","max daily safety multiplier":"mdsm","multiplikator för dygnets högsta basaldos":"mdsm","hệ số tối đa an toàn hàng ngày":"mdsm","max täglicher sicherheitsmultiplikator":"mdsm","ratio de sécurité maximal du basal temporaire":"mdsm","maks. daglige sikkerhedsmultiplikator":"mdsm","最大每日安全乘數":"mdsm","множитель безопасности максимального суточного базала":"mdsm","множник безпеки максимального добового базалу":"mdsm","maximální denní bezpečnostní násobitel":"mdsm","maximale dagelijkse veiligheidsvermenigvuldiger":"mdsm","當前基礎安全倍率":"cbsm","multiplicador actual de seguridad basal":"cbsm","aktualny mnożnik bezpieczeństwa bazy":"cbsm","текущ коефициент на безопасност за базал":"cbsm","aktuální bezpečnostní násobič bazálu":"cbsm","corrente moltiplicatore basale sicurezza":"cbsm","current basal safety multiplier":"cbsm","nuværende basal sikkerheds multiplikator":"cbsm","multiplicador de segurança basal atual":"cbsm","sikkerhetsmultiplikator for nåværende basal":"cbsm","huidige basale veiligheidsvermenigvuldiger":"cbsm","aktueller basal-sicherheits-multiplikator":"cbsm","multiplikator för nuvarande ordinarie basal":"cbsm","multiplicateur de sécurité du basal actuel":"cbsm","hệ số an toàn liều nền hiện tại":"cbsm","множитель безопасности для текущего базала":"cbsm","множник безпеки для поточного базалу":"cbsm","използване на персонализирано пиково време":"peakuse","usar tiempo pico personalizado":"peakuse","benyt brugerdefineret tidspunkt":"peakuse","personnaliser la durée du pic d’action de l'insuline":"peakuse","använd anpassad tid, i minuter, för insulinets maximala glukossänkande effekt":"peakuse","использовать собственный пик действия инсулина":"peakuse","використовувати свій пік дії інсуліну":"peakuse","usa picco tempo personalizzato":"peakuse","bruk egendefinert topptid for insulineffekt":"peakuse","verwende einen benutzerdefinierten höhepunkt":"peakuse","使用自定義高峰時間":"peakuse","użyj własnego czasu szczytu insuliny":"peakuse","usar tempo pico personalizado":"peakuse","use custom peak time":"peakuse","používat vlastní čas vrcholu účinku":"peakuse","tuỳ chỉnh thời gian đỉnh insulin":"peakuse","aangepaste piektijd gebruiken":"peakuse","продолжительность действия инсулина":"dia","тривалість дії інсуліну":"dia","i̇nsülin etki süresi (i̇es)":"dia","varighed af insulin aktivitet":"dia","продължителност на действие на инсулина":"dia","duur insuline activiteit (dia)":"dia","thời gian tác dụng của insulin":"dia","czas aktywności insuliny (dia)":"dia","durée d’action de l’insuline":"dia","doba působení inzulínu (dia)":"dia","胰島素作用的持續時間":"dia","duration of insulin action":"dia","dauer der insulinwirkung":"dia","varighet av insulinaktivitet (dia)":"dia","duración de la insulina activa":"dia","duração da ação da insulina":"dia","insulinets verkningstid":"dia","durata dell’azione dell’insulina":"dia","tid för insulinets maximala glukossänkande effekt, i minuter":"peak","пік дії інсуліну":"peak","topptid for insulineffekt":"peak","insulin spidstidspunkt":"peak","szczyt działania insuliny":"peak","insulin wirkhöhepunkt":"peak","пиково време на инсулина":"peak","durée avant le pic d’action de l'insuline":"peak","čas vrcholu účinku inzulínu":"peak","tempo pico da insulina":"peak","insuline piektijd":"peak","пик действия инсулина":"peak","thời gian đỉnh của insulin":"peak","tiempo pico de insulina":"peak","insulin peak time":"peak","tempo picco insulina":"peak","胰島素峰值時間":"peak","skip neutral temps":"skipneutral","přeskočit neutrální bazály":"skipneutral","pomiń neutralne dawki":"skipneutral","spring over neutrale temps":"skipneutral","ignorar temps neutros":"skipneutral","повернутися на нейтральний базал":"skipneutral","bỏ qua tạm thời trung lập":"skipneutral","salta tempi neutrali":"skipneutral","neutrale temporäre basalraten überspringen":"skipneutral","пропускане на неутрални временни базали":"skipneutral","ignorer les basaux temporaires neutres":"skipneutral","saltar temps neutrales":"skipneutral","hopp over nøytrale midlertidige mål":"skipneutral","sla neutrale temps over":"skipneutral","跳過中性臨時":"skipneutral","возвращаться на нейтральный базал":"skipneutral","hoppa över neutrala temporära basaler":"skipneutral","återaktivera om ingen temp basal":"unsuspend","dessuspender si no hay temporal":"unsuspend","възобновяване при липса на временен базал":"unsuspend","sospendi se nessuna temp":"unsuspend","dessuspender se não temp":"unsuspend","如果沒有臨時，則無法暫停":"unsuspend","відновлювати подачу, якщо немає тбш":"unsuspend","schorsing opheffen als geen tijdelijk doel is ingesteld":"unsuspend","obnovit, pokud neběží dočasný bazál":"unsuspend","возобновлять подачу, если нет вбс":"unsuspend","unsuspend if no temp":"unsuspend","fjern pause hvis det ikke finnes et midlertidig mål":"unsuspend","forsetzen wenn kein temporäres ziel aktiv":"unsuspend","afbryd hvis ingen temp":"unsuspend","bỏ tạm dừng nếu không có liều tạm thời":"unsuspend","wznów po zawieszeniu":"unsuspend","annuler la suspension si aucun débit temporaire":"unsuspend","ratio d'administration de smb":"smbdr","співвідношення доставки smb":"smbdr","smb leveringsforhold":"smbdr","smb współczynnik dostarczania":"smbdr","proporção smb":"smbdr","smb delivery ratio":"smbdr","smb 傳送比率":"smbdr","smb toedienings-verhouding":"smbdr","poměr podávání smb":"smbdr","smb lieferverhältnis":"smbdr","ratio de entrega smb":"smbdr","rapporto di consegna smb":"smbdr","коэффициент доставки smb":"smbdr","коефициент на подаване на smb":"smbdr","smb ratio":"smbdr","tỷ lệ phân phối smb":"smbdr","smb interval":"smbint","intervallo smb":"smbint","smb-intervall (minuter)":"smbint","smb-intervall":"smbint","smb odstęp czasowy":"smbint","интервал между smb":"smbint","smb 間隔":"smbint","intervalo smb":"smbint","интервал на smb":"smbint","interval smb":"smbint","khoảng thời gian giữa các liều smb":"smbint","інтервал між smb":"smbint","intervalle smb":"smbint","min. 5-minutowy wpływ węglowodanów":"min5m","min. 5m carb impact":"min5m","мин. 5 мин. влияние карба":"min5m","min 5m carb impact":"min5m","tác động tối thiểu trong 5 phút":"min5m","min. 5 m carb impact":"min5m","impacto mínimo 5m de carbo":"min5m","impatto carb min 5m":"min5m","mínimo de 5m impacto de carb":"min5m","minsta kolhydratpåverkan på 5 m":"min5m","最少5分鐘碳水影響":"min5m","min. 5m koolhydraten impact":"min5m","мін-5м карб":"min5m","min 5m karb effekt":"min5m","impact glucides min. sur 5 min":"min5m","min. 5minutový vliv sacharidů":"min5m","porcentaje restante de carbohidratos":"remfrac","prosent for gjenværende karbo":"remfrac","phần trăm carbs còn lại":"remfrac","procento zbývajících sacharidů":"remfrac","resterende koolhydraten percentage":"remfrac","pozostały procent węglowodanów":"remfrac","remaining carbs percentage":"remfrac","процент на оставащите въглехидрати":"remfrac","percentuale di carri rimanenti":"remfrac","процент з візками":"remfrac","verbleibende kohlenhydrate prozentsatz":"remfrac","процент оставшихся карбов":"remfrac","剩餘碳水化合物百分比":"remfrac","resterende kulhydrater procentdel":"remfrac","porcentagem de carbos restantes":"remfrac","pourcentage de glucides restants":"remfrac","återstående kolhydrater i procent":"remfrac","grense for gjenværende karbo":"remcap","verbleibende kohlenhydrat-kappung":"remcap","поглощение оставшихся углеводов":"remcap","remaining carbs cap":"remcap","limit pozostałych węglowodanów":"remcap","giới hạn lượng carb còn lại":"remcap","max mängd absorption av kolhydrater":"remcap","剩餘碳水化合物上限":"remcap","limite de carbos restante":"remcap","limit zbývajících sacharidů":"remcap","gorra restante de carbohidratos":"remcap","поглинання вуглеводів, що залишилися":"remcap","resterende koolhydraten grens":"remcap","plafond de glucides restants":"remcap","resterende kulhydrathætte":"remcap","cap carbs rimanenti":"remcap","ограничение на оставащите въглехидрати":"remcap","干擾 cgm 目標上升":"noisy","повишаване на целта при шумен cgm":"noisy","augmenter la cible si le capteur cgm est bruyant":"noisy","цільове зростання шуму cgm":"noisy","увеличение шума cgm":"noisy","aumento do alvo cgm barulhento":"noisy","noisy cgm target increase":"noisy","zvýšení cíle při šumu cgm":"noisy","ungenaues cgm erhöht das ziel":"noisy","aumenta el objetivo cgm ruidoso":"noisy","aumento bersaglio cgm rumoroso":"noisy","lawaaierig cgm doel verhoging":"noisy","współczynnik szumu cgm":"noisy","ökning av målglukos vid cgm-brus":"noisy","økning i blodsukkermål ved støyende cgm":"noisy","tăng mục tiêu đường huyết khi cảm biến nhiễu":"noisy","støjende cgm-mål øg":"noisy","maksymalna ilość aktywnej insuliny (iob)":"maxiob","maximale insuline aan boord (iob)":"maxiob","insuline active max. (iob max)":"maxiob","maximales insulin an bord (iob)":"maxiob","maximal mängd aktivt insulin (iob)":"maxiob","maximum insulin on board (iob)":"maxiob","максимален активен инсулин (iob)":"maxiob","maksimum insulin om bord (iob)":"maxiob","maksimum aktivt insulin (iob)":"maxiob","最大體內胰島素 (iob)":"maxiob","maximální aktivní inzulín (iob)":"maxiob","lượng insulin tối đa (iob)":"maxiob","maximaler bolus":"maxbolus_t","maximal bolus":"maxbolus_t","максимален болус":"maxbolus_t","liều bolus tối đa":"maxbolus_t","maksimal bolus":"maxbolus_t","最大注射量":"maxbolus_t","maximale bolus":"maxbolus_t","maximum bolus":"maxbolus_t","maximální bolus":"maxbolus_t","maksymalny bolus":"maxbolus_t","bolus maximum":"maxbolus_t","maximum basal rate":"maxbasal_t","maksimal basalrate":"maxbasal_t","maximální bazální dávka":"maxbasal_t","maximale basal rate":"maxbasal_t","maksimal basal rate":"maxbasal_t","tỷ lệ liều nền tối đa":"maxbasal_t","maksymalna dawka podstawowa":"maxbasal_t","débit basal maximal":"maxbasal_t","最大基礎率":"maxbasal_t","максимален базал":"maxbasal_t","maximal basaldos":"maxbasal_t","maximale basaal stand":"maxbasal_t","maksimalt antall aktive karbohydrater (cob)":"maxcob","最大體內碳水化合物 (cob)":"maxcob","maximum carbs on board (cob)":"maxcob","lượng carb tối đa (cob)":"maxcob","maximální aktivní sacharidy – cob":"maxcob","maximal mängd aktiva kolhydrater (cob)":"maxcob","maximale kohlenhydrate an bord (cob)":"maxcob","maksimum kulhydrater om bord (cob)":"maxcob","максимални активни въглехидрати (cob)":"maxcob","maximum de glucides actifs (cob)":"maxcob","maximale koolhydraten aan boord (kob)":"maxcob","maksymalna ilość aktywnych węglowodanów (cob)":"maxcob","mindste sikkerhedsgrænse":"thresh","minimale veiligheidsdrempel":"thresh","мінімальний поріг безпеки":"thresh","minste sikkerhetsterskel":"thresh","minimalny próg bezpieczeństwa":"thresh","umbral de seguridad mínimo":"thresh","limite mínimo de segurança":"thresh","soglia di sicurezza minima":"thresh","ngưỡng an toàn tối thiểu":"thresh","minimum safety threshold":"thresh","seuil minimal de sécurité":"thresh","minimální bezpečnostní práh":"thresh","最小安全門檻值":"thresh","minimaler sicherheitsgrenzwert":"thresh","минимальный порог безопасности":"thresh","lägsta säkerhetströskel":"thresh"},"v":{"активовано":"on","aktiviert":"on","aktivert":"on","включено":"on","ativado":"on","cho phép":"on","已啟用":"on","enabled":"on","på":"on","zapnuto":"on","abilitato":"on","włączony":"on","активировано":"on","ingeschakeld":"on","activé":"on","habilitado":"on","aktiveret":"on","deshabilitado":"off","desabilitado":"off","вимкнено":"off","wyłączony":"off","deaktiviert":"off","已停用":"off","disabled":"off","vypnuto":"off","deaktivert":"off","av":"off","изключено":"off","disattivato":"off","vô hiệu hóa":"off","отключены":"off","désactivé":"off","uitgeschakeld":"off","deaktiveret":"off","sigmoidní":"sigmoid","s型":"sigmoid","sigmoïde":"sigmoid","sigmoid":"sigmoid","сигмоид":"sigmoid","logaritmický":"logarithmic","logaritmisch":"logarithmic","hàm logarit":"logarithmic","logarithmic":"logarithmic","logaritmisk":"logarithmic","對數":"logarithmic","logarithmisch":"logarithmic","логаритмично":"logarithmic","logarytmiczny":"logarithmic","logarithmique":"logarithmic"}};
+const LS_IMP='trioInspector.trioSettings';
+let IMP=null; try{ IMP=JSON.parse(localStorage.getItem(LS_IMP)||'null'); }catch(e){}
+const impNorm=x=>String(x||'').trim().toLowerCase().replace(/\s+/g,' ');
+function impv(k){ return (IMP&&IMP.vals&&IMP.vals[k])||null; }
+function impFmt(k){ const x=impv(k); if(!x) return null;
+  if(x.v==='on') return 'on ✓'; if(x.v==='off') return 'off';
+  if(x.v==='sigmoid'||x.v==='logarithmic') return x.v;
+  return x.u==='%'?(x.v+'%'):(x.v+(x.u?' '+x.u:'')); }
+function csvCells(line){
+  const out=[]; let cur='',q=false;
+  for(let i=0;i<line.length;i++){ const ch=line[i];
+    if(q){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===','){ out.push(cur); cur=''; }
+    else cur+=ch; }
+  out.push(cur); return out;
+}
+function parseTrioCsv(text,fname){
+  const vals={};
+  for(const line of String(text).replace(/^\uFEFF/,'').split(/\r?\n/)){
+    if(!line.trim()) continue;
+    const c=csvCells(line); if(c.length<4) continue;
+    const key=IMPMAP.n[impNorm(c[2])]; if(!key) continue;
+    const raw=String(c[3]).trim();
+    vals[key]={v:(IMPMAP.v[impNorm(raw)]||raw),u:String(c[4]||'').trim()};
+  }
+  if(!Object.keys(vals).length)
+    throw new Error('No Trio settings recognized — expected a "TrioSettings_…csv" made via Settings → Trio Backup → Export Settings.');
+  const m=String(fname||'').match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\d{2}/);
+  return {at:Date.now(),date:m?`${m[1]}-${m[2]}-${m[3]} ${m[4]}:${m[5]}`:null,vals};
 }
 
 /* Build the compact day dataset from raw Nightscout rows.
@@ -1188,7 +1233,7 @@ const VD={
  maxSafeBasal:'maxSafeBasal — temp-basal ceiling: min(Maximum Basal Rate, 3 × highest scheduled basal, 4 × current scheduled basal); the multipliers are settings too.<span class="spath">⚙ Therapy → Units and Limits → Maximum Basal Rate · Algorithm → Additionals → Max Daily / Current Basal Safety Multiplier</span>',
  enacted:'enacted — the pump confirmed this command. "Suggested only" means it was computed but not (yet) delivered.',
 };
-let VALS={};
+let VALS={},IMPUSED={},VIMP={};
 /* Trio app settings, per step — exact labels & paths from the app's Settings tree
    (SettingItems.swift). n=UI label, p=where it lives, d=what it does (condensed from the
    app's own hint texts + oref source), def=the app default. Values live in SVALS: Trio
@@ -1334,24 +1379,51 @@ function buildSteps(c,p){
     ZT:gm.ZT!=null?('↘'+fBG(gm.ZT)):'—',
     UAM:gm.UAM!=null?('↘'+fBG(gm.UAM)):'—',
     insulinReq:req!=null?(F2(req)+' U'):'—',
-    maxIOB:p.maxIob!=null?(f2(p.maxIob)+' U'):'— (not exported)',
+    maxIOB:p.maxIob!=null?(f2(p.maxIob)+' U'):(impFmt('maxiob')||'— (not exported)'),
     maxBolus:capVal!=null?(F2(capVal)+' U'):'—',
-    smb_delivery_ratio:ratioNum!=null?('≈'+ratioNum.toFixed(2)):'0.5 (default)',
-    SMBInterval:wait?'waiting':'—',
+    smb_delivery_ratio:ratioNum!=null?('≈'+ratioNum.toFixed(2))
+      :(impv('smbdr')?(+impv('smbdr').v/100).toFixed(2):'0.5 (default)'),
+    SMBInterval:wait?'waiting':(impFmt('smbint')||'—'),
     maxSafeBasal:mmB?(mmB[2]+' U/h'):'—',
     fractionCarbsLeft:impliedF!=null?('≈'+impliedF.toFixed(2)):'—',
     enacted:c.rec?'yes':'suggested only',
   } : {};
-  /* setting values only where this cycle's data proves or implies them */
+  /* setting values: what this cycle's data proves wins; the imported settings export
+     (⇣ snapshot) fills the rest; anything else stays honestly unknown */
   const uamOn = c && (pr.UAM || p.uamPred!=null
     || (dayData(curDay).cycles||[]).some(x=>x.pred&&x.pred.UAM&&x.pred.UAM.length));
+  IMPUSED={}; VIMP={};
+  const iv=(k,meas)=>{ if(meas!=null) return meas;
+    const x=impFmt(k); if(x!=null) IMPUSED[k]=1; return x; };
   SVALS = c ? {
-    uam:uamOn?'on ✓':null,
-    dia:(PROFILE&&PROFILE.dia)?(PROFILE.dia+' h'):null,
-    smbmin:impliedSmbMin!=null?('≈'+impliedSmbMin+' min'):null,
-    smbjumpset:smbjump?'tripped now':null,
+    uam:iv('uam',uamOn?'on ✓':null),
+    dia:iv('dia',(PROFILE&&PROFILE.dia)?(PROFILE.dia+' h'):null),
+    smbmin:iv('smbmin',impliedSmbMin!=null?('≈'+impliedSmbMin+' min'):null),
+    smbjumpset:iv('smbjumpset',smbjump?'tripped now':null),
     closedloop:(c.rec||(dayData(curDay).cycles||[]).some(x=>x.rec))?'on ✓':null,
+    asmax:iv('asmax',null), asmin:iv('asmin',null), rewind:iv('rewind',null),
+    dynisf:iv('dynisf',null), af:iv('af',null), afsig:iv('afsig',null),
+    tddw:iv('tddw',null), adjbas:iv('adjbas',null), maxcob:iv('maxcob',null),
+    min5m:iv('min5m',null), remfrac:iv('remfrac',null), remcap:iv('remcap',null),
+    noisy:iv('noisy',null), hbt:iv('hbt',null),
+    htt:iv('htt',null), ltt:iv('ltt',null), senstgt:iv('senstgt',null), restgt:iv('restgt',null),
+    smbalways:iv('smbalways',null), smbcob:iv('smbcob',null), smbtt:iv('smbtt',null),
+    smbcarbs:iv('smbcarbs',null), smbhigh:iv('smbhigh',null), smbhightt:iv('smbhightt',null),
+    uammin:iv('uammin',null), mdsm:iv('mdsm',null), cbsm:iv('cbsm',null),
+    skipneutral:iv('skipneutral',null), unsuspend:iv('unsuspend',null),
+    maxbolus_t:iv('maxbolus_t',null), maxbasal_t:iv('maxbasal_t',null),
   } : {};
+  if(c){
+    /* Insulin Peak Time only applies with Use Custom Peak Time on */
+    const pu=impv('peakuse');
+    if(pu){ SVALS.peak = pu.v==='on'?impFmt('peak'):'by insulin type'; if(SVALS.peak!=null) IMPUSED.peak=1; }
+    /* Enable SMB With High Glucose carries its target when on */
+    if(SVALS.smbhigh==='on ✓'&&impv('smbhightgt')) SVALS.smbhigh='on ✓ · '+impFmt('smbhightgt');
+    /* variable chips fed from the import (for the ⇣ provenance line) */
+    if(p.maxIob==null&&impv('maxiob')) VIMP.maxIOB=1;
+    if(ratioNum==null&&impv('smbdr')) VIMP.smb_delivery_ratio=1;
+    if(!wait&&impv('smbint')) VIMP.SMBInterval=1;
+  }
 
   /* conclusion (the enacted/suggested status lives here, top-right) */
   let conc='';
@@ -1641,12 +1713,14 @@ panel.addEventListener('click',ev=>{
       body.querySelectorAll('.vr').forEach(x=>x.setAttribute('aria-expanded','false'));
       if(wasOpen){ def.style.display='none'; }
       else {
+        const impNote=' · ⇣ from your Trio settings export'+(IMP&&IMP.date?(' of '+IMP.date):'')+' — re-import after changing settings';
         if(sk){ const s=SETT[sk], cur=SVALS[sk];
           def.innerHTML='<b>'+s.n+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+s.d
             +'<span class="spath">⚙ Trio app: '+s.p+(s.def?' · app default: '+s.def:'')
-            +(cur?'':' · current value not exported to Nightscout — check it in the app')+'</span>';
+            +(IMPUSED[sk]?impNote:(cur?'':' · current value not exported to Nightscout — check it in the app, or import a settings export via the ⋯ menu'))+'</span>';
         } else { const d=VD[vr.dataset.v]||'', cur=VALS[vr.dataset.v];
-          def.innerHTML='<b>'+vr.dataset.v+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+d.slice(d.indexOf('—')+2); }
+          def.innerHTML='<b>'+vr.dataset.v+'</b>'+(cur?' = <b>'+cur+'</b>':'')+' — '+d.slice(d.indexOf('—')+2)
+            +(VIMP[vr.dataset.v]?('<span class="spath">'+impNote.slice(3)+'</span>'):''); }
         def.dataset.v=key; def.style.display='block'; vr.setAttribute('aria-expanded','true'); } }
     return;
   }
@@ -1954,7 +2028,7 @@ document.getElementById('nsToken').addEventListener('keydown',e=>{ if(e.key==='E
 document.getElementById('nsUrl').addEventListener('keydown',e=>{ if(e.key==='Enter') connectNS(); });
 signOutBtn.onclick=()=>{
   try{
-    localStorage.removeItem(LS_AUTH); localStorage.removeItem(LS_PROF);
+    localStorage.removeItem(LS_AUTH); localStorage.removeItem(LS_PROF); localStorage.removeItem(LS_IMP);
     Object.keys(localStorage).filter(k=>k.startsWith(LS_DAY)).forEach(k=>localStorage.removeItem(k));
   }catch(e){}
   location.reload();
@@ -1990,6 +2064,20 @@ document.getElementById('brand').addEventListener('click',()=>{ if(LIVE) goLates
   document.addEventListener('click',e=>{ if(isOpen&&!wrap.contains(e.target)) setOpen(false); });
   document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&isOpen){ setOpen(false); btn.focus(); } });
   refreshBtn.addEventListener('click',()=>setOpen(false));
+  /* settings-export import: file picker → parseTrioCsv → localStorage → re-render */
+  const impFile=document.getElementById('impFile'), impSub=document.getElementById('impSub');
+  const impState=()=>{ impSub.textContent=IMP?('as of '+(IMP.date||new Date(IMP.at).toLocaleDateString())):'CSV from Trio Backup'; };
+  document.getElementById('impBtn').addEventListener('click',()=>{ setOpen(false); impFile.click(); });
+  impFile.addEventListener('change',async()=>{
+    const f=impFile.files&&impFile.files[0]; if(!f) return;
+    try{
+      IMP=parseTrioCsv(await f.text(),f.name);
+      try{ localStorage.setItem(LS_IMP,JSON.stringify(IMP)); }catch(e){}
+      impState(); renderAll(false);
+    }catch(e){ alert((e&&e.message)||'Import failed'); }
+    impFile.value='';
+  });
+  impState();
   (async function(){
     let list=null;
     try{ const r=await fetch('versions.json',{cache:'no-store'}); if(r.ok) list=await r.json(); }catch(e){}

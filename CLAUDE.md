@@ -125,6 +125,17 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   maxBolus, smb_delivery_ratio, SMBInterval, maxSafeBasal, ISF, CR, …) carry their ⚙ path
   inside the VD text instead of a duplicate ⚙ chip. When Trio's settings tree changes,
   re-check labels/paths against `SettingItems.swift`.
+- Settings-export import: the CSV from Trio's Settings → Trio Backup → Export Settings
+  (`TrioSettings_yyyyMMdd_HHmmss.csv`) can be imported via the ⋯ menu → localStorage
+  `trioInspector.trioSettings` (cleared on sign-out). CSV names AND values are LOCALIZED
+  on the phone: `IMPMAP` is generated from Trio's `Localizable.xcstrings` (all languages,
+  whitespace/case-normalized) — regenerate it when Trio's strings change. Imported values
+  fill the ⚙ chips and the maxIOB/smb_delivery_ratio/SMBInterval variable chips with a ⇣
+  provenance line carrying the export date (parsed from the FILE NAME — the in-file date
+  row is locale-formatted); anything proven by the day's own data always wins (IMPUSED/
+  VIMP). This import is the ONLY way to see oref preferences: they are not in NS, and
+  Tidepool only receives maxBasal/maxBolus/threshold_setting/closedLoop/insulin model
+  (verified in TidepoolManager.createStoredSettings).
 - Cycle identity (`buildRaw`): key each loop cycle on `suggested.deliverAt`, NOT
   `enacted.deliverAt`. The enacted deliverAt only advances when a NEW temp/SMB is sent; on a
   "no change" cycle Trio re-reports the previous enact, so keying on it silently drops every
