@@ -80,7 +80,10 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   (computed from the two sgv readings before t) left, ‹ time › nav top-right (steps across
   midnight), IOB/COB/basal/target row, then a SIMPLE forecast chart: ~45 min of real sgv
   dots, a "now" divider, the four forecast curves capped at +2.5 h (like the app), actual
-  readings AFTER the decision at 50% opacity (forecast vs reality), target+threshold
+  readings AFTER the decision at 50% opacity (forecast vs reality), bolus/SMB ▼ and
+  carbs ▲ (same shapes/sizes as the day chart; ones after the decision also at 50% —
+  everything right of "now" reads soft = hadn't happened yet, and the curves themselves
+  are drawn at 50% so they don't shout over the real dots), target+threshold
   dashed lines, hover readout line under it — deliberately NO markers/points/rail; the y-domain always spans the full in-range band so the axis stays put between decisions. The
   conclusion card sits BELOW the chart (so the chart never shifts while stepping) and
   carries the enacted ✓ / suggested chip top-right (hypo-guard red / below-target purple /
