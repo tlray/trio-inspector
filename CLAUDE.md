@@ -85,9 +85,13 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   everything right of "now" reads soft = hadn't happened yet, and the curves themselves
   are drawn at 50% so they don't shout over the real dots), target+threshold
   dashed lines, hover readout line under it — deliberately NO markers/points/rail; the y-domain always spans the full in-range band so the axis stays put between decisions. The
-  conclusion card sits BELOW the chart (so the chart never shifts while stepping) and
-  carries the enacted ✓ / suggested chip top-right (hypo-guard red / below-target purple /
-  needed-vs-given bars / idle). Below: the 8 pipeline steps (rail with status dots) with
+  conclusion card sits BELOW the chart and has a CONSTANT height (`.conc.main`,
+  min-height 80px, content vertically centered) so the steps below never shift while
+  stepping. Enacted/suggested is ONLY the small `.cdot` badge top-right (green ✓ =
+  enacted, dashed circle = suggested); the → deliver step spells it out next to the same
+  badge so users learn the mapping — don't reintroduce a text chip on the card. Variants:
+  hypo-guard red / below-target purple / a ONE-ROW given-vs-needed bar (dashed outline =
+  needed, filled = given, "given / needed U" + %) / idle. Below: the 8 pipeline steps (rail with status dots) with
   the full formula/why/source/glossary-chip bodies, then the raw reason log.
 - Data model per day (dayCache/localStorage): {a,b,sgv[[t,mgdl]],cycles[],smb,bolus,carbs,
   notes,siteChange,overrides[[t,durMin,label]],tempTargets[[t,durMin,targetBottom]],segs}.
@@ -170,6 +174,11 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   `trioInspector.day.<epoch>` (max ~6 days, pruned), `trioInspector.profile`. KEEP these
   key names — the stable Pages/artifact origin means existing users stay signed in across
   releases. `fetchDay` = 4 API calls, 25s timeout.
+- Loading: when a day is fetched with NOTHING cached (first load, uncached day),
+  `renderSkeleton()` fills the chart (height = SVG_H), stats and panel with pulsing `.skel`
+  placeholders in the final layout's sizes, so the page never starts as a tiny empty card
+  and doesn't jump when data lands; the normal renderers replace them (renderDayChart
+  removes `svg,.chartempty,.skel`). Global prefers-reduced-motion rule kills the pulse.
 - Refresh: manual ↻ header button + `pollTick` every 30s (fetches only when viewing today,
   tab visible, cache >55s old ⇒ effectively ~1/min); also on visibilitychange. Nightscout
   has no practical push for third-party web clients (only a socket.io channel), so polling

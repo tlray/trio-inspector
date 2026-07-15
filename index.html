@@ -190,9 +190,14 @@ header.top .grow{flex:1}
 .snaptime .tnav{display:inline-flex;align-items:baseline;gap:0}
 .snaptime .navb{align-self:center}
 .snaptime .t{font:650 20px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:-.02em;padding:0 3px}
-.cstat{float:right;font-size:9.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;margin:2px 0 4px 10px;cursor:help}
-.cstat.en{color:var(--txt-good)}
-.cstat.sg{color:var(--muted)}
+/* enacted/suggested badge: green ✓ = confirmed by the pump, dashed circle = computed only.
+   Spelled out in the “→ deliver” step, so the tiny badge is learnable. */
+.cdot{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
+  font-size:9.5px;font-weight:800;line-height:1;flex:none;box-sizing:border-box;vertical-align:-3px;letter-spacing:0}
+.cdot.en{background:var(--good);color:#fff}
+.cdot.sg{border:1.5px dashed var(--muted);color:var(--muted)}
+.cstat{position:absolute;top:9px;right:10px;cursor:help}
+.schip .cdot{width:13px;height:13px;font-size:8px;margin-right:4px}
 .snapbg{display:flex;align-items:baseline;gap:9px;margin:0;flex-wrap:wrap}
 .snapbg .bg{font-size:38px;font-weight:700;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
 .snapbg .unit{font-size:12px;color:var(--muted)}
@@ -230,12 +235,13 @@ header.top .grow{flex:1}
 .swipeghost .gdate{font-size:15px;font-weight:650}
 .swipeghost .gsub{font-size:12px;color:var(--muted)}
 
-/* conclusion */
+/* conclusion — .main has a constant height so the steps below never shift while stepping */
 .conc{border-radius:12px;padding:11px 13px;margin:0 0 14px;background:var(--hover);font-size:13px}
+.conc.main{min-height:80px;display:flex;flex-direction:column;justify-content:center;position:relative;padding-right:34px}
 .conc.guard{background:rgba(235,87,87,.10);color:var(--txt-lo);font-weight:600}
 .conc.zero{background:rgba(113,97,239,.10)}
 .conc.zero b{color:var(--txt-zt)}
-.crow{display:grid;grid-template-columns:70px 1fr 58px 34px;gap:8px;align-items:center}
+.crow{display:grid;grid-template-columns:52px 1fr auto 34px;gap:8px;align-items:center}
 .crow+.crow{margin-top:6px}
 .clbl{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .cbar{height:9px;border-radius:4px;position:relative}
@@ -244,6 +250,10 @@ header.top .grow{flex:1}
 .cval{font:600 12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
 .cpct{font-size:10.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 .concnote{font-size:11.5px;color:var(--muted);margin-top:7px}
+
+/* loading skeleton: pulsing placeholders in the final layout's sizes, so nothing pops around */
+.skel{background:var(--hover);border-radius:10px;animation:skelp 1.4s ease-in-out infinite}
+@keyframes skelp{0%,100%{opacity:.55}50%{opacity:1}}
 
 /* forecast chart */
 #fc{margin:0 -6px}
@@ -264,6 +274,7 @@ header.top .grow{flex:1}
 .srow:hover .slab{color:var(--ink)}
 .schip{font:600 9px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;
   padding:3px 6px;border-radius:5px;white-space:nowrap;flex:none;color:var(--muted);
+  display:inline-flex;align-items:center;
   background:color-mix(in srgb,currentColor 15%,transparent)}
 .sval{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;color:var(--ink);line-height:1.55;word-break:break-word}
 .sval .ok{color:var(--txt-good);font-weight:700}
@@ -814,8 +825,24 @@ function ovInfo(label){ const q=ovPreset(label);
   return q?[(q.pct!=null?q.pct+'%':null),(q.tgt?'target '+fBG(M(q.tgt)):null)].filter(Boolean).join(' · '):''; }
 const fDur=m=>m>=43200?'indefinite':(Math.round(m)+' m');
 
+/* first-load skeleton: pulsing placeholders in the final layout's sizes (day chart, stats,
+   snapshot panel), so the page doesn't start as a tiny empty card and jump when data lands */
+function renderSkeleton(){
+  const sk=(w,h,extra)=>`<div class="skel" style="width:${w};height:${h}px${extra||''}"></div>`;
+  chartWrap.querySelectorAll('svg,.chartempty,.skel').forEach(e=>e.remove());
+  chartWrap.insertAdjacentHTML('beforeend',sk('100%',SVG_H));
+  document.getElementById('limleg').innerHTML='';
+  document.getElementById('stats').innerHTML=Array.from({length:4},()=>`<span class="stat">${sk('46px',22)}</span>`).join('');
+  panel.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px">${sk('128px',42)}${sk('96px',26)}</div>
+    <div style="display:flex;gap:12px;margin-bottom:14px">${sk('64px',14)}${sk('58px',14)}${sk('72px',14)}${sk('62px',14)}</div>
+    ${sk('100%',170,';margin-bottom:14px')}
+    ${sk('100%',80,';margin-bottom:16px')}
+    ${sk('42%',12,';margin-bottom:12px')}
+    ${Array.from({length:8},()=>sk('100%',36,';margin-bottom:9px')).join('')}`;
+}
+
 function renderDayChart(dd){
-  chartWrap.querySelectorAll('svg,.chartempty').forEach(e=>e.remove());
+  chartWrap.querySelectorAll('svg,.chartempty,.skel').forEach(e=>e.remove());
   const w=chartWrap.clientWidth||880;
   if(w<60) return;
   X=t=>PADL+(t-dd.a)/(dd.b-dd.a)*(w-PADL-PADR);
@@ -1445,23 +1472,23 @@ function buildSteps(c,p){
     if(!wait&&impv('smbint')) VIMP.SMBInterval=1;
   }
 
-  /* conclusion (the enacted/suggested status lives here, top-right) */
+  /* conclusion — constant height (.conc.main) so stepping never shifts the steps below;
+     enacted/suggested is only the small .cdot badge top-right, spelled out in “→ deliver” */
   let conc='';
   if(c){
-    const st=`<span class="cstat ${c.rec?'en':'sg'}" title="${c.rec?'confirmed by the pump':'computed but not confirmed by the pump'}">${c.rec?'enacted ✓':'suggested'}</span>`;
+    const st=`<span class="cstat cdot ${c.rec?'en':'sg'}" title="${c.rec?'enacted — confirmed by the pump':'suggested — computed but not confirmed by the pump'}">${c.rec?'✓':''}</span>`;
     const carbLine = creq!=null?`<div class="conc guard" style="margin-bottom:6px">🍬 ~${creq} g fast carbs required${p.creqMin?` within ${p.creqMin} m`:''} — cutting insulin alone won't keep BG above the threshold</div>`:'';
-    if(guard) conc=carbLine+`<div class="conc guard">${st}Hypo guard active — all dosing stopped (zero temp)</div>`;
-    else if(rising) conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
-    else if(zero) conc=carbLine+`<div class="conc zero">${st}<b>Forecast below target</b> — basal wound down, nothing added</div>`;
-    else if(maxiob) conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
+    if(guard) conc=carbLine+`<div class="conc main guard">${st}Hypo guard active — all dosing stopped (zero temp)</div>`;
+    else if(rising) conc=carbLine+`<div class="conc main" style="color:var(--ink2)">${st}Forecast below target, but BG is <b>rising faster than expected</b> — normal basal held, nothing removed</div>`;
+    else if(zero) conc=carbLine+`<div class="conc main zero">${st}<b>Forecast below target</b> — basal wound down, nothing added</div>`;
+    else if(maxiob) conc=carbLine+`<div class="conc main" style="color:var(--ink2)">${st}IOB already at the maxIOB ceiling — nothing added (neutral basal)</div>`;
     else if(req!=null&&req>0.01){
       const maxb=Math.max(req,smbGiven,0.01), pct=Math.round(smbGiven/req*100);
-      conc=carbLine+`<div class="conc">${st}
-        <div class="crow"><span class="clbl">needed</span><span class="cbar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span></span><span class="cval">${F2(req)} U</span><span class="cpct"></span></div>
-        <div class="crow"><span class="clbl">given now</span><span class="cbar"><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} U</span><span class="cpct">${pct}%</span></div>
-        ${smbGiven<req-0.011?`<div class="concnote">remainder follows in later cycles — held back by the safety limits in the steps below</div>`:''}</div>`;
+      conc=carbLine+`<div class="conc main">${st}
+        <div class="crow" title="SMB given now vs insulin needed"><span class="clbl">insulin</span><span class="cbar"><span class="req" style="width:${Math.min(100,req/maxb*100)}%"></span><span class="giv" style="width:${Math.min(100,smbGiven/maxb*100)}%"></span></span><span class="cval">${F2(smbGiven)} / ${F2(req)} U</span><span class="cpct">${pct}%</span></div>
+        ${smbGiven<req-0.011?`<div class="concnote">given now / needed — the remainder follows in later cycles, held back by the safety limits below</div>`:''}</div>`;
     }
-    else conc=carbLine+`<div class="conc" style="color:var(--ink2)">${st}No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
+    else conc=carbLine+`<div class="conc main" style="color:var(--ink2)">${st}No extra insulin needed this cycle${req!=null&&req<-0.01?` (need ${F2(req)} U → basal reduced)`:''}</div>`;
   }
 
   /* 1 — inputs */
@@ -1620,12 +1647,12 @@ function buildSteps(c,p){
       +vchips(['maxSafeBasal','insulinReq'])
       +schips(['maxbasal_t','mdsm','cbsm','skipneutral','unsuspend'])+srcBlock('basal')});
 
-  /* 8 — result */
+  /* 8 — result (the badge here matches the .cdot on the conclusion card, so people learn it) */
   rows.push({id:'result',lab:'→ deliver',dot:(c&&c.rec)?'--good':null,
-    chip:c?{t:c.rec?'enacted':'suggested',c:c.rec?'--txt-good':'--muted'}:null,
+    chip:c?{t:c.rec?'<span class="cdot en">✓</span>enacted':'<span class="cdot sg"></span>suggested',c:c.rec?'--txt-good':'--muted'}:null,
     val:c?`SMB <b>${F2(smbGiven)} U</b> + temp ${(c.rate!=null&&c.dur>0)?`<b>${F2(c.rate)} U/h</b> · ${Math.round(c.dur)} m`:'(unchanged)'}`
        :'deliver, then start over in ~5 minutes',
-    body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
+    body:`<p>The command goes to the pump (<i>enacted</i> = confirmed; <i>suggested</i> = computed only). The small badge on the conclusion card above means the same thing: <span class="cdot en">✓</span> = enacted, a dashed circle <span class="cdot sg"></span> = suggested. Five minutes later the whole pipeline runs again with fresh data — temp basals are re-decided every cycle, which is why every individual decision can afford to be small and cautious.</p>`
       +vchips(['enacted'])+schips(['closedloop'])});
   return {rows,conc,thr};
 }
@@ -1830,6 +1857,7 @@ async function selectDay(d,force){
   if(LIVE && (force || !c || stale) && !fetching){
     fetching=true; refreshBtn.classList.add('spin');
     dayStatusTxt = dayCache[d]?'':'loading…'; renderDaybar();
+    if(!dayCache[d]) renderSkeleton(); /* nothing cached to show yet → pulsing placeholders */
     try{
       await fetchDay(d);
       const got=dayData(d);
