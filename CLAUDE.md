@@ -215,5 +215,9 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   https://claude.ai/code/artifact/1f0e27e1-220b-4c84-9812-e7d89375c6c1 (main app, favicon 🩸)
   Experiments: variable map …/7a827d7c-2bbe-408b-96d6-0a16f301aaff (🗺️),
   playground …/ec095d69-f763-40d2-a5ce-ed686c43f9f4 (🧪).
-- After each accepted change: test, commit+push, republish the artifact, and send the user
-  the fresh `index.html` as a file.
+- After each accepted change: test, commit+push, DEPLOY to main (standing approval from the
+  user — "ook altijd deployen": fast-forward main to the working branch,
+  `git push origin <branch>:main`, then verify the pages.yml run conclusion via the GitHub
+  MCP actions tools; if the push is rejected, open a PR and merge it), republish the
+  artifact, and send the user the fresh `index.html` as a file. The user prefers the deploy
+  to be carried out by a subagent.
