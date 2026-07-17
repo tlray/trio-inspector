@@ -343,7 +343,7 @@ details.raw summary{font-size:10.5px;letter-spacing:.08em;text-transform:upperca
   #chartToggle:active{background:var(--hover)}
   .daycard{display:none;border:none;box-shadow:none;border-radius:0;background:none;padding:8px 0 0;cursor:auto}
   .daycard.open{display:block}
-  .cols{display:flex;flex-direction:column;gap:12px}
+  .cols{display:flex;flex-direction:column;gap:12px;align-items:stretch} /* start (desktop grid) would shrink sparse cards to content width */
   .snap{position:static;padding:14px 14px 10px}
   .snaptime .navb{display:none}   /* pager + swipe navigate decisions */
   #pager.on{display:flex}
@@ -485,7 +485,7 @@ try{ LIVE=JSON.parse(localStorage.getItem(LS_AUTH)||'null'); }catch(e){}
 let PROFILE=null;          /* {basal:[[sec,rate]],target,isf,cr,dia,units} */
 try{ PROFILE=JSON.parse(localStorage.getItem(LS_PROF)||'null'); }catch(e){}
 const dayCache={};         /* dayStart -> {data,fetchedAt} */
-let curDay=todayStart(), selCycle=null, fetching=false, dayStatusTxt='';
+let curDay=todayStart(), selCycle=null, fetching=false, dayStatusTxt='', firstPaint=true;
 
 /* ---------- profile-derived ---------- */
 function schedBasal(t){ const bp=(PROFILE&&PROFILE.basal)||[]; if(!bp.length) return 0;
@@ -1856,8 +1856,17 @@ async function selectDay(d,force){
     : (c.fetchedAt < nextDay(d)*1000+600000)); /* cached before the day had ended */
   if(LIVE && (force || !c || stale) && !fetching){
     fetching=true; refreshBtn.classList.add('spin');
-    dayStatusTxt = dayCache[d]?'':'loading…'; renderDaybar();
+    dayStatusTxt = dayCache[d]?(firstPaint?'updating…':''):'loading…'; renderDaybar();
     if(!dayCache[d]) renderSkeleton(); /* nothing cached to show yet → pulsing placeholders */
+    else if(firstPaint){
+      /* returning user: show the cached day right away instead of a blank page while the
+         refresh runs — select the deep-linked cycle if any, else the newest cached one */
+      const dd0=dayData(d), t0=deepT();
+      selCycle=(t0&&(dd0.cycles.find(x=>x.t===t0)||nearestCycle(dd0,t0)))
+        ||(selCycle&&dd0.cycles.find(x=>x.t===selCycle.t))
+        ||dd0.cycles[dd0.cycles.length-1]||null;
+      renderAll();
+    }
     try{
       await fetchDay(d);
       const got=dayData(d);
@@ -2027,6 +2036,7 @@ document.addEventListener('touchstart',()=>{},{passive:true});
 
 /* ---------- master render ---------- */
 function renderAll(full){
+  firstPaint=false;
   renderDaybar();
   const dd=dayData(curDay);
   if(full!==false) renderStats(dd);
