@@ -219,14 +219,13 @@ own Nightscout site. Fully rewritten July 2026 (clean "design" redesign).
   `versions.json` is absent (local file / claude.ai artifact).
 
 ## Publishing
-- The app is published as a claude.ai artifact. To keep updating the SAME page from a new
-  session, pass the existing URL to the Artifact tool:
-  https://claude.ai/code/artifact/1f0e27e1-220b-4c84-9812-e7d89375c6c1 (main app, favicon 🩸)
-  Experiments: variable map …/7a827d7c-2bbe-408b-96d6-0a16f301aaff (🗺️),
-  playground …/ec095d69-f763-40d2-a5ce-ed686c43f9f4 (🧪).
+- Do NOT publish/republish claude.ai artifacts — the user doesn't use them and asked to
+  stop (2026-07-17, "ik doe niets met die artifacts, gewoon deployen"). GitHub Pages is the
+  ONLY channel; the user views changes on the live site. (Old artifact URLs, only if ever
+  asked explicitly: main …/1f0e27e1-220b-4c84-9812-e7d89375c6c1, variable map
+  …/7a827d7c-2bbe-408b-96d6-0a16f301aaff, playground …/ec095d69-f763-40d2-a5ce-ed686c43f9f4.)
 - After each accepted change: test, commit+push, DEPLOY to main (standing approval from the
   user — "ook altijd deployen": fast-forward main to the working branch,
   `git push origin <branch>:main`, then verify the pages.yml run conclusion via the GitHub
-  MCP actions tools; if the push is rejected, open a PR and merge it), republish the
-  artifact, and send the user the fresh `index.html` as a file. The user prefers the deploy
-  to be carried out by a subagent.
+  MCP actions tools; if the push is rejected, open a PR and merge it). The user prefers the
+  deploy to be carried out by a subagent.
